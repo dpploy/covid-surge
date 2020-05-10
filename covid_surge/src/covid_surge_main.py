@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# This file is part of the COVID-surge application.
+# This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
 
 import os
@@ -252,15 +252,14 @@ class Surge:
     def plot_covid_nlfit(self, name, param_vec, 
             #dates, cases, 
             #fit_func, 
-            fit_func_prime=None, time_max_prime=None,
-            fit_func_double_prime = None, time_min_max_double_prime=None,
+            #fit_func_prime=None, time_max_prime=None,
+            #fit_func_double_prime = None, time_min_max_double_prime=None,
             option='dates', ylabel='null-ylabel',
             legend='null-legend', title='null-title', formula='null-formula'):
 
         formula = self.sigmoid_formula
 
         import matplotlib.pyplot as plt
-        plt.rcParams['figure.figsize'] = [25, 4]
 
         assert name == 'combined'
 
@@ -286,15 +285,13 @@ class Surge:
                 '; deaths per 100k/y: '+str(deaths_100k_y)
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
-        plt.rcParams['figure.figsize'] = [20, 8]
         plt.figure(1)
+        plt.rcParams['figure.figsize'] = [20, 5]
 
         if option == 'dates':
             plt.plot(dates_plot, cases_plot,'r*',label=source)
         elif option == 'days':
             plt.plot(range(len(dates_plot)), cases_plot,'r*',label=source)
-
-        import math
 
         n_plot_pts = 100
         dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
@@ -314,9 +311,16 @@ class Surge:
         plt.ylabel(ylabel,fontsize=16)
         plt.title(title,fontsize=20)
 
+        (tc,dtc) = self.critical_times('combined',param_vec)
+
+        time_max_prime = tc
+        time_min_max_double_prime = [tc-dtc,tc+dtc]
+
+        fit_func = self.__sigmoid_func
+
         if time_max_prime is not None:
 
-            cases = self.__sigmoid_func(time_max_prime,param_vec)
+            cases = fit_func(time_max_prime,param_vec)
             plt.plot(time_max_prime, cases,'*',color='green',markersize=16)
 
             (x_min,x_max) = plt.xlim()
@@ -382,26 +386,31 @@ class Surge:
         plt.legend(loc='best',fontsize=12)
         plt.grid(True)
         plt.show()
+        plt.savefig('covid_data_fit_0'+'.png', dpi=300)
+        plt.close()
+
+
+        fit_func_prime = self.__sigmoid_func_prime
 
         if fit_func_prime is not None:
 
-            plt.rcParams['figure.figsize'] = [20, 5]
             plt.figure(2)
+            plt.rcParams['figure.figsize'] = [10, 5]
 
             n_rows = 1
-            n_cols = 2
+            n_cols = 1
             plt.subplot(n_rows,n_cols,1)
 
             n_plot_pts = 100
-            dates_plot = np.linspace( 0, range(len(dates))[-1], n_plot_pts)
+            dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
 
-            cases_plot = fit_func_prime( dates_plot, param_vec )
+            cases_fit = fit_func_prime( dates_fit, param_vec )
 
-            plt.plot(dates_plot,cases_plot,'b-',label='Fitting derivative' )
+            plt.plot(dates_fit,cases_fit,'b-',label='Fitting derivative' )
 
             if time_max_prime is not None:
 
-                peak = self.__fit_func_prime(time_max_prime,param_vec)
+                peak = fit_func_prime(time_max_prime,param_vec)
                 plt.plot(time_max_prime, peak,'*',color='green',markersize=16)
 
                 (x_min,x_max) = plt.xlim()
@@ -417,58 +426,66 @@ class Surge:
 
             plt.ylabel('Surge Speed [case/day]',fontsize=16)
             plt.grid(True)
-
-            if fit_func_double_prime is not None:
-
-                plt.subplot(n_rows,n_cols,2)
-
-                n_plot_pts = 100
-                dates_plot = np.linspace( 0, range(len(dates))[-1], n_plot_pts)
-
-                cases_plot = self.__fit_func_double_prime( dates_plot, param_vec )
-
-                plt.plot(dates_plot,cases_plot,'b-',label='Fitting derivative' )
-
-                if time_min_max_double_prime is not None:
-
-                    t_min = time_min_max_double_prime[0]
-                    t_max = time_min_max_double_prime[1]
-
-                    max = fit_func_double_prime(t_max,param_vec)
-                    plt.plot(t_max, max,'*',color='orange',markersize=16)
-
-                    (x_min,x_max) = plt.xlim()
-                    dx = abs(x_max-x_min)
-                    x_text = t_max - dx*0.35
-
-                    (y_min,y_max) = plt.ylim()
-                    dy = abs(y_max-y_min)
-                    y_text = max + dy*0.00
-
-                    plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max),
-                        fontsize=14)
-
-                    min = self.__fit_func_double_prime(t_min,param_vec)
-                    plt.plot(t_min, min,'*',color='orange',markersize=16)
-
-                    (x_min,x_max) = plt.xlim()
-                    dx = abs(x_max-x_min)
-                    x_text = t_min - dx*0.35
-
-                    (y_min,y_max) = plt.ylim()
-                    dy = abs(y_max-y_min)
-                    y_text = min + dy*0.00
-
-                    plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,min),
-                        fontsize=14)
-
-                plt.ylabel('Surge Acceleration [case/day$^2$]',fontsize=16)
-                plt.grid(True)
-
             plt.show()
+            plt.savefig('covid_data_fit_1'+'.png', dpi=300)
+            plt.close()
 
-        plt.savefig('covid_data_fit'+'.png', dpi=300)
-        plt.close()
+        fit_func_double_prime = self.__sigmoid_func_double_prime
+
+        if fit_func_double_prime is not None:
+
+            plt.figure(3)
+            plt.rcParams['figure.figsize'] = [10, 5]
+
+            n_rows = 1
+            n_cols = 1
+            plt.subplot(n_rows,n_cols,1)
+
+            n_plot_pts = 100
+            dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
+
+            cases_fit = fit_func_double_prime( dates_fit, param_vec )
+
+            plt.plot(dates_fit,cases_fit,'b-',label='Fitting derivative' )
+
+            if time_min_max_double_prime is not None:
+
+                t_min = time_min_max_double_prime[0]
+                t_max = time_min_max_double_prime[1]
+
+                max = fit_func_double_prime(t_max,param_vec)
+                plt.plot(t_max, max,'*',color='orange',markersize=16)
+
+                (x_min,x_max) = plt.xlim()
+                dx = abs(x_max-x_min)
+                x_text = t_max - dx*0.35
+
+                (y_min,y_max) = plt.ylim()
+                dy = abs(y_max-y_min)
+                y_text = max + dy*0.00
+
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max),
+                    fontsize=14)
+
+                min = fit_func_double_prime(t_min,param_vec)
+                plt.plot(t_min, min,'*',color='orange',markersize=16)
+
+                (x_min,x_max) = plt.xlim()
+                dx = abs(x_max-x_min)
+                x_text = t_min - dx*0.35
+
+                (y_min,y_max) = plt.ylim()
+                dy = abs(y_max-y_min)
+                y_text = min + dy*0.00
+
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,min),
+                    fontsize=14)
+
+            plt.ylabel('Surge Acceleration [case/day$^2$]',fontsize=16)
+            plt.grid(True)
+            plt.show()
+            plt.savefig('covid_data_fit_2'+'.png', dpi=300)
+            plt.close()
 
         return
 
@@ -650,27 +667,44 @@ class Surge:
 
         return (param_vec, r2, k)
 
-    def critical_times(self, name, param_vec):
+    def critical_times(self, name, param_vec, verbose=True):
+
+        a0 = param_vec[0]
+        a1 = param_vec[1]
+        a2 = param_vec[2]
+
+        import math
 
         assert name == 'combined'
 
-        ( time_max_prime, prime_max ) = self. __sigmoid_prime_max(param_vec)
+        if name == 'combined':
+            # Combine all column data in the surge
+            cases = np.sum(self.cases,axis=1)
+
+        # Select data with non-zero cases only
+        (nz_cases_ids,) = np.where(cases>0)
+        dates = self.dates[nz_cases_ids]
+
+        # Peak
+        ( time_max_prime, prime_max ) = self.__sigmoid_prime_max(param_vec)
 
         if time_max_prime%1:
             time_max_id = int(time_max_prime) + 1
         else:
             time_max_id = int(time_max_prime)
 
-        print('Maximum growth rate            = %3.2e [death/day]'%(prime_max))
-        print('Maximum normalized growth rate = %3.2e [%%/day]'%(prime_max/a0*100))
-        print('Time at maximum growth rate    = %3.1f [day]'%(time_max_prime))
-        if time_max_id > dates.size-1:
-            print('WARNING: Ignore maximum growth rate; time at max. growth exceeds time length.')
-        else:
-            print('Date at maximum growth rate = %s '%(self.dates[time_max_id]))
+        if verbose:
+            print('Maximum growth rate            = %3.2e [case/day]'%(prime_max))
+            print('Maximum normalized growth rate = %3.2e [%%/day]'%(prime_max/a0*100))
+            print('Time at maximum growth rate    = %3.1f [day]'%(time_max_prime))
+            if time_max_id > dates.size-1:
+                print('WARNING: Ignore maximum growth rate; time at max. growth exceeds time length.')
+            else:
+                print('Date at maximum growth rate = %s '%(dates[time_max_id]))
 
-        print('')
+            print('')
 
+        # Maximum curvature
         time_max_double_prime = -math.log(a1/(2+math.sqrt(3)))/a2 # time at maximum growth acceleration
 
         if time_max_double_prime%1:
@@ -678,47 +712,52 @@ class Surge:
         else:
             time_max_id = int(time_max_double_prime)
 
-        assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
 
-        print('Maximum growth acceleration            = %3.2e [death/day^2]'%(a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3))
-        print('Maximum normalized growth acceleration = %3.2e [%%/day^2]'%(a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3*100))
-        print('Time at maximum growth accel.          = %3.1f [day]'%(time_max_double_prime))
-        print('Shifted time at maximum growth accel.  = %3.1f [day]'%(time_max_double_prime-time_max_prime))
-        if time_max_id > dates.size-1:
-            print('WARNING: Ignore maximum growth accel.; time at max. growth accel. exceeds time length.')
-        else:
-            print('Date at maximum growth accel. = %s '%(dates[time_max_id]))
+        if verbose:
+            print('Maximum growth acceleration            = %3.2e [case/day^2]'%(a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3))
+            print('Maximum normalized growth acceleration = %3.2e [%%/day^2]'%(a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3*100))
+            print('Time at maximum growth accel.          = %3.1f [day]'%(time_max_double_prime))
+            print('Shifted time at maximum growth accel.  = %3.1f [day]'%(time_max_double_prime-time_max_prime))
+            if time_max_id > dates.size-1:
+                print('WARNING: Ignore maximum growth accel.; time at max. growth accel. exceeds time length.')
+            else:
+                print('Date at maximum growth accel. = %s '%(dates[time_max_id]))
 
-        print('')
+            print('')
 
-        time_min_double_prime = -math.log(a1/(2-math.sqrt(3)))/a2 # time at minimum growth rate
+        # Minimum curvature
+        time_min_double_prime = -math.log(a1/(2-math.sqrt(3)))/a2 # time at minimum growth acceration
 
         if time_min_double_prime%1:
             time_min_id = int(time_min_double_prime) + 1
         else:
             time_min_id = int(time_min_double_prime)
 
-        assert abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
+        assert abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
 
-        print('')
-        print('Minimum growth acceleration            = %3.2e [death/day^2]'%(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3))
-        print('Minimum normalized growth acceleration = %3.2e [%%/day^2]'%(a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3*100))
-        print('Time at minimum growth accel.          = %3.1f [day]'%(time_min_double_prime))
-        print('Shifted time at maximum growth accel.  = %3.1f [day]'%(time_min_double_prime-time_max_prime))
-        if time_min_id > dates.size-1:
-            print('WARNING: Ignore maximum growth accel.; time at min. growth accel. exceeds time length.')
-        else:
-            print('Date at minimum growth accel. = %s '%(self.dates[time_min_id]))
+        if verbose:
+            print('')
+            print('Minimum growth acceleration            = %3.2e [case/day^2]'%(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3))
+            print('Minimum normalized growth acceleration = %3.2e [%%/day^2]'%(a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3*100))
+            print('Time at minimum growth accel.          = %3.1f [day]'%(time_min_double_prime))
+            print('Shifted time at maximum growth accel.  = %3.1f [day]'%(time_min_double_prime-time_max_prime))
+            if time_min_id > dates.size-1:
+                print('WARNING: Ignore maximum growth accel.; time at min. growth accel. exceeds time length.')
+            else:
+                print('Date at minimum growth accel. = %s '%(dates[time_min_id]))
 
-        print('')
-        print('Surge period = %3.2e [day]'%(time_min_double_prime-time_max_double_prime))
+            print('')
+            print('Surge period = %3.2e [day]'%(time_min_double_prime-time_max_double_prime))
 
         assert abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5
+
 
         return ( time_max_prime, time_max_prime-time_max_double_prime )
 
     def __sigmoid_prime_max(self, param_vec):
 
+        import math
         a0 = param_vec[0]
         a1 = param_vec[1]
         a2 = param_vec[2]
@@ -733,6 +772,7 @@ class Surge:
 
     def __sigmoid_double_prime_max(self, param_vec):
 
+        import math
         a0 = param_vec[0]
         a1 = param_vec[1]
         a2 = param_vec[2]
@@ -740,3 +780,63 @@ class Surge:
         time_max_double_prime = -math.log(a1/(2+math.sqrt(3)))/a2 # time at maximum growth acceleration
 
         assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+
+    def error_analysis(self, name, param_vec, tc, dtc):
+
+        assert name == 'combined'
+
+        if name == 'combined':
+            # Combine all column data in the surge
+            cases = np.sum(self.cases,axis=1)
+
+        # Select data with non-zero cases only
+        (nz_cases_ids,) = np.where(cases>0)
+        cases = cases[nz_cases_ids]
+        dates = self.dates[nz_cases_ids]
+
+        times = np.array(range(dates.size),dtype=np.float64)
+
+        sigmoid_func = self.__sigmoid_func
+
+        print('')
+        print('Pointwise Error Analysis')
+        print('')
+        print('Total error')
+        (idx,) = np.where(np.abs(cases)>=0)
+        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        mean_rel_error = np.mean(rel_error)
+        print('mean relative error [%%] = %5.2f'%(mean_rel_error))
+        std_rel_error = np.std(rel_error)
+        print('std  relative error [%%] = %5.2f'%(std_rel_error))
+
+        print('')
+        print('Pre-exponential error')
+        (idx,) = np.where( times < tc - dtc )
+        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        mean_rel_error = np.mean(rel_error)
+        print('mean relative error [%%] = %5.2f'%(mean_rel_error))
+        std_rel_error = np.std(rel_error)
+        print('std  relative error [%%] = %5.2f'%(std_rel_error))
+
+        print('')
+        print('Post-linear error')
+        (idx,) = np.where( times > tc + dtc )
+        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        mean_rel_error = np.mean(rel_error)
+        print('mean relative error [%%] = %5.2f'%(mean_rel_error))
+        std_rel_error = np.std(rel_error)
+        print('std  relative error [%%] = %5.2f'%(std_rel_error))
+
+        print('')
+        print('Surge period error')
+        (idx_min,) = np.where( times >= tc - dtc )
+        (idx_max,) = np.where( times <= tc + dtc )
+        idx = idx_min[:idx_max[-1]]
+        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        mean_rel_error = np.mean(rel_error)
+        print('mean relative error [%%] = %5.2f'%(mean_rel_error))
+        std_rel_error = np.std(rel_error)
+        print('std  relative error [%%] = %5.2f'%(std_rel_error))
+
+        return
+
