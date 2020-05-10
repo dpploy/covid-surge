@@ -233,7 +233,7 @@ class Surge:
         rel_tol = 0.01 / 100.0 # (0.01%)
 
         (param_vec,r2,k) = self.__newton_nlls_solve( times, cases,
-                           self.__sigmoid_func, self.__grad_p_sigmoid_func,
+                           self.sigmoid_func, self.__grad_p_sigmoid_func,
                            param_vec_0, k_max, rel_tol, verbose=False )
 
         assert param_vec[0] > 0.0
@@ -296,7 +296,7 @@ class Surge:
         n_plot_pts = 100
         dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
 
-        cases_fit = self.__sigmoid_func( dates_fit, param_vec )
+        cases_fit = self.sigmoid_func( dates_fit, param_vec )
 
         plt.plot( dates_fit,cases_fit,'b-',label='NLLS fitting' )
 
@@ -316,7 +316,7 @@ class Surge:
         time_max_prime = tc
         time_min_max_double_prime = [tc-dtc,tc+dtc]
 
-        fit_func = self.__sigmoid_func
+        fit_func = self.sigmoid_func
 
         if time_max_prime is not None:
 
@@ -339,7 +339,7 @@ class Surge:
             t_min = time_min_max_double_prime[0]
             t_max = time_min_max_double_prime[1]
 
-            cases = self.__sigmoid_func(t_max,param_vec)
+            cases = self.sigmoid_func(t_max,param_vec)
             plt.plot(t_max, cases,'*',color='orange',markersize=16)
 
             (x_min,x_max) = plt.xlim()
@@ -353,7 +353,7 @@ class Surge:
             plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,cases),
                 fontsize=16)
 
-            cases = self.__sigmoid_func(t_min,param_vec)
+            cases = self.sigmoid_func(t_min,param_vec)
             plt.plot(t_min, cases,'*',color='orange',markersize=16)
 
             (x_min,x_max) = plt.xlim()
@@ -401,6 +401,13 @@ class Surge:
             n_cols = 1
             plt.subplot(n_rows,n_cols,1)
 
+            cases_rate_plot = [0.0]
+            for (b,a) in zip(cases_plot[1:],cases_plot[:-1]):
+                cases_rate_plot.append( b-a )
+            cases_rate_plot = np.array( cases_rate_plot )
+
+            plt.plot( np.array(range(dates_plot.size)),cases_rate_plot,'r*',label=source )
+
             n_plot_pts = 100
             dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
 
@@ -426,6 +433,7 @@ class Surge:
 
             plt.ylabel('Surge Speed [case/day]',fontsize=16)
             plt.grid(True)
+            plt.legend(loc='best',fontsize=12)
             plt.show()
             plt.savefig('covid_data_fit_1'+'.png', dpi=300)
             plt.close()
@@ -489,7 +497,7 @@ class Surge:
 
         return
 
-    def __sigmoid_func(self, x, param_vec):
+    def sigmoid_func(self, x, param_vec):
 
         import numpy as np
 
@@ -796,7 +804,7 @@ class Surge:
 
         times = np.array(range(dates.size),dtype=np.float64)
 
-        sigmoid_func = self.__sigmoid_func
+        sigmoid_func = self.sigmoid_func
 
         print('')
         print('Pointwise Error Analysis')

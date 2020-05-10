@@ -28,11 +28,12 @@ def main():
     # Plot the data
     us_surge.plot_covid_data( 'combined' )
 
+    n_last_days = 7
     print('')
-    print('Last 5 days # of cumulative cases =',np.sum(us_surge.cases,axis=1)[-5:])
-    print('Last 5 days # of added cases =',
-        [b-a for (b,a) in zip( np.sum(us_surge.cases,axis=1)[-4:],
-                               np.sum(us_surge.cases,axis=1)[-5:-1] )
+    print('Last %i days'%n_last_days,' # of cumulative cases = ',np.sum(us_surge.cases,axis=1)[-n_last_days:])
+    print('Last %i days'%n_last_days,' # of added cases =',
+        [b-a for (b,a) in zip( np.sum(us_surge.cases,axis=1)[-(n_last_days-1):],
+                               np.sum(us_surge.cases,axis=1)[-n_last_days:-1] )
         ]
          )
     print('')
@@ -49,6 +50,17 @@ def main():
 
     # Report errors 
     us_surge.error_analysis( 'combined', param_vec, tc, dtc )
+
+    # 60-day look-ahead
+    n_prediction_days = 60
+
+    last_day = us_surge.dates.size
+    total_deaths_predicted = int( us_surge.sigmoid_func(n_prediction_days + last_day, param_vec) )
+
+    print('')
+    print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,us_surge.dates[-1],total_deaths_predicted))
+    print('# of cumulative deaths today, %s               = %6i'%(us_surge.dates[-1],np.sum(us_surge.cases[-1,:])))
+    print('')
 
 if __name__ == '__main__':
     main()
