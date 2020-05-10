@@ -6,5 +6,5 @@
 cd ..
 python3 setup.py sdist bdist_wheel
 twine upload dist/*
-rm -rf build cortix.egg-info dist
+rm -rf build covid_surge.egg-info dist
 
