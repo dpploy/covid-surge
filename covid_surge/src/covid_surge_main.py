@@ -7,6 +7,7 @@ import os
 import logging
 import time
 import datetime
+import numpy as np
 
 class Surge:
 
@@ -15,17 +16,23 @@ class Surge:
         self.__end_date           = None
         self.__ignore_last_n_days = 0
 
-        ( state_names, populations, dates, cases ) = self.__get_covid_19_us_data()
-
+        ( state_names, populations, dates, cases ) = self.__get_covid_us_data()
         assert dates.size == cases.shape[0]
         assert len(state_names) == cases.shape[1]
 
         self.state_names = state_names
         self.populations = populations
 
-        self.dates = dates
-        self.cases = cases
+        self.__dates = dates
+        self.__cases = cases
 
+        self.__reset_data()
+
+        return
+
+    def __reset_data(self):
+        self.cases = np.copy(self.__cases)
+        self.dates = np.copy(self.__dates)
         return
 
     def __set_end_date(self, v):
@@ -33,16 +40,18 @@ class Surge:
         assert isinstance(v,str) or v is None
 
         self.__end_date = v
+        self.__reset_data()
 
         if self.__end_date is not None:
             assert isinstance(self.__end_date,str)
             (id,) = np.where(self.dates==self.__end_date)
             assert id.size == 1
-            self.dates = np.copy(self.dates[:id[0]+1]))
-            self.cases = np.copy(self.cases[:id[0]+1,:]))
+            self.dates = np.copy(self.dates[:id[0]+1])
+            self.cases = np.copy(self.cases[:id[0]+1,:])
         elif self.__ignore_last_n_days != 0:
-            plot_dates = plot_dates[:-__ignore_last_n_days]
-            plot_cases = plot_cases[:-__ignore_last_n_days]
+            self.__set_ignore_last_n_days(self.__ignore_last_n_days)
+        else:
+            pass
 
         return
 
@@ -57,11 +66,12 @@ class Surge:
         assert v >= 0
 
         self.__ignore_last_n_days = v
+        self.__reset_data()
 
         if self.__ignore_last_n_days != 0:
 
-            plot_dates = plot_dates[:-__ignore_last_n_days]
-            plot_cases = plot_cases[:-__ignore_last_n_days]
+            self.dates = np.copy(self.dates[:-self.__ignore_last_n_days])
+            self.cases = np.copy(self.cases[:-self.__ignore_last_n_days])
 
         return
 
@@ -70,7 +80,7 @@ class Surge:
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days, __set_ignore_last_n_days, None, None)
 
-    def __get_covid_19_us_data(self, type='deaths' ):
+    def __get_covid_us_data(self, type='deaths' ):
         '''
         Load COVID-19 pandemic cumulative data from:
 
@@ -145,7 +155,7 @@ class Surge:
 
         return ( state_names, population, dates, cases )
 
-    def plot_covid_19_data(self, name):
+    def plot_covid_data(self, name):
 
         import matplotlib.pyplot as plt
         plt.rcParams['figure.figsize'] = [25, 4]
@@ -154,31 +164,33 @@ class Surge:
 
         if name == 'combined':
             # Combine all column data in the surge
-            plot_cases      = np.sum(self.cases,axis=1)
-            plot_population = np.sum(self.populations)
+            cases_plot = np.sum(self.cases,axis=1)
+            population = np.sum(self.populations)
 
         # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(self.cases>0)
-        plot_cases = np.copy(self.cases[nz_cases_ids])
-        plot_dates = np.copy(self.dates[nz_cases_ids])
+        (nz_cases_ids,) = np.where(cases_plot>0)
+        cases_plot = cases_plot[nz_cases_ids]
+        dates_plot = self.dates[nz_cases_ids]
 
         # Drop days from the back if any
 
-        deaths_100k_y = round(plot_cases[-1]*100000/plot_population * 365/plot_dates.size,1)
+        deaths_100k_y = round(
+                cases_plot[-1]*100000/population * 365/cases_plot.size, 1
+                             )
 
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
         place = 'US'
-        title = 'COVID-19 in '+place+'; population: '+str(plot_population)+\
+        title = 'COVID-19 in '+place+'; population: '+str(population)+\
                 '; deaths per 100k/y: '+str(deaths_100k_y)
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
         fig, ax = plt.subplots(figsize=(20,6))
 
-        ax.plot( range(len(plot_dates)), cases, 'r*', label=legend )
+        ax.plot( range(len(dates_plot)), cases_plot, 'r*', label=source )
 
-        plt.xticks( range(len(plot_dates)), plot_dates, rotation=60, fontsize=14 )
+        plt.xticks( range(len(dates_plot)), dates_plot, rotation=60, fontsize=14 )
 
         ax.set_ylabel(ylabel,fontsize=16)
         ax.set_xlabel(xlabel,fontsize=16)
@@ -186,8 +198,9 @@ class Surge:
         fig.suptitle(title,fontsize=20)
         plt.legend(loc='best',fontsize=12)
         plt.grid(True)
-        plt.savefig('covid_19_data'+'.png', dpi=300)
+        plt.savefig('covid_data'+'.png', dpi=300)
         plt.show()
+        plt.close()
 
         return
 
@@ -195,28 +208,32 @@ class Surge:
 
         assert name == 'combined'
 
-        from chen_3170.toolkit import sigmoid_func
-        from chen_3170.toolkit import grad_p_sigmoid_func
-        from chen_3170.toolkit import sigmoid_func_prime
-        from chen_3170.toolkit import sigmoid_func_double_prime
-        from chen_3170.toolkit import newton_nlls_solve
+        if name == 'combined':
+            # Combine all column data in the surge
+            cases      = np.sum(self.cases,axis=1)
+            population = np.sum(self.populations)
 
-        scaling = self.cases.max()
-        self.cases /= scaling
+        # Select data with non-zero cases only
+        (nz_cases_ids,) = np.where(cases>0)
+        cases = cases[nz_cases_ids]
+        dates = self.dates[nz_cases_ids]
 
-        a0 = self.cases[-1]
-        a1 = a0/self.cases[0] - 1
+        scaling = cases.max()
+        cases /= scaling
+
+        a0 = cases[-1]
+        a1 = a0/cases[0] - 1
         a2 = -0.15
 
         param_vec_0 = np.array([a0,a1,a2])
 
-        times = np.array(range(self.dates.size),dtype=np.float64)
+        times = np.array(range(dates.size),dtype=np.float64)
 
         k_max = 25
         rel_tol = 0.01 / 100.0 # (0.01%)
 
-        (param_vec,r2,k) = __newton_nlls_solve( times, self.cases,
-                           sigmoid_func, grad_p_sigmoid_func,
+        (param_vec,r2,k) = self.__newton_nlls_solve( times, cases,
+                           self.__sigmoid_func, self.__grad_p_sigmoid_func,
                            param_vec_0, k_max, rel_tol, verbose=False )
 
         assert param_vec[0] > 0.0
@@ -224,44 +241,70 @@ class Surge:
         assert param_vec[2] < 0.0
 
         param_vec[0] *= scaling
-        self.cases   *= scaling
 
         print('')
+        np.set_printoptions(precision=3,threshold=20,edgeitems=12,linewidth=100)
         print('Unscaled root =',param_vec)
+        print('R2            = %1.3f'%r2)
 
         return param_vec
 
-    def plot_covid_19_nlfit(self, name, 
-            dates, deaths, fit_func, param_vec, 
+    def plot_covid_nlfit(self, name, param_vec, 
+            #dates, cases, 
+            #fit_func, 
             fit_func_prime=None, time_max_prime=None,
             fit_func_double_prime = None, time_min_max_double_prime=None,
             option='dates', ylabel='null-ylabel',
             legend='null-legend', title='null-title', formula='null-formula'):
 
-        assert name == 'combined'
+        formula = self.sigmoid_formula
 
         import matplotlib.pyplot as plt
+        plt.rcParams['figure.figsize'] = [25, 4]
+
+        assert name == 'combined'
+
+        if name == 'combined':
+            # Combine all column data in the surge
+            cases_plot = np.sum(self.cases,axis=1)
+            population = np.sum(self.populations)
+
+        # Select data with non-zero cases only
+        (nz_cases_ids,) = np.where(cases_plot>0)
+        cases_plot  = cases_plot[nz_cases_ids]
+        dates_plot = self.dates[nz_cases_ids]
+
+        xlabel = 'Date'
+        ylabel = 'Cumulative Deaths []'
+
+        place = 'US'
+        plot_population = np.sum(self.populations)
+        deaths_100k_y = round(
+                cases_plot[-1]*100000/population * 365/cases_plot.size, 1
+                             )
+        title = 'COVID-19 in '+place+'; population: '+str(population)+\
+                '; deaths per 100k/y: '+str(deaths_100k_y)
+        source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
         plt.rcParams['figure.figsize'] = [20, 8]
         plt.figure(1)
 
         if option == 'dates':
-            plt.plot(dates, deaths,'r*',label='experimental')
+            plt.plot(dates_plot, cases_plot,'r*',label=source)
         elif option == 'days':
-            plt.plot(range(len(dates)), deaths,'r*',label='experimental')
+            plt.plot(range(len(dates_plot)), cases_plot,'r*',label=source)
 
         import math
-        import numpy as np
 
         n_plot_pts = 100
-        dates_plot = np.linspace( 0, range(len(dates))[-1], n_plot_pts)
+        dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
 
-        cases_plot = fit_func( dates_plot, param_vec )
+        cases_fit = self.__sigmoid_func( dates_fit, param_vec )
 
-        plt.plot( dates_plot,cases_plot,'b-',label='NLS fitting' )
+        plt.plot( dates_fit,cases_fit,'b-',label='NLLS fitting' )
 
         if option == 'dates':
-            plt.xticks( range(len(dates)),dates,rotation=60,fontsize=14)
+            plt.xticks( range(len(dates_plot)),dates_plot,rotation=60,fontsize=14)
             plt.xlabel(r'Date',fontsize=16)
         elif option == 'days':
             plt.xlabel(r'Time [day]',fontsize=16)
@@ -273,7 +316,7 @@ class Surge:
 
         if time_max_prime is not None:
 
-            cases = fit_func(time_max_prime,param_vec)
+            cases = self.__sigmoid_func(time_max_prime,param_vec)
             plt.plot(time_max_prime, cases,'*',color='green',markersize=16)
 
             (x_min,x_max) = plt.xlim()
@@ -292,7 +335,7 @@ class Surge:
             t_min = time_min_max_double_prime[0]
             t_max = time_min_max_double_prime[1]
 
-            cases = fit_func(t_max,param_vec)
+            cases = self.__sigmoid_func(t_max,param_vec)
             plt.plot(t_max, cases,'*',color='orange',markersize=16)
 
             (x_min,x_max) = plt.xlim()
@@ -306,7 +349,7 @@ class Surge:
             plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,cases),
                 fontsize=16)
 
-            cases = fit_func(t_min,param_vec)
+            cases = self.__sigmoid_func(t_min,param_vec)
             plt.plot(t_min, cases,'*',color='orange',markersize=16)
 
             (x_min,x_max) = plt.xlim()
@@ -358,7 +401,7 @@ class Surge:
 
             if time_max_prime is not None:
 
-                peak = fit_func_prime(time_max_prime,param_vec)
+                peak = self.__fit_func_prime(time_max_prime,param_vec)
                 plt.plot(time_max_prime, peak,'*',color='green',markersize=16)
 
                 (x_min,x_max) = plt.xlim()
@@ -382,7 +425,7 @@ class Surge:
                 n_plot_pts = 100
                 dates_plot = np.linspace( 0, range(len(dates))[-1], n_plot_pts)
 
-                cases_plot = fit_func_double_prime( dates_plot, param_vec )
+                cases_plot = self.__fit_func_double_prime( dates_plot, param_vec )
 
                 plt.plot(dates_plot,cases_plot,'b-',label='Fitting derivative' )
 
@@ -405,7 +448,7 @@ class Surge:
                     plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max),
                         fontsize=14)
 
-                    min = fit_func_double_prime(t_min,param_vec)
+                    min = self.__fit_func_double_prime(t_min,param_vec)
                     plt.plot(t_min, min,'*',color='orange',markersize=16)
 
                     (x_min,x_max) = plt.xlim()
@@ -424,11 +467,16 @@ class Surge:
 
             plt.show()
 
+        plt.savefig('covid_data_fit'+'.png', dpi=300)
+        plt.close()
+
         return
 
     def __sigmoid_func(self, x, param_vec):
 
         import numpy as np
+
+        self.sigmoid_formula = r'$y = \frac{\alpha_0}{1 + \alpha_1 \, e^{\alpha_2\,t}  }$'
 
         a0 = param_vec[0]
         a1 = param_vec[1]
@@ -494,11 +542,6 @@ class Surge:
         import numpy as np
         import numpy.linalg
 
-        try:
-            from chen_3170.toolkit import solve
-        except ModuleNotFoundError:
-            assert False, 'You need to provide your own solve function here. Bailing out.'
-
         # Other initialization
         delta_vec_k = np.ones(param_vec_0.size, dtype=np.float64)*1e10
         r_vec_k     = np.ones(x_vec.size, dtype=np.float64)*1e10
@@ -532,7 +575,7 @@ class Surge:
 
             delta_vec_k_old = np.copy(delta_vec_k)
 
-            rank = numpy.linalg.matrix_rank(j_mtrx_k.transpose()@j_mtrx_k)
+            rank = numpy.linalg.matrix_rank( j_mtrx_k.transpose()@j_mtrx_k )
 
             if rank != param_vec.size and verbose == True:
                 print('')
@@ -542,15 +585,13 @@ class Surge:
                 print('rank(JTJ) = %3i; shape(JTJ) = (%3i,%3i)'%
                       (rank, (j_mtrx_k.transpose()@j_mtrx_k).shape[0],
                              (j_mtrx_k.transpose()@j_mtrx_k).shape[1]))
-                print('JTJ = ',j_mtrx_k.transpose()@j_mtrx_k)
+                print('JTJ = \n',j_mtrx_k.transpose()@j_mtrx_k)
                 print('*********************************************************************')
                 print('')
 
             if rank == param_vec.size:
                 delta_vec_k = numpy.linalg.solve( j_mtrx_k.transpose()@j_mtrx_k,
                                                  -j_mtrx_k.transpose()@r_vec_k )
-            #delta_vec_k = solve( j_mtrx_k.transpose()@j_mtrx_k, -j_mtrx_k.transpose()@r_vec_k,
-            #                     pivoting_option='complete', pivot_tol=1e-5, zero_tol=1e-10)
             else:
                 a_mtrx_k = j_mtrx_k.transpose()@j_mtrx_k
                 b_vec_k  = -j_mtrx_k.transpose()@r_vec_k
