@@ -13,12 +13,16 @@ class Surge:
 
     def __init__(self, locale='US', log_filename='covid_surge'):
 
+        self.locale = locale
+
         self.__end_date           = None
         self.__ignore_last_n_days = 0
 
-        ( state_names, populations, dates, cases ) = self.__get_covid_us_data()
-        assert dates.size == cases.shape[0]
-        assert len(state_names) == cases.shape[1]
+        if self.locale == 'US':
+            ( state_names, populations, dates, cases ) = \
+                                                       self.__get_covid_us_data()
+            assert dates.size == cases.shape[0]
+            assert len(state_names) == cases.shape[1]
 
         self.state_names = state_names
         self.populations = populations
@@ -160,12 +164,16 @@ class Surge:
         import matplotlib.pyplot as plt
         plt.rcParams['figure.figsize'] = [25, 4]
 
-        assert name == 'combined'
-
-        if name == 'combined':
+        if name == 'US':
             # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
             population = np.sum(self.populations)
+        elif name in self.state_names:
+            state_id = self.state_names.index(name)
+            population = self.populations[state_id]
+            cases_plot = self.cases[:,state_id]
+        else:
+            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases_plot>0)
@@ -181,8 +189,7 @@ class Surge:
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
-        place = 'US'
-        title = 'COVID-19 in '+place+'; population: '+str(population)+\
+        title = 'COVID-19 in '+name+'; population: '+str(population)+\
                 '; deaths per 100k/y: '+str(deaths_100k_y)
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
@@ -198,7 +205,7 @@ class Surge:
         fig.suptitle(title,fontsize=20)
         plt.legend(loc='best',fontsize=12)
         plt.grid(True)
-        plt.savefig('covid_data'+'.png', dpi=300)
+        plt.savefig('covid_data_'+name.lower()+'.png', dpi=300)
         plt.show()
         plt.close()
 
@@ -206,16 +213,20 @@ class Surge:
 
     def fit_data(self, name ):
 
-        assert name == 'combined'
-
-        if name == 'combined':
+        if name == 'US':
             # Combine all column data in the surge
             cases      = np.sum(self.cases,axis=1)
             population = np.sum(self.populations)
+        elif name in self.state_names:
+            state_id = self.state_names.index(name)
+            population = self.populations[state_id]
+            cases = self.cases[:,state_id]
+        else:
+            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases>0)
-        cases = cases[nz_cases_ids]
+        cases = np.copy(cases[nz_cases_ids])
         dates = self.dates[nz_cases_ids]
 
         scaling = cases.max()
@@ -261,12 +272,16 @@ class Surge:
 
         import matplotlib.pyplot as plt
 
-        assert name == 'combined'
-
-        if name == 'combined':
+        if name == 'US':
             # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
             population = np.sum(self.populations)
+        elif name in self.state_names:
+            state_id = self.state_names.index(name)
+            population = self.populations[state_id]
+            cases_plot = self.cases[:,state_id]
+        else:
+            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases_plot>0)
@@ -276,12 +291,10 @@ class Surge:
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
-        place = 'US'
-        plot_population = np.sum(self.populations)
         deaths_100k_y = round(
                 cases_plot[-1]*100000/population * 365/cases_plot.size, 1
                              )
-        title = 'COVID-19 in '+place+'; population: '+str(population)+\
+        title = 'COVID-19 in '+name+'; population: '+str(population)+\
                 '; deaths per 100k/y: '+str(deaths_100k_y)
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
@@ -311,7 +324,7 @@ class Surge:
         plt.ylabel(ylabel,fontsize=16)
         plt.title(title,fontsize=20)
 
-        (tc,dtc) = self.critical_times('combined',param_vec)
+        (tc,dtc) = self.critical_times(name,param_vec)
 
         time_max_prime = tc
         time_min_max_double_prime = [tc-dtc,tc+dtc]
@@ -386,7 +399,7 @@ class Surge:
         plt.legend(loc='best',fontsize=12)
         plt.grid(True)
         plt.show()
-        plt.savefig('covid_data_fit_0'+'.png', dpi=300)
+        plt.savefig('covid_data_fit_'+name.lower()+'_0'+'.png', dpi=300)
         plt.close()
 
 
@@ -431,11 +444,12 @@ class Surge:
                 plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(time_max_prime,peak),
                     fontsize=14)
 
+            plt.title(title,fontsize=20)
             plt.ylabel('Surge Speed [case/day]',fontsize=16)
             plt.grid(True)
             plt.legend(loc='best',fontsize=12)
             plt.show()
-            plt.savefig('covid_data_fit_1'+'.png', dpi=300)
+            plt.savefig('covid_data_fit_'+name.lower()+'_1'+'.png', dpi=300)
             plt.close()
 
         fit_func_double_prime = self.__sigmoid_func_double_prime
@@ -489,10 +503,11 @@ class Surge:
                 plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,min),
                     fontsize=14)
 
+            plt.title(title,fontsize=20)
             plt.ylabel('Surge Acceleration [case/day$^2$]',fontsize=16)
             plt.grid(True)
             plt.show()
-            plt.savefig('covid_data_fit_2'+'.png', dpi=300)
+            plt.savefig('covid_data_fit_'+name.lower()+'_2'+'.png', dpi=300)
             plt.close()
 
         return
@@ -683,11 +698,15 @@ class Surge:
 
         import math
 
-        assert name == 'combined'
-
-        if name == 'combined':
+        if name == 'US':
             # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
+        elif name in self.state_names:
+            state_id = self.state_names.index(name)
+            population = self.populations[state_id]
+            cases = self.cases[:,state_id]
+        else:
+            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases>0)
@@ -791,11 +810,15 @@ class Surge:
 
     def error_analysis(self, name, param_vec, tc, dtc):
 
-        assert name == 'combined'
-
-        if name == 'combined':
+        if name == 'US':
             # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
+        elif name in self.state_names:
+            state_id = self.state_names.index(name)
+            population = self.populations[state_id]
+            cases = self.cases[:,state_id]
+        else:
+            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases>0)
@@ -847,4 +870,3 @@ class Surge:
         print('std  relative error [%%] = %5.2f'%(std_rel_error))
 
         return
-
