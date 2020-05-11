@@ -20,6 +20,8 @@ class Surge:
 
         self.__min_n_cases = 0.5 # 0.1% of total
 
+        self.__deaths_100k_minimum = 15 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+
         if self.locale == 'US':
             ( state_names, populations, dates, cases ) = \
                                                        self.__get_covid_us_data()
@@ -327,7 +329,7 @@ class Surge:
         plt.ylabel(ylabel,fontsize=16)
         plt.title(title,fontsize=20)
 
-        (tc,dtc) = self.critical_times(name,param_vec)
+        (tc,dtc) = self.critical_times(name,param_vec,verbose=False)
 
         time_max_prime = tc
         time_min_max_double_prime = [tc-dtc,tc+dtc]
@@ -876,3 +878,144 @@ class Surge:
         print('std  relative error [%%] = %5.2f'%(std_rel_error))
 
         return
+
+    def states_fit_data(self, verbose=False):
+
+        # Sort the states by descending number of total cases
+        sorted_states = sorted(
+                zip( self.state_names, self.cases[-1,:] ),
+                key = lambda entry: entry[1], reverse=True
+                          )
+
+        # Post processing data storage
+        fit_data = list()
+        states_past_peak_surge_period = list()
+        states_no_peak_surge_period = list()
+        states_below_deaths_100k_minimum = list()
+
+        top_id = 0
+
+        for (state,dummy) in sorted_states:
+            assert state in self.state_names, 'State: %r not in %r'%(state,self.state_names)
+            state_id = self.state_names.index(state)
+            population = self.populations[state_id]
+            cases = self.cases[:,state_id]
+
+            # Select data with non-zero cases only
+            (nz_cases_ids,) = np.where(cases>self.__min_n_cases/100*cases[-1])
+            cases = np.copy(cases[nz_cases_ids])
+            dates = self.dates[nz_cases_ids]
+
+            if nz_cases_ids.size == 0:
+                if verbose:
+                    print('')
+                    print('WARNING: No data for state %r. Continuing...'%state)
+                    print('')
+                continue
+
+            deaths_100k = round(cases[-1]*100000/population * 365/dates.size,1)
+
+            if deaths_100k < self.__deaths_100k_minimum:
+                if verbose:
+                    print('')
+                    print('WARNING: state %r deaths per 100k: %r below minimum'%(state,deaths_100k))
+                    print('')
+                states_below_deaths_100k_minimum.append((state,deaths_100k))
+                continue
+
+            if verbose:
+                print('')
+                print('********************************************************')
+                print('                     '+state)
+                print('********************************************************')
+                print('')
+
+            scaling = cases.max()
+            cases /= scaling
+
+            a0 = cases[-1]
+            a1 = a0/cases[0] - 1
+            a2 = -0.15
+            if state == 'Michigan':
+                a2 = -.1
+
+            param_vec_0 = np.array([a0,a1,a2])
+
+            times = np.array(range(dates.size),dtype=np.float64)
+
+            k_max = 25
+            rel_tol = 0.01 / 100.0 # (0.1%)
+
+            (param_vec,r2,k) = self.__newton_nlls_solve( times, cases,
+                               self.sigmoid_func, self.__grad_p_sigmoid_func,
+                               param_vec_0, k_max, rel_tol, verbose=False )
+
+            if k > k_max:
+                print(" NO Newton's method convergence")
+                continue
+
+            print('')
+            print('Fitting coeff. of det. R2 = %1.3e'%r2)
+            print('')
+
+            assert param_vec[0] > 0.0
+            assert param_vec[1] > 0.0
+            assert param_vec[2] < 0.0
+
+            param_vec[0] *= scaling
+            cases  *= scaling
+
+            print('')
+            print('Unscaled root =',param_vec)
+            print('')
+
+            # Compute critical times
+            (tc,dtc) = self.critical_times(state,param_vec)
+
+            if tc > times[-1]:
+                if verbose:
+                    print('')
+                    print('WARNING: Time at peak surge rate exceeds time data.')
+                    print('WARNING: Skipping this data set.')
+                states_no_peak_surge_period.append( (state, tc-dtc, dates[int(tc-dtc)+1], dtc) )
+                continue
+
+            if tc + dtc > times[-1]:
+                if verbose:
+                    print('')
+                    print('WARNING: Time at mininum acceleration exceeds time data.')
+                    print('WARNING: Skipping this data set.')
+                states_past_peak_surge_period.append( (state, tc, dates[int(tc)+1], dtc) )
+                continue
+
+
+            top_id += 1
+
+            self.plot_covid_nlfit( state, param_vec )
+
+            n_last_days = 7
+            if verbose:
+                print('')
+                print('Last %i days'%n_last_days,
+                      ' # of cumulative cases = ',cases[-n_last_days:])
+                print('Last %i days'%n_last_days,
+                      ' # of added cases =',
+                      [round(b-a,0) for (b,a) in zip( cases[-(n_last_days-1):],
+                                             cases[-n_last_days:-1]) ]
+                     )
+                print('')
+
+
+
+
+
+
+
+
+
+
+
+        #print(fit_data)
+        #print(states_past_peak_surge_period)
+        #print(states_no_peak_surge_period)
+        #print(states_below_deaths_100k_minimum)

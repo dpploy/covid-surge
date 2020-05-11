@@ -23,7 +23,7 @@ def main():
     us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
 
     #****************************************************************************
-    # All states case
+    # Combine all states into a country
     #****************************************************************************
     print('********************************************************************')
     print('*                             US                                   *')
