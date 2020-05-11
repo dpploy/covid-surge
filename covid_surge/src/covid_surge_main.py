@@ -18,6 +18,8 @@ class Surge:
         self.__end_date           = None
         self.__ignore_last_n_days = 0
 
+        self.__min_n_cases = 0.5 # 0.1% of total
+
         if self.locale == 'US':
             ( state_names, populations, dates, cases ) = \
                                                        self.__get_covid_us_data()
@@ -162,7 +164,7 @@ class Surge:
     def plot_covid_data(self, name):
 
         import matplotlib.pyplot as plt
-        plt.rcParams['figure.figsize'] = [25, 4]
+        plt.rcParams['figure.figsize'] = [12, 5]
 
         if name == 'US':
             # Combine all column data in the surge
@@ -176,7 +178,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases_plot>0)
+        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -225,7 +227,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases>0)
+        (nz_cases_ids,) = np.where(cases>self.__min_n_cases/100*cases[-1])
         cases = np.copy(cases[nz_cases_ids])
         dates = self.dates[nz_cases_ids]
 
@@ -284,7 +286,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases_plot>0)
+        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases/100*cases_plot[-1])
         cases_plot  = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -299,7 +301,7 @@ class Surge:
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
         plt.figure(1)
-        plt.rcParams['figure.figsize'] = [20, 5]
+        plt.rcParams['figure.figsize'] = [12, 5]
 
         if option == 'dates':
             plt.plot(dates_plot, cases_plot,'r*',label=source)
@@ -408,7 +410,7 @@ class Surge:
         if fit_func_prime is not None:
 
             plt.figure(2)
-            plt.rcParams['figure.figsize'] = [10, 5]
+            plt.rcParams['figure.figsize'] = [12, 5]
 
             n_rows = 1
             n_cols = 1
@@ -457,7 +459,7 @@ class Surge:
         if fit_func_double_prime is not None:
 
             plt.figure(3)
-            plt.rcParams['figure.figsize'] = [10, 5]
+            plt.rcParams['figure.figsize'] = [12, 5]
 
             n_rows = 1
             n_cols = 1
@@ -821,7 +823,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases>0)
+        (nz_cases_ids,) = np.where(cases>self.__min_n_cases/100*cases[-1])
         cases = cases[nz_cases_ids]
         dates = self.dates[nz_cases_ids]
 
