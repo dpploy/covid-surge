@@ -18,9 +18,10 @@ class Surge:
         self.__end_date           = None
         self.__ignore_last_n_days = 0
 
-        self.__min_n_cases = 0.5 # 0.1% of total
+        self.__min_n_cases_rel = 0.5 # 0.1% of total
+        self.__min_n_cases_abs = 100 # cases
 
-        self.__deaths_100k_minimum = 15 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+        self.__deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
         if self.locale == 'US':
             ( state_names, populations, dates, cases ) = \
@@ -179,8 +180,8 @@ class Surge:
         else:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
-        # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases/100*cases_plot[-1])
+        # Select data with # of cases greater than the minimum
+        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases_rel/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -229,8 +230,8 @@ class Surge:
         else:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
-        # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases>self.__min_n_cases/100*cases[-1])
+        # Select data with # of cases greater than the minimum
+        (nz_cases_ids,) = np.where(cases>self.__min_n_cases_rel/100*cases[-1])
         cases = np.copy(cases[nz_cases_ids])
         dates = self.dates[nz_cases_ids]
 
@@ -288,8 +289,8 @@ class Surge:
         else:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
-        # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases/100*cases_plot[-1])
+        # Select data with # of cases greater than the minimum
+        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases_rel/100*cases_plot[-1])
         cases_plot  = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -828,8 +829,8 @@ class Surge:
         else:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
-        # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases>self.__min_n_cases/100*cases[-1])
+        # Select data with # of cases greater than the minimum
+        (nz_cases_ids,) = np.where(cases>self.__min_n_cases_rel/100*cases[-1])
         cases = cases[nz_cases_ids]
         dates = self.dates[nz_cases_ids]
 
@@ -892,19 +893,28 @@ class Surge:
         states_past_peak_surge_period = list()
         states_no_peak_surge_period = list()
         states_below_deaths_100k_minimum = list()
+        states_below_deaths_abs_minimum = list()
 
         top_id = 0
 
         for (state,dummy) in sorted_states:
+
             assert state in self.state_names, 'State: %r not in %r'%(state,self.state_names)
             state_id = self.state_names.index(state)
             population = self.populations[state_id]
             cases = self.cases[:,state_id]
 
-            # Select data with non-zero cases only
-            (nz_cases_ids,) = np.where(cases>self.__min_n_cases/100*cases[-1])
-            cases = np.copy(cases[nz_cases_ids])
-            dates = self.dates[nz_cases_ids]
+
+            if cases[-1] < self.__min_n_cases_abs:
+                if verbose:
+                    print('')
+                    print('WARNING: state %r # deaths: %r below absolute minimum'%(state,cases[-1]))
+                    print('')
+                states_below_deaths_abs_minimum.append((state,cases[-1]))
+                continue
+
+            # Select data with # of cases greater than the minimum
+            (nz_cases_ids,) = np.where(cases>self.__min_n_cases_rel/100*cases[-1])
 
             if nz_cases_ids.size == 0:
                 if verbose:
@@ -912,6 +922,9 @@ class Surge:
                     print('WARNING: No data for state %r. Continuing...'%state)
                     print('')
                 continue
+
+            cases = np.copy(cases[nz_cases_ids])
+            dates = self.dates[nz_cases_ids]
 
             deaths_100k = round(cases[-1]*100000/population * 365/dates.size,1)
 
@@ -955,7 +968,7 @@ class Surge:
                 continue
 
             print('')
-            print('Fitting coeff. of det. R2 = %1.3e'%r2)
+            print('Fitting coeff. of det. R2 = %1.3f'%r2)
             print('')
 
             assert param_vec[0] > 0.0
@@ -991,7 +1004,9 @@ class Surge:
 
             top_id += 1
 
+
             self.plot_covid_nlfit( state, param_vec )
+
 
             n_last_days = 7
             if verbose:
@@ -1001,21 +1016,56 @@ class Surge:
                 print('Last %i days'%n_last_days,
                       ' # of added cases =',
                       [round(b-a,0) for (b,a) in zip( cases[-(n_last_days-1):],
-                                             cases[-n_last_days:-1]) ]
-                     )
+                                                      cases[-n_last_days:-1])
+                    ])
                 print('')
 
+            # Report erros
+            self.error_analysis(state, param_vec, tc, dtc)
+
+            # 60-day look-ahead
+            n_prediction_days = 60
+
+            last_day = dates.size
+            total_deaths_predicted = int( self.sigmoid_func(n_prediction_days + last_day, param_vec) )
+
+            print('')
+            print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,dates[-1],total_deaths_predicted))
+            print('# of cumulative deaths today, %s               = %6i'%(dates[-1],cases[-1]))
+            print('')
+
+
+            fit_data.append( [ state,
+                               dates,
+                               cases,
+                               param_vec,
+                               tc,
+                               dtc] )
 
 
 
+        print('States with significant deaths past peak in surge period:')
+        print('')
+        for (state, tc, tc_date, dtc) in states_past_peak_surge_period:
+            print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(state,tc,tc_date,dtc))
 
+        print('')
 
+        print('States with significant deaths before peak in surge period:')
+        print('')
+        for (state, tc_minus_dtc, tc_minus_dtc_date, dtc) in states_no_peak_surge_period:
+            print( '%15s tc-dtc = %3.1f [d] tc-dtc_date = %8s pending days = %3.1f'%(state,tc_minus_dtc,tc_minus_dtc_date,dtc))
 
+        print('')
 
+        print('States with deaths per 100k below mininum:')
+        print('')
+        for (state, deaths_100k) in states_below_deaths_100k_minimum:
+            print( '%15s deaths per 100k/y = %5.2f'%(state,deaths_100k))
 
+        print('')
 
-
-        #print(fit_data)
-        #print(states_past_peak_surge_period)
-        #print(states_no_peak_surge_period)
-        #print(states_below_deaths_100k_minimum)
+        print('States with deaths below the absolute mininum:')
+        print('')
+        for (state, case) in states_below_deaths_abs_minimum:
+            print( '%15s deaths = %5.2f'%(state,case) )

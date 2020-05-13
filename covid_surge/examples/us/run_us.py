@@ -78,7 +78,7 @@ def main():
     print('*                        Single State                              *')
     print('********************************************************************')
 
-    name = 'Massachusetts'
+    name = 'Pennsylvania'
     print(name)
     print('')
 
@@ -89,8 +89,7 @@ def main():
     state_id = us_surge.state_names.index(name)
     print('')
     print('Last %i days'%n_last_days,
-          ' # of cumulative cases = ',
-          us_surge.cases[-n_last_days:,state_id])
+          ' # of cumulative cases = ', us_surge.cases[-n_last_days:,state_id])
     print('Last %i days'%n_last_days,
           ' # of added cases =',
           [b-a for (b,a) in zip( us_surge.cases[-(n_last_days-1):,state_id],
