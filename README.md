@@ -1,6 +1,8 @@
 # covid-surge
 COVID-19 surge period calculation and clustering for communities afflicted by the corona virus SARS-CoV-2.
 
+[![NBViewer](https://github.com/jupyter/design/blob/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.jupyter.org/github/dpploy/covid-surge/tree/master/notebooks/)
+
 This development is in progress: test using [PyPI](https://pypi.org/project/covid-surge/).
 
 |   |
