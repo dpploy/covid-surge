@@ -26,7 +26,10 @@ def main():
     print('# of states/distric: ',len(us_surge.state_names))
     print('# of days:           ',us_surge.dates.shape[0])
 
-    us_surge.states_fit_data(verbose=True)
+    fit_data = us_surge.states_fit_data(verbose=True)
+
+    us_surge.plot_fit_data( fit_data, 'experimental' )
+    us_surge.plot_fit_data( fit_data, 'fit' )
 
 
     # Plot the data

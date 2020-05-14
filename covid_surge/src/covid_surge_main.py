@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
-
 import os
 import logging
 import time
@@ -40,6 +39,7 @@ class Surge:
         return
 
     def __reset_data(self):
+
         self.cases = np.copy(self.__cases)
         self.dates = np.copy(self.__dates)
         return
@@ -211,8 +211,20 @@ class Surge:
         plt.legend(loc='best',fontsize=12)
         plt.grid(True)
         plt.tight_layout(1)
-        plt.savefig('covid_data_'+name.lower()+'.png', dpi=300)
+
+        filename = name.lower().strip().split(' ')
+        if len(filename) == 1:
+            filename = filename[0]
+        else:
+            tmp = filename[0]
+            for (i,v) in enumerate(filename):
+                if i == 0:
+                    continue
+                tmp = tmp+'_'+v
+            filename = tmp
+
         plt.show()
+        plt.savefig('covid_data_'+filename+'.png', dpi=300)
         plt.close()
 
         return
@@ -405,8 +417,21 @@ class Surge:
         plt.legend(loc='best',fontsize=12)
         plt.grid(True)
         plt.tight_layout(1)
+
+        filename = name.lower().strip().split(' ')
+        if len(filename) == 1:
+            filename = filename[0]
+        else:
+            tmp = filename[0]
+            for (i,v) in enumerate(filename):
+                if i == 0:
+                    continue
+                tmp = tmp+'_'+v
+            filename = tmp
+
         plt.show()
-        plt.savefig('covid_data_fit_'+name.lower()+'_0'+'.png', dpi=300)
+        plt.savefig('covid_data_fit_'+filename+'_0'+'.png', dpi=300)
+
         plt.close()
 
 
@@ -456,8 +481,20 @@ class Surge:
             plt.grid(True)
             plt.legend(loc='best',fontsize=12)
             plt.tight_layout(1)
+
+            filename = name.lower().strip().split(' ')
+            if len(filename) == 1:
+                filename = filename[0]
+            else:
+                tmp = filename[0]
+                for (i,v) in enumerate(filename):
+                    if i == 0:
+                        continue
+                    tmp = tmp+'_'+v
+                filename = tmp
+
             plt.show()
-            plt.savefig('covid_data_fit_'+name.lower()+'_1'+'.png', dpi=300)
+            plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=300)
             plt.close()
 
         fit_func_double_prime = self.__sigmoid_func_double_prime
@@ -515,8 +552,20 @@ class Surge:
             plt.ylabel('Surge Acceleration [case/day$^2$]',fontsize=16)
             plt.grid(True)
             plt.tight_layout(1)
+
+            filename = name.lower().strip().split(' ')
+            if len(filename) == 1:
+                filename = filename[0]
+            else:
+                tmp = filename[0]
+                for (i,v) in enumerate(filename):
+                    if i == 0:
+                        continue
+                    tmp = tmp+'_'+v
+                filename = tmp
+
             plt.show()
-            plt.savefig('covid_data_fit_'+name.lower()+'_2'+'.png', dpi=300)
+            plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=300)
             plt.close()
 
         return
@@ -1043,7 +1092,6 @@ class Surge:
                                dtc] )
 
 
-
         print('States with significant deaths past peak in surge period:')
         print('')
         for (state, tc, tc_date, dtc) in states_past_peak_surge_period:
@@ -1069,3 +1117,98 @@ class Surge:
         print('')
         for (state, case) in states_below_deaths_abs_minimum:
             print( '%15s deaths = %5.2f'%(state,case) )
+
+        # Order fit_data 
+
+        sorted_by_max_rel_death_rate = sorted(
+             [ (self.__sigmoid_func_prime(i[4],i[3])/i[3][0]*100, i )
+                for i in fit_data ], key = lambda entry: entry[0], reverse=True )
+
+        sorted_by_surge_period = sorted(
+                [ (2*i[5], i ) for i in fit_data ],
+                 key = lambda entry: entry[0], reverse=False )
+
+        sorted_fit_data = sorted_by_surge_period
+
+        return sorted_fit_data
+
+    def plot_fit_data(self, fit_data, option=None):
+
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from covid_surge import color_map
+
+        if option == 'experimental':
+
+            legend_title = 'Max. Relative Death Rate [%/day]'
+            legend_title = 'Surge Period [day]'
+
+            fig, ax1 = plt.subplots(1, figsize=(15, 8))
+
+            colors = color_map(len(fit_data))
+            for (sort_key,data) in fit_data:
+                color = colors[fit_data.index((sort_key,data))]
+                state = data[0]
+                n_dates = data[1].size
+                param_vec = data[3]
+                tshift = data[4]
+                value = '%1.1f'%sort_key
+
+                ax1.plot(np.array(range(n_dates))-tshift, data[2]/param_vec[0],
+                         '*',label=state+': '+value,color=color)
+
+            ax1.set_xlabel(r'Shifted Time [day]',fontsize=16)
+            ax1.set_ylabel(r'Normalized Cumulative Death',fontsize=16,color='black')
+
+            if matplotlib.__version__ >= '3.0.2':
+                ax1.legend(loc='best',fontsize=12,title=legend_title,title_fontsize=14)
+            else:
+                ax1.legend(loc='best',fontsize=12,title=legend_title)
+
+            ax1.grid(True)
+            plt.title('COVID-19 Pandemic 2020 for Top '+
+                str(len(fit_data))+' US States in Total Mortality ('+
+                data[1][-1]+')',fontsize=20)
+            plt.show()
+            plt.savefig('covid_data_fit_overlap'+'_0'+'.png', dpi=300)
+            plt.close()
+
+
+        if option == 'fit':
+
+            legend_title = 'Max. Relative Death Rate [%/day]'
+            legend_title = 'Surge Period [day]'
+
+            fig, ax1 = plt.subplots(1, figsize=(15, 8))
+
+            colors = color_map(len(fit_data))
+            for (sort_key,data) in fit_data:
+                color = colors[fit_data.index((sort_key,data))]
+                state = data[0]
+                n_dates = data[1].size
+                param_vec = data[3]
+                tshift = data[4]
+
+                t1 = tshift - data[5]
+                t2 = tshift + data[5]
+                value = '%1.1f'%sort_key
+
+                ax1.plot(np.array(range(n_dates))-tshift, self.sigmoid_func(np.array(range(n_dates)),param_vec)/param_vec[0],
+                     'b-',label=state+': '+value,color=color)
+
+                ax1.plot(t1-tshift,self.sigmoid_func(t1,param_vec)/param_vec[0],'*',color=color,markersize=12)
+
+                ax1.plot(t2-tshift,self.sigmoid_func(t2,param_vec)/param_vec[0],'*',color=color,markersize=12)
+
+            ax1.set_xlabel(r'Shifted Time [day]',fontsize=16)
+            ax1.set_ylabel(r'Normalized Cumulative Death',fontsize=16,color='black')
+            if matplotlib.__version__ >= '3.0.2':
+                ax1.legend(loc='best',fontsize=12,title=legend_title,title_fontsize=14)
+            else:
+                ax1.legend(loc='best',fontsize=12,title=legend_title)
+
+            ax1.grid(True)
+            plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
+            plt.show()
+            plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=300)
+            plt.close()
