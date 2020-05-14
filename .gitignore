@@ -5,6 +5,7 @@ __pycache__/
 
 covid_surge/examples/us/*.png
 *.swp
+*.DS_Store
 
 # C extensions
 *.so

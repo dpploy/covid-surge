@@ -17,7 +17,7 @@ def main():
     # Get US surge data
     us_surge = Surge()
 
-    # Set oldest value for date and 
+    # Set parameters
     us_surge.end_date = '4/20/20'       # set end date wanted
     us_surge.end_date = None            # get all the data available
     us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated

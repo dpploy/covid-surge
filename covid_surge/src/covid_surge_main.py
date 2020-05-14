@@ -164,7 +164,7 @@ class Surge:
 
         return ( state_names, population, dates, cases )
 
-    def plot_covid_data(self, name):
+    def plot_covid_data(self, name, save=False):
 
         import matplotlib.pyplot as plt
         plt.rcParams['figure.figsize'] = [12, 5]
@@ -224,7 +224,8 @@ class Surge:
             filename = tmp
 
         plt.show()
-        plt.savefig('covid_data_'+filename+'.png', dpi=300)
+        if save:
+            plt.savefig('covid_data_'+filename+'.png', dpi=300)
         plt.close()
 
         return
@@ -278,7 +279,7 @@ class Surge:
 
         return param_vec
 
-    def plot_covid_nlfit(self, name, param_vec, 
+    def plot_covid_nlfit(self, name, param_vec, save=False,
             #dates, cases, 
             #fit_func, 
             #fit_func_prime=None, time_max_prime=None,
@@ -430,7 +431,8 @@ class Surge:
             filename = tmp
 
         plt.show()
-        plt.savefig('covid_data_fit_'+filename+'_0'+'.png', dpi=300)
+        if save:
+            plt.savefig('covid_data_fit_'+filename+'_0'+'.png', dpi=300)
 
         plt.close()
 
@@ -494,7 +496,8 @@ class Surge:
                 filename = tmp
 
             plt.show()
-            plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=300)
+            if save:
+                plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=300)
             plt.close()
 
         fit_func_double_prime = self.__sigmoid_func_double_prime
@@ -565,7 +568,8 @@ class Surge:
                 filename = tmp
 
             plt.show()
-            plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=300)
+            if save:
+                plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=300)
             plt.close()
 
         return
@@ -910,11 +914,15 @@ class Surge:
         print('')
         print('Post-linear error')
         (idx,) = np.where( times > tc + dtc )
-        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
-        mean_rel_error = np.mean(rel_error)
-        print('mean relative error [%%] = %5.2f'%(mean_rel_error))
-        std_rel_error = np.std(rel_error)
-        print('std  relative error [%%] = %5.2f'%(std_rel_error))
+        if len(idx):
+            rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+            mean_rel_error = np.mean(rel_error)
+            print('mean relative error [%%] = %5.2f'%(mean_rel_error))
+            std_rel_error = np.std(rel_error)
+            print('std  relative error [%%] = %5.2f'%(std_rel_error))
+        else:
+            print('Post-linear error unavailable; not enough evolution.' )
+            print('This data set is not suitable for analysis yet.' )
 
         print('')
         print('Surge period error')
@@ -1132,7 +1140,7 @@ class Surge:
 
         return sorted_fit_data
 
-    def plot_fit_data(self, fit_data, option=None):
+    def plot_fit_data(self, fit_data, option=None, save=False):
 
         import matplotlib
         import matplotlib.pyplot as plt
@@ -1170,7 +1178,8 @@ class Surge:
                 str(len(fit_data))+' US States in Total Mortality ('+
                 data[1][-1]+')',fontsize=20)
             plt.show()
-            plt.savefig('covid_data_fit_overlap'+'_0'+'.png', dpi=300)
+            if save:
+                plt.savefig('covid_data_fit_overlap'+'_0'+'.png', dpi=300)
             plt.close()
 
 
@@ -1210,7 +1219,8 @@ class Surge:
             ax1.grid(True)
             plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
             plt.show()
-            plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=300)
+            if save:
+                plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=300)
             plt.close()
 
         return
@@ -1253,7 +1263,7 @@ class Surge:
 
         assert False,'FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
 
-    def plot_group_fit_data(self, state_groups, fit_data):
+    def plot_group_fit_data(self, state_groups, fit_data, save=False):
         '''
         Plot fit functions for each country group
         '''
@@ -1311,12 +1321,13 @@ class Surge:
             plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
 
             plt.show()
-            plt.savefig('covid_data_states_group_'+str(ig)+'.png', dpi=300)
+            if save:
+                plt.savefig('covid_data_states_group_'+str(ig)+'.png', dpi=300)
             plt.close()
 
         return
 
-    def plot_group_surge_periods(self, fit_data, bins):
+    def plot_group_surge_periods(self, fit_data, bins, save=False):
 
         import matplotlib.pyplot as plt
         from covid_surge import color_map
@@ -1370,7 +1381,8 @@ class Surge:
         plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
         plt.tight_layout(1)
         plt.show()
-        plt.savefig('covid_group_surge_periods.png', dpi=300)
+        if save:
+            plt.savefig('covid_group_surge_periods.png', dpi=300)
         plt.close()
 
         return
