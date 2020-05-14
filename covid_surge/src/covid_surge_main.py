@@ -279,8 +279,8 @@ class Surge:
 
         return param_vec
 
-    def plot_covid_nlfit(self, name, param_vec, save=False, plot_prime=False,
-            plot_double_prime=False,
+    def plot_covid_nlfit(self, name, param_vec, 
+            save=False, plot_prime=False, plot_double_prime=False,
             option='dates', ylabel='null-ylabel',
             legend='null-legend', title='null-title', formula='null-formula'):
 
@@ -438,9 +438,9 @@ class Surge:
 
 
         # Additional plot for first derivative 
-        fit_func_prime = self.__sigmoid_func_prime
+        if plot_prime:
 
-        if fit_func_prime is not None:
+            fit_func_prime = self.__sigmoid_func_prime
 
             plt.figure(2)
             plt.rcParams['figure.figsize'] = [12, 5]
@@ -497,14 +497,14 @@ class Surge:
                 filename = tmp
 
             plt.show()
-            if save and plot_prime:
+            if save:
                 plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=100)
             plt.close()
 
         # Additional plot for second derivative 
-        fit_func_double_prime = self.__sigmoid_func_double_prime
+        if plot_double_prime:
 
-        if fit_func_double_prime is not None:
+            fit_func_double_prime = self.__sigmoid_func_double_prime
 
             plt.figure(3)
             plt.rcParams['figure.figsize'] = [12, 5]
@@ -570,7 +570,7 @@ class Surge:
                 filename = tmp
 
             plt.show()
-            if save and plot_double_prime:
+            if save:
                 plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=100)
             plt.close()
 
