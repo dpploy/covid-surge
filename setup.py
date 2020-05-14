@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="covid-surge",
-    version="0.0.0",
+    version="0.0.1",
     author="Valmor F. de Almeida",
     author_email="valmor_dealmeida@uml.edu",
     description="Covid-Surge is a utility for computing and comparing surge periods\

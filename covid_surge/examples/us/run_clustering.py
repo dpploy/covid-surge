@@ -17,60 +17,65 @@ def main():
     # Get US surge data
     us_surge = Surge()
 
-    # Set oldest value for date and 
-    us_surge.end_date = '4/20/20'       # set end date wanted
-    us_surge.end_date = None            # get all the data available
+    # Set parameters
+    us_surge.end_date = '4/20/20'   # set end date wanted
+    us_surge.end_date = None        # get all the data available
     us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    us_surge.min_n_cases_abs = 100  # min # of absolute cases for analysis
+    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
     print('')
     print('# of states/distric: ',len(us_surge.state_names))
     print('# of days:           ',us_surge.dates.shape[0])
 
+    # Fit data to all states
     fit_data = us_surge.states_fit_data(verbose=True)
 
+    # Plot all data in one plot
     us_surge.plot_fit_data( fit_data, 'experimental' )
+    # Plot all fit data in one plot
     us_surge.plot_fit_data( fit_data, 'fit' )
 
+    # Create clustering bins based on surge period
+    bins = us_surge.clustering(fit_data,2,'surge_period')
 
-    # Plot the data
-    #us_surge.plot_covid_data( name )
+    print('')
+    print('*****************************************************************')
+    print('                             Bins                                ')
+    print('*****************************************************************')
+    for k in sorted(bins.keys()):
+        print(' Bin %i %s'%(k,bins[k]))
 
-    #n_last_days = 7
-    #state_id = us_surge.state_names.index(name)
-    #print('')
-    #print('Last %i days'%n_last_days,
-    #      ' # of cumulative cases = ',
-    #      us_surge.cases[-n_last_days:,state_id])
-    #print('Last %i days'%n_last_days,
-    #      ' # of added cases =',
-    #      [b-a for (b,a) in zip( us_surge.cases[-(n_last_days-1):,state_id],
-    #                             us_surge.cases[-n_last_days:-1,state_id] )
-    #    ])
-    #print('')
+    # Use bins to create groups of states based on surge period
+    state_groups = dict()
 
-    # Fit data to model function
-    #param_vec = us_surge.fit_data( name )
-    #print('')
+    for (sort_key,data) in fit_data:
+        state = data[0]
+        param_vec = data[3]
+        tshift = data[4]
+        key = us_surge.get_bin_id(sort_key,bins)
+        if key in state_groups:
+            state_groups[key].append(state)
+        else:
+            state_groups[key] = list()
+            state_groups[key].append(state)
 
-    # Plot the fit data to model function
-    #us_surge.plot_covid_nlfit(name, param_vec )
+    state_groups = [ state_groups[k] for k in
+                     sorted(state_groups.keys(),reverse=False) ]
 
-    # Report critical times
-    #(tc,dtc) = us_surge.critical_times( name, param_vec )
+    print('')
+    print('*****************************************************************')
+    print('                         Country Groups                          ')
+    print('*****************************************************************')
+    for g in state_groups:
+        print(' Group %i %s'%(state_groups.index(g),g))
 
-    # Report errors 
-    #us_surge.error_analysis( name, param_vec, tc, dtc )
+    # Plot the normalized surge for groups of states
+    us_surge.plot_group_fit_data( state_groups, fit_data )
 
-    # 60-day look-ahead
-    #n_prediction_days = 60
+    # Plot the surge period for all grouped states
+    us_surge.plot_group_surge_periods( fit_data, bins )
 
-    #last_day = us_surge.dates.size
-    #total_deaths_predicted = int( us_surge.sigmoid_func(n_prediction_days + last_day, param_vec) )
-
-    #print('')
-    #print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,us_surge.dates[-1],total_deaths_predicted))
-    #print('# of cumulative deaths today, %s               = %6i'%(us_surge.dates[-1],us_surge.cases[-1,us_surge.state_names.index(name)]))
-    #print('')
 
 if __name__ == '__main__':
     main()

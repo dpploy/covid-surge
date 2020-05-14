@@ -17,10 +17,10 @@ class Surge:
         self.__end_date           = None
         self.__ignore_last_n_days = 0
 
-        self.__min_n_cases_rel = 0.5 # 0.1% of total
-        self.__min_n_cases_abs = 100 # cases
+        self.min_n_cases_abs = 100 # absolute minimum # of cases (go-no-go)
+        self.min_n_cases_rel = 0.5 # 0.5% of total
 
-        self.__deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+        self.deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
         if self.locale == 'US':
             ( state_names, populations, dates, cases ) = \
@@ -181,7 +181,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases_rel/100*cases_plot[-1])
+        (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -243,7 +243,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases>self.__min_n_cases_rel/100*cases[-1])
+        (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
         cases = np.copy(cases[nz_cases_ids])
         dates = self.dates[nz_cases_ids]
 
@@ -302,7 +302,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases_plot>self.__min_n_cases_rel/100*cases_plot[-1])
+        (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
         cases_plot  = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -879,7 +879,7 @@ class Surge:
             assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases>self.__min_n_cases_rel/100*cases[-1])
+        (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
         cases = cases[nz_cases_ids]
         dates = self.dates[nz_cases_ids]
 
@@ -954,7 +954,7 @@ class Surge:
             cases = self.cases[:,state_id]
 
 
-            if cases[-1] < self.__min_n_cases_abs:
+            if cases[-1] < self.min_n_cases_abs:
                 if verbose:
                     print('')
                     print('WARNING: state %r # deaths: %r below absolute minimum'%(state,cases[-1]))
@@ -963,7 +963,7 @@ class Surge:
                 continue
 
             # Select data with # of cases greater than the minimum
-            (nz_cases_ids,) = np.where(cases>self.__min_n_cases_rel/100*cases[-1])
+            (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
 
             if nz_cases_ids.size == 0:
                 if verbose:
@@ -977,7 +977,7 @@ class Surge:
 
             deaths_100k = round(cases[-1]*100000/population * 365/dates.size,1)
 
-            if deaths_100k < self.__deaths_100k_minimum:
+            if deaths_100k < self.deaths_100k_minimum:
                 if verbose:
                     print('')
                     print('WARNING: state %r deaths per 100k: %r below minimum'%(state,deaths_100k))
@@ -1143,7 +1143,7 @@ class Surge:
             legend_title = 'Max. Relative Death Rate [%/day]'
             legend_title = 'Surge Period [day]'
 
-            fig, ax1 = plt.subplots(1, figsize=(15, 8))
+            fig, ax1 = plt.subplots(1, figsize=(20, 8))
 
             colors = color_map(len(fit_data))
             for (sort_key,data) in fit_data:
@@ -1179,7 +1179,7 @@ class Surge:
             legend_title = 'Max. Relative Death Rate [%/day]'
             legend_title = 'Surge Period [day]'
 
-            fig, ax1 = plt.subplots(1, figsize=(15, 8))
+            fig, ax1 = plt.subplots(1, figsize=(20, 8))
 
             colors = color_map(len(fit_data))
             for (sort_key,data) in fit_data:
@@ -1212,3 +1212,165 @@ class Surge:
             plt.show()
             plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=300)
             plt.close()
+
+        return
+
+    def clustering(self, sorted_fit_data, bin_width, option='surge_period'):
+        '''
+        Cluster the communities based on the sorting value of the fit_data
+        '''
+
+        max_value = max([key for (key,data) in sorted_fit_data])
+        min_value = min([key for (key,data) in sorted_fit_data])
+
+        small_value = (max_value - min_value)* 1./100.0
+
+        max_value = round(max_value,1) + small_value
+        min_value = round(min_value,1) - small_value
+
+
+        if option == 'surge_period':
+            max_value = int(max_value) + 1
+            min_value = int(min_value)
+
+        n_bins = int((max_value - min_value)/bin_width)
+        pts = np.linspace(min_value, max_value, n_bins+1)
+
+
+        bins = dict()
+        for i in range(n_bins):
+            pt  = pts[i]
+            pt1 = pts[i+1]
+            bins[i] = [pt,pt1]
+
+        return bins
+
+    def get_bin_id(self,value,bins):
+
+        for (key,val) in bins.items():
+            if value >= val[0] and value < val[1]:
+                return key
+
+        assert False,'FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
+
+    def plot_group_fit_data(self, state_groups, fit_data):
+        '''
+        Plot fit functions for each country group
+        '''
+
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from covid_surge import color_map
+
+        legend_title = 'Max. Relative Death Rate [%/day]'
+        legend_title = 'Surge Period [day]'
+
+        for (ig,states) in enumerate(state_groups):
+
+            fig, ax1 = plt.subplots(1, figsize=(20, 8))
+            colors = color_map(len(states))
+
+            for state in states:
+                color = colors[states.index(state)]
+
+                for (sort_key_i,data_i) in fit_data:
+
+                    if data_i[0] != state:
+                        continue
+                    else:
+                        sort_key = sort_key_i
+                        data = data_i
+
+                n_dates = data[1].size
+                param_vec = data[3]
+                tshift = data[4]
+                t1 = tshift - data[5]
+                t2 = tshift + data[5]
+                sort_value = '%1.1f'%sort_key
+
+                ax1.plot(np.array(range(n_dates))-tshift,
+                        self.sigmoid_func( np.array(range(n_dates)), param_vec )/param_vec[0],
+                         'b-',label=state+': '+sort_value,
+                         color=color)
+
+                ax1.plot(t1-tshift,
+                        self.sigmoid_func(t1,param_vec)/param_vec[0],'*',
+                        color=color,markersize=12)
+
+                ax1.plot(t2-tshift,
+                        self.sigmoid_func(t2,param_vec)/param_vec[0],'*',
+                        color=color,markersize=12)
+
+            ax1.set_xlabel(r'Shifted Time [day]',fontsize=16)
+            ax1.set_ylabel(r'Normalized Cumulative Death',fontsize=16,color='black')
+            if matplotlib.__version__ >= '3.0.2':
+                ax1.legend(loc='best',fontsize=16,title=legend_title,title_fontsize=18)
+            else:
+                ax1.legend(loc='best',fontsize=16,title=legend_title)
+            ax1.grid(True)
+            plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
+
+            plt.show()
+            plt.savefig('covid_data_states_group_'+str(ig)+'.png', dpi=300)
+            plt.close()
+
+        return
+
+    def plot_group_surge_periods(self, fit_data, bins):
+
+        import matplotlib.pyplot as plt
+        from covid_surge import color_map
+
+        plt.rcParams['figure.figsize'] = [20, 4]
+        fig, ax = plt.subplots(figsize=(20,6))
+
+        surge_periods = list()
+        states = list()
+
+        for (key,data) in fit_data:
+            surge_periods.append(2*data[5])
+            states.append(data[0])
+
+        mean = np.mean(np.array(surge_periods))
+        std  = np.std(np.array(surge_periods))
+
+        # created sorted list
+        sorted_list = sorted( zip(states,surge_periods),
+                key = lambda entry: entry[1], reverse=False )
+
+        colors = color_map(len(bins))
+
+        for (id,(state,val)) in enumerate(sorted_list):
+
+            color = colors[ self.get_bin_id(val,bins) ]
+            ax.bar( id, val, color=color )
+
+        ax.set_xlim((-.75,len(fit_data)))
+        (xmin,xmax)= ax.get_xlim()
+        (ymin,ymax)= ax.get_ylim()
+
+        for group_id in range(len(bins.keys())):
+            b = bins[group_id]
+            ax.plot((-.75,len(fit_data)), [b[0],b[0]], 'k-.',linewidth=0.75 )
+            if group_id == len(bins.keys())-1:
+                ax.plot((-.75,len(fit_data)), [b[1],b[1]], 'k-.',linewidth=0.75 )
+
+        #label='mean: %2.1f; std: %2.1f (%2.1f %%)'%\
+        #                (mean,std,std/mean*100))
+        #ax.plot( )
+
+        plt.xticks( range(len(states)), [state for (state,val) in sorted_list],
+                rotation=80,fontsize=16)
+        plt.yticks(fontsize=18)
+
+        ax.set_ylabel('Surge Period [day]',fontsize=16)
+        ax.set_xlabel('',fontsize=20)
+        ax.xaxis.grid(True,linestyle='-',which='major',color='lightgrey',alpha=0.9)
+        #plt.legend(loc='best',fontsize=14)
+        plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
+        plt.tight_layout(1)
+        plt.show()
+        plt.savefig('covid_group_surge_periods.png', dpi=300)
+        plt.close()
+
+        return
