@@ -29,12 +29,12 @@ def main():
     print('# of days:           ',us_surge.dates.shape[0])
 
     # Fit data to all states
-    fit_data = us_surge.states_fit_data(verbose=True)
+    fit_data = us_surge.states_fit_data(verbose=True, save_plots=True)
 
     # Plot all data in one plot
-    us_surge.plot_fit_data( fit_data, 'experimental' )
+    us_surge.plot_fit_data( fit_data, 'experimental', save=True )
     # Plot all fit data in one plot
-    us_surge.plot_fit_data( fit_data, 'fit' )
+    us_surge.plot_fit_data( fit_data, 'fit', save=True )
 
     # Create clustering bins based on surge period
     bins = us_surge.clustering(fit_data,2,'surge_period')
@@ -71,10 +71,10 @@ def main():
         print(' Group %i %s'%(state_groups.index(g),g))
 
     # Plot the normalized surge for groups of states
-    us_surge.plot_group_fit_data( state_groups, fit_data )
+    us_surge.plot_group_fit_data( state_groups, fit_data, save=True )
 
     # Plot the surge period for all grouped states
-    us_surge.plot_group_surge_periods( fit_data, bins )
+    us_surge.plot_group_surge_periods( fit_data, bins, save=True )
 
 
 if __name__ == '__main__':

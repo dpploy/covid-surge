@@ -33,7 +33,7 @@ def main():
     print('# of days:           ',us_surge.dates.shape[0])
 
     # Plot the data
-    us_surge.plot_covid_data( 'US' )
+    us_surge.plot_covid_data( 'US', save=True )
 
     n_last_days = 7
     print('')
@@ -52,7 +52,8 @@ def main():
     print('')
 
     # Plot the fit data to model function
-    us_surge.plot_covid_nlfit('US', param_vec )
+    us_surge.plot_covid_nlfit('US', param_vec, save=True,
+            plot_prime=True, plot_double_prime=True )
 
     # Report critical times
     (tc,dtc) = us_surge.critical_times( 'US', param_vec )
@@ -78,12 +79,12 @@ def main():
     print('*                        Single State                              *')
     print('********************************************************************')
 
-    name = 'Pennsylvania'
+    name = 'New York'
     print(name)
     print('')
 
     # Plot the data
-    us_surge.plot_covid_data( name )
+    us_surge.plot_covid_data( name, save=True )
 
     n_last_days = 7
     state_id = us_surge.state_names.index(name)
@@ -102,7 +103,7 @@ def main():
     print('')
 
     # Plot the fit data to model function
-    us_surge.plot_covid_nlfit(name, param_vec )
+    us_surge.plot_covid_nlfit(name, param_vec, save=True )
 
     # Report critical times
     (tc,dtc) = us_surge.critical_times( name, param_vec )

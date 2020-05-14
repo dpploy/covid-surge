@@ -225,7 +225,7 @@ class Surge:
 
         plt.show()
         if save:
-            plt.savefig('covid_data_'+filename+'.png', dpi=300)
+            plt.savefig('covid_data_'+filename+'.png', dpi=100)
         plt.close()
 
         return
@@ -279,11 +279,8 @@ class Surge:
 
         return param_vec
 
-    def plot_covid_nlfit(self, name, param_vec, save=False,
-            #dates, cases, 
-            #fit_func, 
-            #fit_func_prime=None, time_max_prime=None,
-            #fit_func_double_prime = None, time_min_max_double_prime=None,
+    def plot_covid_nlfit(self, name, param_vec, save=False, plot_prime=False,
+            plot_double_prime=False,
             option='dates', ylabel='null-ylabel',
             legend='null-legend', title='null-title', formula='null-formula'):
 
@@ -350,6 +347,7 @@ class Surge:
 
         fit_func = self.sigmoid_func
 
+        # Plot marker
         if time_max_prime is not None:
 
             cases = fit_func(time_max_prime,param_vec)
@@ -366,6 +364,7 @@ class Surge:
             plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(time_max_prime,cases),
                 fontsize=16)
 
+        # Plot marker
         if time_min_max_double_prime is not None:
 
             t_min = time_min_max_double_prime[0]
@@ -399,13 +398,14 @@ class Surge:
             plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,cases),
                 fontsize=16)
 
+        # Plot fit formula
         (x_min,x_max) = plt.xlim()
         dx = abs(x_max-x_min)
-        x_text = x_min + dx*0.07
+        x_text = x_min + dx*0.02
 
         (y_min,y_max) = plt.ylim()
         dy = abs(y_max-y_min)
-        y_text = y_min + dy*0.5
+        y_text = y_min + dy*0.7
 
         plt.text(x_text, y_text, formula,fontsize=16)
 
@@ -432,11 +432,12 @@ class Surge:
 
         plt.show()
         if save:
-            plt.savefig('covid_data_fit_'+filename+'_0'+'.png', dpi=300)
+            plt.savefig('covid_data_fit_'+filename+'_0'+'.png', dpi=100)
 
         plt.close()
 
 
+        # Additional plot for first derivative 
         fit_func_prime = self.__sigmoid_func_prime
 
         if fit_func_prime is not None:
@@ -496,10 +497,11 @@ class Surge:
                 filename = tmp
 
             plt.show()
-            if save:
-                plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=300)
+            if save and plot_prime:
+                plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=100)
             plt.close()
 
+        # Additional plot for second derivative 
         fit_func_double_prime = self.__sigmoid_func_double_prime
 
         if fit_func_double_prime is not None:
@@ -568,8 +570,8 @@ class Surge:
                 filename = tmp
 
             plt.show()
-            if save:
-                plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=300)
+            if save and plot_double_prime:
+                plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=100)
             plt.close()
 
         return
@@ -937,7 +939,7 @@ class Surge:
 
         return
 
-    def states_fit_data(self, verbose=False):
+    def states_fit_data(self, verbose=False, save_plots=False):
 
         # Sort the states by descending number of total cases
         sorted_states = sorted(
@@ -1062,7 +1064,7 @@ class Surge:
             top_id += 1
 
 
-            self.plot_covid_nlfit( state, param_vec )
+            self.plot_covid_nlfit( state, param_vec, save=save_plots )
 
 
             n_last_days = 7
@@ -1179,7 +1181,7 @@ class Surge:
                 data[1][-1]+')',fontsize=20)
             plt.show()
             if save:
-                plt.savefig('covid_data_fit_overlap'+'_0'+'.png', dpi=300)
+                plt.savefig('covid_data_fit_overlap'+'_0'+'.png', dpi=100)
             plt.close()
 
 
@@ -1220,7 +1222,7 @@ class Surge:
             plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
             plt.show()
             if save:
-                plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=300)
+                plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=100)
             plt.close()
 
         return
@@ -1322,7 +1324,7 @@ class Surge:
 
             plt.show()
             if save:
-                plt.savefig('covid_data_states_group_'+str(ig)+'.png', dpi=300)
+                plt.savefig('covid_data_states_group_'+str(ig)+'.png', dpi=100)
             plt.close()
 
         return
@@ -1382,7 +1384,7 @@ class Surge:
         plt.tight_layout(1)
         plt.show()
         if save:
-            plt.savefig('covid_group_surge_periods.png', dpi=300)
+            plt.savefig('covid_group_surge_periods.png', dpi=100)
         plt.close()
 
         return
