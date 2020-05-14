@@ -754,7 +754,7 @@ class Surge:
 
         return (param_vec, r2, k)
 
-    def critical_times(self, name, param_vec, verbose=True):
+    def critical_times(self, name, param_vec, verbose=False):
 
         a0 = param_vec[0]
         a1 = param_vec[1]
@@ -939,7 +939,7 @@ class Surge:
 
         return
 
-    def states_fit_data(self, verbose=False, save_plots=False):
+    def states_fit_data(self, verbose=False, plot=False, save_plots=False):
 
         # Sort the states by descending number of total cases
         sorted_states = sorted(
@@ -1022,7 +1022,7 @@ class Surge:
                                self.sigmoid_func, self.__grad_p_sigmoid_func,
                                param_vec_0, k_max, rel_tol, verbose=False )
 
-            if k > k_max:
+            if k > k_max and verbose:
                 print(" NO Newton's method convergence")
                 continue
 
@@ -1044,7 +1044,7 @@ class Surge:
                 print('')
 
             # Compute critical times
-            (tc,dtc) = self.critical_times(state,param_vec)
+            (tc,dtc) = self.critical_times(state,param_vec,verbose=verbose)
 
             if tc > times[-1]:
                 if verbose:
@@ -1066,7 +1066,8 @@ class Surge:
             top_id += 1
 
 
-            self.plot_covid_nlfit( state, param_vec, save=save_plots )
+            if plot:
+                self.plot_covid_nlfit( state, param_vec, save=save_plots )
 
 
             n_last_days = 7
