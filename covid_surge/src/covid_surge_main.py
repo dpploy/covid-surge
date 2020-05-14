@@ -327,7 +327,7 @@ class Surge:
 
         cases_fit = self.sigmoid_func( dates_fit, param_vec )
 
-        plt.plot( dates_fit,cases_fit,'b-',label='NLLS fitting' )
+        plt.plot( dates_fit,cases_fit,'b-',label='covid-surge fitting' )
 
         if option == 'dates':
             plt.xticks( range(len(dates_plot)),dates_plot,rotation=60,fontsize=14)
