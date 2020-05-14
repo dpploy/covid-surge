@@ -6,5 +6,5 @@ In development. Install using [PyPI](https://pypi.org/project/covid-surge/).
 
 |   |
 |:---|
-|<img  width="150" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/covid_group_surge_periods.png" title="droplets"> |
-| Distribution of surge periods for the states in US with highest mortality |
+|<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/covid_group_surge_periods.png" title="Surge Periods"> |
+| Distribution of critical surge periods for the states in US with the most evolved epidemic. |
