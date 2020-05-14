@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-covid_surge/examples/us/*.png
+covid_surge/examples/*.png
 *.swp
 *.DS_Store
 
