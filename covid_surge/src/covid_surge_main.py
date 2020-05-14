@@ -839,7 +839,7 @@ class Surge:
                 print('Date at minimum growth accel. = %s '%(dates[time_min_id]))
 
             print('')
-            print('Surge period = %3.2e [day]'%(time_min_double_prime-time_max_double_prime))
+            print('Surge period = %3.1f [day]'%(time_min_double_prime-time_max_double_prime))
 
         assert abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5
 
@@ -1026,9 +1026,10 @@ class Surge:
                 print(" NO Newton's method convergence")
                 continue
 
-            print('')
-            print('Fitting coeff. of det. R2 = %1.3f'%r2)
-            print('')
+            if verbose:
+                print('')
+                print('Fitting coeff. of det. R2 = %1.3f'%r2)
+                print('')
 
             assert param_vec[0] > 0.0
             assert param_vec[1] > 0.0
@@ -1037,9 +1038,10 @@ class Surge:
             param_vec[0] *= scaling
             cases  *= scaling
 
-            print('')
-            print('Unscaled root =',param_vec)
-            print('')
+            if verbose:
+                print('')
+                print('Unscaled root =',param_vec)
+                print('')
 
             # Compute critical times
             (tc,dtc) = self.critical_times(state,param_vec)
@@ -1080,7 +1082,8 @@ class Surge:
                 print('')
 
             # Report erros
-            self.error_analysis(state, param_vec, tc, dtc)
+            if verbose:
+                self.error_analysis(state, param_vec, tc, dtc)
 
             # 60-day look-ahead
             n_prediction_days = 60
@@ -1088,10 +1091,11 @@ class Surge:
             last_day = dates.size
             total_deaths_predicted = int( self.sigmoid_func(n_prediction_days + last_day, param_vec) )
 
-            print('')
-            print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,dates[-1],total_deaths_predicted))
-            print('# of cumulative deaths today, %s               = %6i'%(dates[-1],cases[-1]))
-            print('')
+            if verbose:
+                print('')
+                print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,dates[-1],total_deaths_predicted))
+                print('# of cumulative deaths today, %s               = %6i'%(dates[-1],cases[-1]))
+                print('')
 
 
             fit_data.append( [ state,
@@ -1102,31 +1106,32 @@ class Surge:
                                dtc] )
 
 
-        print('States with significant deaths past peak in surge period:')
-        print('')
-        for (state, tc, tc_date, dtc) in states_past_peak_surge_period:
-            print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(state,tc,tc_date,dtc))
+        if verbose:
+            print('States with significant deaths past peak in surge period:')
+            print('')
+            for (state, tc, tc_date, dtc) in states_past_peak_surge_period:
+                print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(state,tc,tc_date,dtc))
 
-        print('')
+            print('')
 
-        print('States with significant deaths before peak in surge period:')
-        print('')
-        for (state, tc_minus_dtc, tc_minus_dtc_date, dtc) in states_no_peak_surge_period:
-            print( '%15s tc-dtc = %3.1f [d] tc-dtc_date = %8s pending days = %3.1f'%(state,tc_minus_dtc,tc_minus_dtc_date,dtc))
+            print('States with significant deaths before peak in surge period:')
+            print('')
+            for (state, tc_minus_dtc, tc_minus_dtc_date, dtc) in states_no_peak_surge_period:
+                print( '%15s tc-dtc = %3.1f [d] tc-dtc_date = %8s pending days = %3.1f'%(state,tc_minus_dtc,tc_minus_dtc_date,dtc))
 
-        print('')
+            print('')
 
-        print('States with deaths per 100k below mininum:')
-        print('')
-        for (state, deaths_100k) in states_below_deaths_100k_minimum:
-            print( '%15s deaths per 100k/y = %5.2f'%(state,deaths_100k))
+            print('States with deaths per 100k below mininum:')
+            print('')
+            for (state, deaths_100k) in states_below_deaths_100k_minimum:
+                print( '%15s deaths per 100k/y = %5.2f'%(state,deaths_100k))
 
-        print('')
+            print('')
 
-        print('States with deaths below the absolute mininum:')
-        print('')
-        for (state, case) in states_below_deaths_abs_minimum:
-            print( '%15s deaths = %5.2f'%(state,case) )
+            print('States with deaths below the absolute mininum:')
+            print('')
+            for (state, case) in states_below_deaths_abs_minimum:
+                print( '%15s deaths = %5.2f'%(state,case) )
 
         # Order fit_data 
 
