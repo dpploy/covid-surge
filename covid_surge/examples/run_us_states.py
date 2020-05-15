@@ -3,7 +3,7 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 '''
-US COVID-19 surge period analysis.
+US States COVID-19 surge period analysis.
 
 Expand on this later.
 '''
@@ -76,7 +76,6 @@ def main():
 
     # Plot the surge period for all grouped states
     us_surge.plot_group_surge_periods( fit_data, bins, save=True )
-
 
 if __name__ == '__main__':
     main()
