@@ -1,6 +1,7 @@
 pip
 matplotlib
 numpy
+pandas
 plotly
 ipywidgets
 jupyter_contrib_nbextensions
