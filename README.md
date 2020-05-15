@@ -10,7 +10,7 @@ COVID-19 surge period calculation and clustering for communities afflicted by th
 [![Azure Notebooks](https://notebooks.azure.com/launch.svg)](https://notebooks.azure.com/dealmeidavf/projects/covid-surge)
 
 [![PyPI Version](https://img.shields.io/pypi/v/covid-surge)](https://pypi.org/project/covid-surge/)
-
+[![Repo Size](https://img.shields.io/github/repo-size/dpploy/covid-surge)](https://github.com/dpploy/covid-surge)
 
 This development is in progress: test using [PyPI](https://pypi.org/project/covid-surge/).
 
