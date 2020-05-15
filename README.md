@@ -7,6 +7,7 @@ COVID-19 surge period calculation and clustering for communities afflicted by th
    
 [![NBViewer](https://github.com/jupyter/design/blob/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.jupyter.org/github/dpploy/covid-surge/tree/master/notebooks/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dpploy/covid-surge/master)
+[![Azure Notebooks](https://notebooks.azure.com/launch.svg)](https://notebooks.azure.com/dealmeidavf/projects/covid-surge)
 
 This development is in progress: test using [PyPI](https://pypi.org/project/covid-surge/).
 
