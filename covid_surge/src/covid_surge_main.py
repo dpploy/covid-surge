@@ -320,7 +320,7 @@ class Surge:
 
         plt.show()
         if save:
-            plt.savefig('covid_data_'+filename+'.png', dpi=100)
+            plt.savefig('data_'+filename+'.png', dpi=100)
         plt.close()
 
         return
@@ -539,7 +539,7 @@ class Surge:
 
         plt.show()
         if save:
-            plt.savefig('covid_data_fit_'+filename+'_0'+'.png', dpi=100)
+            plt.savefig('data_fit_'+filename+'_0'+'.png', dpi=100)
 
         plt.close()
 
@@ -605,7 +605,7 @@ class Surge:
 
             plt.show()
             if save:
-                plt.savefig('covid_data_fit_'+filename+'_1'+'.png', dpi=100)
+                plt.savefig('fit_'+filename+'_1'+'.png', dpi=100)
             plt.close()
 
         # Additional plot for second derivative 
@@ -678,7 +678,7 @@ class Surge:
 
             plt.show()
             if save:
-                plt.savefig('covid_data_fit_'+filename+'_2'+'.png', dpi=100)
+                plt.savefig('fit_'+filename+'_2'+'.png', dpi=100)
             plt.close()
 
         return
@@ -1054,11 +1054,18 @@ class Surge:
 
         return
 
-    def multi_fit_data(self, name, verbose=False, plot=False, save_plots=False):
+    def multi_fit_data(self, name, 
+            blocked_list=[],
+            verbose=False, plot=False, save_plots=False):
 
         if name == 'states':
             names = self.state_names
-            cases = self.cases
+        elif name == 'countries':
+            names = self.country_names
+        else:
+            assert False,'Bad name %r (states or countries)'%name
+
+        cases = self.cases
 
         # Sort the states by descending number of total cases
         sorted_list = sorted(
@@ -1068,14 +1075,17 @@ class Surge:
 
         # Post processing data storage
         fit_data = list()
-        states_past_peak_surge_period = list()
-        states_no_peak_surge_period = list()
-        states_below_deaths_100k_minimum = list()
-        states_below_deaths_abs_minimum = list()
+        names_past_peak_surge_period = list()
+        names_no_peak_surge_period = list()
+        names_below_deaths_100k_minimum = list()
+        names_below_deaths_abs_minimum = list()
 
         top_id = 0
 
         for (name,dummy) in sorted_list:
+
+            if name in blocked_list:
+                continue
 
             assert name in names, 'Name: %r not in %r'%(name,names)
             name_id = names.index(name)
@@ -1088,7 +1098,7 @@ class Surge:
                     print('')
                     print('WARNING: name %r # deaths: %r below absolute minimum'%(name,icases[-1]))
                     print('')
-                states_below_deaths_abs_minimum.append((name,icases[-1]))
+                names_below_deaths_abs_minimum.append((name,icases[-1]))
                 continue
 
             # Select data with # of cases greater than the minimum
@@ -1112,7 +1122,7 @@ class Surge:
                         print('')
                         print('WARNING: name %r deaths per 100k: %r below minimum'%(name,deaths_100k))
                         print('')
-                    states_below_deaths_100k_minimum.append((name,deaths_100k))
+                    names_below_deaths_100k_minimum.append((name,deaths_100k))
                     continue
 
             if verbose:
@@ -1171,7 +1181,7 @@ class Surge:
                     print('')
                     print('WARNING: Time at peak surge rate exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                states_no_peak_surge_period.append( (name, tc-dtc, dates[int(tc-dtc)+1], dtc) )
+                names_no_peak_surge_period.append( (name, tc-dtc, dates[int(tc-dtc)+1], dtc) )
                 continue
 
             if tc + dtc > times[-1]:
@@ -1179,7 +1189,7 @@ class Surge:
                     print('')
                     print('WARNING: Time at mininum acceleration exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                states_past_peak_surge_period.append( (name, tc, dates[int(tc)+1], dtc) )
+                names_past_peak_surge_period.append( (name, tc, dates[int(tc)+1], dtc) )
                 continue
 
 
@@ -1230,28 +1240,28 @@ class Surge:
         if verbose:
             print('Names with significant deaths past peak in surge period:')
             print('')
-            for (name, tc, tc_date, dtc) in states_past_peak_surge_period:
+            for (name, tc, tc_date, dtc) in names_past_peak_surge_period:
                 print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name,tc,tc_date,dtc))
 
             print('')
 
             print('Names with significant deaths before peak in surge period:')
             print('')
-            for (name, tc_minus_dtc, tc_minus_dtc_date, dtc) in states_no_peak_surge_period:
+            for (name, tc_minus_dtc, tc_minus_dtc_date, dtc) in names_no_peak_surge_period:
                 print( '%15s tc-dtc = %3.1f [d] tc-dtc_date = %8s pending days = %3.1f'%(name,tc_minus_dtc,tc_minus_dtc_date,dtc))
 
             print('')
 
             print('Names with deaths per 100k below mininum:')
             print('')
-            for (name, deaths_100k) in states_below_deaths_100k_minimum:
+            for (name, deaths_100k) in names_below_deaths_100k_minimum:
                 print( '%15s deaths per 100k/y = %5.2f'%(name,deaths_100k))
 
             print('')
 
             print('States with deaths below the absolute mininum:')
             print('')
-            for (name, case) in states_below_deaths_abs_minimum:
+            for (name, case) in names_below_deaths_abs_minimum:
                 print( '%15s deaths = %5.2f'%(name,case) )
 
         # Order fit_data 
@@ -1302,12 +1312,20 @@ class Surge:
                 ax1.legend(loc='best',fontsize=12,title=legend_title)
 
             ax1.grid(True)
+
+            (key,data)=fit_data[0]
+            if data[0] in self.state_names:
+                data_name = 'US States'
+            if data[0] in self.country_names:
+                data_name = 'Countries'
+
             plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' US States in Total Mortality ('+
+                str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
                 data[1][-1]+')',fontsize=20)
+
             plt.show()
             if save:
-                plt.savefig('covid_data_fit_overlap'+'_0'+'.png', dpi=100)
+                plt.savefig('data_overlap'+'_0'+'.png', dpi=100)
             plt.close()
 
 
@@ -1345,10 +1363,20 @@ class Surge:
                 ax1.legend(loc='best',fontsize=12,title=legend_title)
 
             ax1.grid(True)
-            plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
+
+            (key,data)=fit_data[0]
+            if data[0] in self.state_names:
+                data_name = 'US States'
+            if data[0] in self.country_names:
+                data_name = 'Countries'
+
+            plt.title('COVID-19 Pandemic 2020 for Top '+
+                str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+                data[1][-1]+')',fontsize=20)
+
             plt.show()
             if save:
-                plt.savefig('covid_data_fit_overlap'+'_1'+'.png', dpi=100)
+                plt.savefig('fit_overlap'+'_1'+'.png', dpi=100)
             plt.close()
 
         return
@@ -1445,12 +1473,22 @@ class Surge:
                 ax1.legend(loc='best',fontsize=16,title=legend_title,title_fontsize=18)
             else:
                 ax1.legend(loc='best',fontsize=16,title=legend_title)
+
             ax1.grid(True)
-            plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
+
+            (key,data)=fit_data[0]
+            if data[0] in self.state_names:
+                data_name = 'US States'
+            if data[0] in self.country_names:
+                data_name = 'Countries'
+
+            plt.title('COVID-19 Pandemic 2020 for Top '+
+                str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+                data[1][-1]+')',fontsize=20)
 
             plt.show()
             if save:
-                plt.savefig('covid_data_states_group_'+str(ig)+'.png', dpi=100)
+                plt.savefig('fit_group_'+str(ig)+'.png', dpi=100)
             plt.close()
 
         return
@@ -1506,11 +1544,22 @@ class Surge:
         ax.set_xlabel('',fontsize=20)
         ax.xaxis.grid(True,linestyle='-',which='major',color='lightgrey',alpha=0.9)
         #plt.legend(loc='best',fontsize=14)
-        plt.title('COVID-19 Pandemic 2020 for Top '+str(len(fit_data))+' US States ('+data[1][-1]+')',fontsize=20)
+
+        (key,data)=fit_data[0]
+        if data[0] in self.state_names:
+            data_name = 'US States'
+        if data[0] in self.country_names:
+            data_name = 'Countries'
+
+        plt.title('COVID-19 Pandemic 2020 for Top '+
+            str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+            data[1][-1]+')',fontsize=20)
+
         plt.tight_layout(1)
+
         plt.show()
         if save:
-            plt.savefig('covid_group_surge_periods.png', dpi=100)
+            plt.savefig('group_surge_periods.png', dpi=100)
         plt.close()
 
         return
