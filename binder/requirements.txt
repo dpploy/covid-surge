@@ -1,0 +1,6 @@
+pip
+matplotlib
+numpy
+plotly
+ipywidgets
+jupyter_contrib_nbextensions
