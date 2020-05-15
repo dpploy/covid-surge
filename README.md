@@ -1,4 +1,4 @@
-# covid-surge
+# Covid-surge
 COVID-19 surge period calculation and clustering for communities afflicted by the corona virus SARS-CoV-2.
 
   + [University of Massachusetts Lowell](https://www.uml.edu/)
