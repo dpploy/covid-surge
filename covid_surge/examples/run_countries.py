@@ -3,7 +3,7 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 '''
-US States COVID-19 surge period analysis.
+Global COVID-19 surge period analysis.
 
 Expand on this later.
 '''
@@ -15,29 +15,27 @@ from covid_surge import Surge
 def main():
 
     # Get US surge data
-    us_surge = Surge()
+    g_surge = Surge()
 
     # Set parameters
-    us_surge.end_date = '4/20/20'   # set end date wanted
-    us_surge.end_date = None        # get all the data available
-    us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
-    us_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
-    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+    g_surge.end_date = '4/20/20'   # set end date wanted
+    g_surge.end_date = None        # get all the data available
+    g_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    g_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
 
-    print('')
-    print('# of states/distric: ',len(us_surge.state_names))
-    print('# of days:           ',us_surge.dates.shape[0])
+    print('# of countries: ',g_surge.cases.shape[1])
+    print('# of days:      ',g_surge.cases.shape[0])
 
     # Fit data to all states
-    fit_data = us_surge.multi_fit_data('states',verbose=True, plot=True, save_plots=True)
+    fit_data = g_surge.multi_fit_data('countries',verbose=True, plot=True, save_plots=True)
 
     # Plot all data in one plot
-    us_surge.plot_fit_data( fit_data, 'experimental', save=True )
+    g_surge.plot_fit_data( fit_data, 'experimental', save=True )
     # Plot all fit data in one plot
-    us_surge.plot_fit_data( fit_data, 'fit', save=True )
+    g_surge.plot_fit_data( fit_data, 'fit', save=True )
 
     # Create clustering bins based on surge period
-    bins = us_surge.clustering(fit_data,2,'surge_period')
+    bins = g_surge.clustering(fit_data,2,'surge_period')
 
     print('')
     print('*****************************************************************')
