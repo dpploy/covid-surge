@@ -21,7 +21,7 @@ def main():
     us_surge.end_date = '4/20/20'   # set end date wanted
     us_surge.end_date = None        # get all the data available
     us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
-    us_surge.min_n_cases_abs = 100  # min # of absolute cases for analysis
+    us_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
     us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
     print('')
@@ -29,8 +29,7 @@ def main():
     print('# of days:           ',us_surge.dates.shape[0])
 
     # Fit data to all states
-#    fit_data = us_surge.states_fit_data(verbose=True, save_plots=True)
-    fit_data = us_surge.states_fit_data()
+    fit_data = us_surge.states_fit_data(verbose=True, plot=True, save_plots=True)
 
     # Plot all data in one plot
     us_surge.plot_fit_data( fit_data, 'experimental', save=True )

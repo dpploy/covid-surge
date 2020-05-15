@@ -22,14 +22,26 @@ class Surge:
 
         self.deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
+        self.state_names = list()
+        self.populations = list()
+        self.country_names = list()
+
         if self.locale == 'US':
             ( state_names, populations, dates, cases ) = \
-                                                       self.__get_covid_us_data()
+                                                      self.__get_covid_us_data()
             assert dates.size == cases.shape[0]
             assert len(state_names) == cases.shape[1]
 
-        self.state_names = state_names
-        self.populations = populations
+            self.state_names = state_names
+            self.populations = populations
+
+        elif self.locale == 'global':
+            ( country_names, dates, cases ) = \
+                                   self.__get_covid_global_data(cumulative=True)
+            self.country_names = country_names
+
+        else:
+            assert False, 'Bad locale: %r (US, global)'%(self.locale)
 
         self.__dates = dates
         self.__cases = cases
@@ -164,10 +176,85 @@ class Surge:
 
         return ( state_names, population, dates, cases )
 
+    def __get_covid_global_data(self, type='deaths', distribution=True, cumulative=False ):
+        '''
+        Load COVID-19 pandemic cumulative data from:
+
+            https://github.com/CSSEGISandData/COVID-19
+
+        Parameters
+        ----------
+        type: str, optional
+            Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
+            Default: 'deaths'.
+
+        distribution: bool, optional
+            Distribution of new cases over dates.
+            Default: True
+
+        cumulative: bool, optional
+            Cumulative number of cases over dates.
+            Default: False
+
+        Returns
+        -------
+        data: tuple(int, list(str), list(int))
+               (contry_names, dates, cases)
+
+        '''
+
+        if cumulative is True:
+            distribution = False
+
+        import pandas as pd
+
+        if type == 'deaths':
+            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
+            #df.to_html('covid_19_global_deaths.html')
+
+        else:
+            assert True, 'invalid query type: %r (valid: "deaths"'%(type)
+
+        df = df.drop(['Lat', 'Long'],axis=1)
+        df = df.rename(columns={'Province/State':'state/province','Country/Region':'country/region'})
+
+        import numpy as np
+
+        country_names = list()
+
+        country_names_tmp = list()
+
+        for (i,icountry) in enumerate(df['country/region']):
+            country_names_tmp.append(icountry)
+
+        country_names_set = set(country_names_tmp)
+
+        country_names = list(country_names_set)
+        country_names = sorted(country_names)
+
+        dates = np.array(list(df.columns[2:]))
+
+        cases = np.zeros( (len(df.columns[2:]),len(country_names)), dtype=np.float64)
+
+        for (i,icountry) in enumerate(df['country/region']):
+
+            country_id = country_names.index(icountry)
+
+            cases[:,country_id] += np.array(list(df.loc[i, df.columns[2:]]))
+
+        if distribution:
+
+            for j in range(cases.shape[1]):
+                cases[:,j] = np.round(np.gradient( cases[:,j] ),0)
+
+        return ( country_names, dates, cases )
+
     def plot_covid_data(self, name, save=False):
 
         import matplotlib.pyplot as plt
         plt.rcParams['figure.figsize'] = [12, 5]
+
+        population = None
 
         if name == 'US':
             # Combine all column data in the surge
@@ -177,25 +264,33 @@ class Surge:
             state_id = self.state_names.index(name)
             population = self.populations[state_id]
             cases_plot = self.cases[:,state_id]
+        elif name in self.country_names:
+            country_id = self.country_names.index(name)
+            cases_plot = self.cases[:,country_id]
         else:
-            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
+            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
-        # Drop days from the back if any
+        # Report on deaths per 100k per year if available
 
-        deaths_100k_y = round(
-                cases_plot[-1]*100000/population * 365/cases_plot.size, 1
-                             )
+        if population:
+            deaths_100k_y = round(
+                    cases_plot[-1]*100000/population * 365/cases_plot.size, 1
+                                 )
 
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
-        title = 'COVID-19 in '+name+'; population: '+str(population)+\
-                '; deaths per 100k/y: '+str(deaths_100k_y)
+        if population:
+            title = 'COVID-19 in '+name+'; population: '+str(population)+\
+                    '; deaths per 100k/y: '+str(deaths_100k_y)
+        else:
+            title = 'COVID-19 in '+name
+
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
         fig, ax = plt.subplots(figsize=(20,6))
@@ -232,6 +327,8 @@ class Surge:
 
     def fit_data(self, name ):
 
+        population = None
+
         if name == 'US':
             # Combine all column data in the surge
             cases      = np.sum(self.cases,axis=1)
@@ -240,8 +337,11 @@ class Surge:
             state_id = self.state_names.index(name)
             population = self.populations[state_id]
             cases = self.cases[:,state_id]
+        elif name in self.country_names:
+            country_id = self.country_names.index(name)
+            cases = self.cases[:,country_id]
         else:
-            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
+            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
@@ -288,6 +388,8 @@ class Surge:
 
         import matplotlib.pyplot as plt
 
+        population = None
+
         if name == 'US':
             # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
@@ -296,22 +398,31 @@ class Surge:
             state_id = self.state_names.index(name)
             population = self.populations[state_id]
             cases_plot = self.cases[:,state_id]
+        elif name in self.country_names:
+            country_id = self.country_names.index(name)
+            cases_plot = self.cases[:,country_id]
         else:
-            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
+            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
-        cases_plot  = cases_plot[nz_cases_ids]
+        cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
-        deaths_100k_y = round(
-                cases_plot[-1]*100000/population * 365/cases_plot.size, 1
+        if population:
+            deaths_100k_y = round(
+                    cases_plot[-1]*100000/population * 365/cases_plot.size, 1
                              )
-        title = 'COVID-19 in '+name+'; population: '+str(population)+\
+
+        if population:
+            title = 'COVID-19 in '+name+'; population: '+str(population)+\
                 '; deaths per 100k/y: '+str(deaths_100k_y)
+        else:
+            title = 'COVID-19 in '+name
+
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
         plt.figure(1)
@@ -769,8 +880,11 @@ class Surge:
             state_id = self.state_names.index(name)
             population = self.populations[state_id]
             cases = self.cases[:,state_id]
+        elif name in self.country_names:
+            country_id = self.country_names.index(name)
+            cases = self.cases[:,country_id]
         else:
-            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
+            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases>0)
@@ -874,6 +988,8 @@ class Surge:
 
     def error_analysis(self, name, param_vec, tc, dtc):
 
+        population = None
+
         if name == 'US':
             # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
@@ -881,8 +997,11 @@ class Surge:
             state_id = self.state_names.index(name)
             population = self.populations[state_id]
             cases = self.cases[:,state_id]
+        elif name in self.country_names:
+            country_id = self.country_names.index(name)
+            cases = self.cases[:,country_id]
         else:
-            assert name in self.state_names, 'State: %r not in %r'%(name,self.state_names)
+            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
