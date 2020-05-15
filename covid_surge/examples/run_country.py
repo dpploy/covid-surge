@@ -29,7 +29,7 @@ def main():
     print('*                        Single Country                            *')
     print('********************************************************************')
 
-    name = 'Italy'
+    name = 'Spain'
     print(name)
     print('')
 

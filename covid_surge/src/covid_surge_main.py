@@ -2,11 +2,15 @@
 # -*- coding: utf-8 -*-
 # This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
+# Valmor F. de Almeida dealmeidavf@gmail.com
 import os
 import logging
 import time
 import datetime
+
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 class Surge:
 
@@ -251,12 +255,9 @@ class Surge:
 
     def plot_covid_data(self, name, save=False):
 
-        import matplotlib.pyplot as plt
-        plt.rcParams['figure.figsize'] = [12, 5]
-
         population = None
 
-        if name == 'US':
+        if name == 'US' and self.locale == 'US':
             # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
             population = np.sum(self.populations)
@@ -293,7 +294,8 @@ class Surge:
 
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
-        fig, ax = plt.subplots(figsize=(20,6))
+        fig, ax = plt.subplots(figsize=(15,6))
+        #plt.rcParams['figure.figsize'] = [12, 5]
 
         ax.plot( range(len(dates_plot)), cases_plot, 'r*', label=source )
 
@@ -327,7 +329,7 @@ class Surge:
 
     def fit_data(self, name ):
 
-        if name == 'US':
+        if name == 'US' and self.locale == 'US':
             # Combine all column data in the surge
             cases      = np.sum(self.cases,axis=1)
         elif name in self.state_names:
@@ -382,11 +384,9 @@ class Surge:
 
         formula = self.sigmoid_formula
 
-        import matplotlib.pyplot as plt
-
         population = None
 
-        if name == 'US':
+        if name == 'US' and self.locale == 'US':
             # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
             population = np.sum(self.populations)
@@ -421,8 +421,7 @@ class Surge:
 
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
-        plt.figure(1)
-        plt.rcParams['figure.figsize'] = [12, 5]
+        plt.figure(1,figsize=(15,5))
 
         if option == 'dates':
             plt.plot(dates_plot, cases_plot,'r*',label=source)
@@ -549,8 +548,7 @@ class Surge:
 
             fit_func_prime = self.__sigmoid_func_prime
 
-            plt.figure(2)
-            plt.rcParams['figure.figsize'] = [12, 5]
+            plt.figure(2,figsize=(15,5))
 
             n_rows = 1
             n_cols = 1
@@ -613,8 +611,7 @@ class Surge:
 
             fit_func_double_prime = self.__sigmoid_func_double_prime
 
-            plt.figure(3)
-            plt.rcParams['figure.figsize'] = [12, 5]
+            plt.figure(3,figsize=(15,5))
 
             n_rows = 1
             n_cols = 1
@@ -869,7 +866,7 @@ class Surge:
 
         import math
 
-        if name == 'US':
+        if name == 'US' and self.locale == 'US':
             # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
         elif name in self.state_names:
@@ -986,7 +983,7 @@ class Surge:
 
         population = None
 
-        if name == 'US':
+        if name == 'US' and self.locale == 'US':
             # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
         elif name in self.state_names:
@@ -1278,10 +1275,8 @@ class Surge:
 
         return sorted_fit_data
 
-    def plot_fit_data(self, fit_data, option=None, save=False):
+    def plot_multi_fit_data(self, fit_data, option=None, save=False):
 
-        import matplotlib
-        import matplotlib.pyplot as plt
         from covid_surge import color_map
 
         if option == 'experimental':
@@ -1289,9 +1284,10 @@ class Surge:
             legend_title = 'Max. Relative Death Rate [%/day]'
             legend_title = 'Surge Period [day]'
 
-            fig, ax1 = plt.subplots(1, figsize=(20, 8))
+            fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
             colors = color_map(len(fit_data))
+
             for (sort_key,data) in fit_data:
                 color = colors[fit_data.index((sort_key,data))]
                 state = data[0]
@@ -1334,9 +1330,10 @@ class Surge:
             legend_title = 'Max. Relative Death Rate [%/day]'
             legend_title = 'Surge Period [day]'
 
-            fig, ax1 = plt.subplots(1, figsize=(20, 8))
+            fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
             colors = color_map(len(fit_data))
+
             for (sort_key,data) in fit_data:
                 color = colors[fit_data.index((sort_key,data))]
                 state = data[0]
@@ -1348,7 +1345,7 @@ class Surge:
                 t2 = tshift + data[5]
                 value = '%1.1f'%sort_key
 
-                ax1.plot(np.array(range(n_dates))-tshift, self.sigmoid_func(np.array(range(n_dates)),param_vec)/param_vec[0],
+                ax1.plot( np.array(range(n_dates))-tshift, self.sigmoid_func(np.array(range(n_dates)),param_vec)/param_vec[0],
                      'b-',label=state+': '+value,color=color)
 
                 ax1.plot(t1-tshift,self.sigmoid_func(t1,param_vec)/param_vec[0],'*',color=color,markersize=12)
@@ -1424,8 +1421,6 @@ class Surge:
         Plot fit functions for each country group
         '''
 
-        import matplotlib
-        import matplotlib.pyplot as plt
         from covid_surge import color_map
 
         legend_title = 'Max. Relative Death Rate [%/day]'
@@ -1495,10 +1490,9 @@ class Surge:
 
     def plot_group_surge_periods(self, fit_data, bins, save=False):
 
-        import matplotlib.pyplot as plt
         from covid_surge import color_map
 
-        plt.rcParams['figure.figsize'] = [20, 4]
+        #plt.rcParams['figure.figsize'] = [20, 4]
         fig, ax = plt.subplots(figsize=(20,6))
 
         surge_periods = list()

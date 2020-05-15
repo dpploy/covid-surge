@@ -32,9 +32,9 @@ def main():
             verbose=True, plot=True, save_plots=True)
 
     # Plot all data in one plot
-    g_surge.plot_fit_data( fit_data, 'experimental', save=True )
+    g_surge.plot_multi_fit_data( fit_data, 'experimental', save=True )
     # Plot all fit data in one plot
-    g_surge.plot_fit_data( fit_data, 'fit', save=True )
+    g_surge.plot_multi_fit_data( fit_data, 'fit', save=True )
 
     # Create clustering bins based on surge period
     bins = g_surge.clustering(fit_data,2,'surge_period')

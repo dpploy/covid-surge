@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 covid_surge/examples/*.png
+notebooks/*.png
 *.swp
 *.DS_Store
 
