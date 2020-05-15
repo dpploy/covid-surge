@@ -1522,7 +1522,13 @@ class Surge:
             color = colors[ self.get_bin_id(val,bins) ]
             ax.bar( id, val, color=color )
 
+        # Fine tunning the axes
         ax.set_xlim((-.75,len(fit_data)))
+
+        # make space for annotation
+        (ymin,ymax)= ax.get_ylim()
+        ax.set_ylim((ymin,ymax+(ymax-ymin)*0.15))
+
         (xmin,xmax)= ax.get_xlim()
         (ymin,ymax)= ax.get_ylim()
 
@@ -1532,9 +1538,15 @@ class Surge:
             if group_id == len(bins.keys())-1:
                 ax.plot((-.75,len(fit_data)), [b[1],b[1]], 'k-.',linewidth=0.75 )
 
-        #label='mean: %2.1f; std: %2.1f (%2.1f %%)'%\
-        #                (mean,std,std/mean*100))
-        #ax.plot( )
+        # Annotation
+        annot='mean: %2.1f; std: %2.1f (%2.1f %%)'%(mean,std,std/mean*100)
+        dx = abs(xmax-xmin)
+        xtext = xmin + dx*0.02
+
+        dy = abs(ymax-ymin)
+        ytext = ymin + dy*0.90
+
+        ax.text(xtext, ytext, annot, fontsize=16)
 
         plt.xticks( range(len(states)), [state for (state,val) in sorted_list],
                 rotation=80,fontsize=16)
@@ -1543,8 +1555,6 @@ class Surge:
         ax.set_ylabel('Surge Period [day]',fontsize=16)
         ax.set_xlabel('',fontsize=20)
         ax.xaxis.grid(True,linestyle='-',which='major',color='lightgrey',alpha=0.9)
-        #plt.legend(loc='best',fontsize=14)
-
         (key,data)=fit_data[0]
         if data[0] in self.state_names:
             data_name = 'US States'

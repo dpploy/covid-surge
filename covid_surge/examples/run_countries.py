@@ -22,7 +22,7 @@ def main():
     g_surge.end_date = '4/20/20'   # set end date wanted
     g_surge.end_date = None        # get all the data available
     g_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
-    g_surge.min_n_cases_abs = 5000  # min # of absolute cases for analysis
+    g_surge.min_n_cases_abs = 2500  # min # of absolute cases for analysis
 
     print('# of countries: ',g_surge.cases.shape[1])
     print('# of days:      ',g_surge.cases.shape[0])
