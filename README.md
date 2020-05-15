@@ -1,6 +1,10 @@
 # covid-surge
 COVID-19 surge period calculation and clustering for communities afflicted by the corona virus SARS-CoV-2.
 
+  + [University of Massachusetts Lowell](https://www.uml.edu/), Spring 2020
+  + [Dept. of Chemical Engineering](https://www.uml.edu/Engineering/Chemical/) (Nuclear Program)
+  + [Prof. Valmor F. de Almeida](https://www.uml.edu/Engineering/Chemical/faculty/de-Almeida-Valmor.aspx) (valmor_dealmeida@uml.edu)
+   
 [![NBViewer](https://github.com/jupyter/design/blob/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.jupyter.org/github/dpploy/covid-surge/tree/master/notebooks/)
 
 This development is in progress: test using [PyPI](https://pypi.org/project/covid-surge/).
