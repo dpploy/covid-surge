@@ -105,7 +105,7 @@ class Surge:
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days, __set_ignore_last_n_days, None, None)
 
-    def __get_covid_us_data(self, type='deaths' ):
+    def __get_covid_us_data(self, type='deaths', save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
 
@@ -129,14 +129,15 @@ class Surge:
         if type == 'deaths':
 
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
-            #df.to_html('covid_19_deaths.html')
+            if save_html:
+                df.to_html('covid_19_deaths.html')
 
         elif type == 'confirmed':
 
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
             df_pop = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
-            #df.to_html('covid_19_deaths.html')
-            #df.to_html('covid_19_confirmed.html')
+            if save_html:
+                df.to_html('covid_19_confirmed.html')
 
         else:
             assert True, 'invalid query type: %r (valid: "deaths", "confirmed"'%(type)
@@ -180,7 +181,8 @@ class Surge:
 
         return ( state_names, population, dates, cases )
 
-    def __get_covid_global_data(self, type='deaths', distribution=True, cumulative=False ):
+    def __get_covid_global_data(self, type='deaths', 
+            distribution=True, cumulative=False, save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
 
@@ -214,7 +216,8 @@ class Surge:
 
         if type == 'deaths':
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
-            #df.to_html('covid_19_global_deaths.html')
+            if save_html:
+                df.to_html('covid_19_global_deaths.html')
 
         else:
             assert True, 'invalid query type: %r (valid: "deaths"'%(type)
