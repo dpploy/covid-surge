@@ -29,7 +29,7 @@ def main():
     print('*                        Single State                              *')
     print('********************************************************************')
 
-    name = 'New York'
+    name = 'Massachusetts'
     print(name)
     print('')
 

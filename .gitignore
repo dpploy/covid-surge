@@ -7,6 +7,7 @@ covid_surge/examples/*.png
 notebooks/*.png
 *.swp
 *.DS_Store
+*.html
 
 # C extensions
 *.so

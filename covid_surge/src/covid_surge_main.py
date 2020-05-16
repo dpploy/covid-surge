@@ -14,7 +14,9 @@ import matplotlib.pyplot as plt
 
 class Surge:
 
-    def __init__(self, locale='US', log_filename='covid_surge'):
+    def __init__(self, locale='US', countywise=False,
+            save_all_original_data_html=False, 
+            log_filename='covid_surge'):
 
         self.locale = locale
 
@@ -26,13 +28,21 @@ class Surge:
 
         self.deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
-        self.state_names   = list()
+        self.state_names        = list()
+        self.state_county_names = list()
         self.populations   = None
         self.country_names = list()
 
         if self.locale == 'US':
-            ( state_names, populations, dates, cases ) = \
-                                                      self.__get_covid_us_data()
+            if countywise:
+                ( state_names, county_names, populations, dates, cases ) = \
+                self.__get_covid_us_data( countywise=countywise,
+                            save_html=save_all_original_data_html )
+                self.state_county_names = county_names
+            else:
+                ( state_names, populations, dates, cases ) = \
+                self.__get_covid_us_data( save_html=save_all_original_data_html )
+
             assert dates.size == cases.shape[0]
             assert len(state_names) == cases.shape[1]
 
@@ -105,7 +115,8 @@ class Surge:
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days, __set_ignore_last_n_days, None, None)
 
-    def __get_covid_us_data(self, type='deaths', save_html=False ):
+    def __get_covid_us_data(self, statewise=True, countywise=False,
+            case_type='deaths', save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
 
@@ -113,7 +124,7 @@ class Surge:
 
         Parameters
         ----------
-        type:  str, optional
+        case_type:  str, optional
                 Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
                 Default: 'deaths'.
 
@@ -124,15 +135,18 @@ class Surge:
 
         '''
 
+        if countywise:
+            statewise = False
+
         import pandas as pd
 
-        if type == 'deaths':
+        if case_type == 'deaths':
 
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
             if save_html:
                 df.to_html('covid_19_deaths.html')
 
-        elif type == 'confirmed':
+        elif case_type == 'confirmed':
 
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
             df_pop = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
@@ -140,11 +154,11 @@ class Surge:
                 df.to_html('covid_19_confirmed.html')
 
         else:
-            assert True, 'invalid query type: %r (valid: "deaths", "confirmed"'%(type)
+            assert True, 'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type)
 
         df = df.drop(['UID','iso2','iso3','Combined_Key','code3','FIPS','Lat', 'Long_','Country_Region'],axis=1)
 
-        df = df.rename(columns={'Province_State':'state/province','Admin2':'city'})
+        df = df.rename(columns={'Province_State':'state/province','Admin2':'county'})
 
         import numpy as np
 
@@ -153,7 +167,8 @@ class Surge:
         state_names_tmp = list()
 
         for (i,istate) in enumerate(df['state/province']):
-            if istate.strip() == 'Wyoming' and df.loc[i,'city']=='Weston':
+
+            if istate.strip() == 'Wyoming' and df.loc[i,'county']=='Weston':
                 break
             state_names_tmp.append(istate)
 
@@ -164,24 +179,68 @@ class Surge:
 
         dates = np.array(list(df.columns[3:]))
 
-        population = [0]*len(state_names)
-        cases = np.zeros( (len(df.columns[3:]),len(state_names)), dtype=np.float64)
+        if statewise:
 
-        for (i,istate) in enumerate(df['state/province']):
-            if istate.strip() == 'Wyoming' and df.loc[i,'city']=='Weston':
-                break
+            population = [0]*len(state_names)
 
-            state_id = state_names.index(istate)
-            if type == 'confirmed':
-                population[state_id] += int(df_pop.loc[i,'Population'])
-            else:
-                population[state_id] += int(df.loc[i,'Population'])
+            cases = np.zeros( (len(df.columns[3:]), len(state_names)),
+                    dtype=np.float64)
 
-            cases[:,state_id] += np.array(list(df.loc[i, df.columns[3:]]))
+            for (i,istate) in enumerate(df['state/province']):
 
-        return ( state_names, population, dates, cases )
+                if istate.strip() == 'Wyoming' and\
+                    (df.loc[i,'county']).strip() == 'Weston':
+                    break
 
-    def __get_covid_global_data(self, type='deaths', 
+                state_id = state_names.index(istate)
+
+                if case_type == 'confirmed':
+                    population[state_id] += int(df_pop.loc[i,'Population'])
+                else:
+                    population[state_id] += int(df.loc[i,'Population'])
+
+                # Add all counties/city/towns columnwise states
+                cases[:,state_id] += np.array(list(df.loc[i, df.columns[3:]]))
+
+            return ( state_names, population, dates, cases )
+
+        if countywise:
+
+            county_names      = dict() # per state
+            county_population = dict() # per state
+            county_cases      = dict() # per state
+
+
+            for (i,istate) in enumerate(df['state/province']):
+
+                if istate.strip() == 'Wyoming' and\
+                    (df.loc[i,'county']).strip() == 'Weston':
+                    break
+
+                state_id = state_names.index(istate)
+                county = df.loc[i,'county']
+
+                if istate in county_names.keys():
+                    county_names[istate].append( county )
+                else:
+                    county_names[istate] = [county]
+
+                cases = np.zeros( (len(df.columns[3:]), len(state_names)),
+                                  dtype=np.float64 )
+
+                cases[:,state_id] = np.array(list(df.loc[i, df.columns[3:]]))
+
+                if istate in county_names.keys():
+                    county_cases[istate].append( cases )
+                else:
+                    county_cases[istate] = [cases]
+                    cases[istate] = county_cases
+
+
+            return ( state_names, county_names, population, dates, cases )
+
+
+    def __get_covid_global_data(self, case_type='deaths', 
             distribution=True, cumulative=False, save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
@@ -190,7 +249,7 @@ class Surge:
 
         Parameters
         ----------
-        type: str, optional
+        case_type: str, optional
             Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
             Default: 'deaths'.
 
@@ -214,13 +273,13 @@ class Surge:
 
         import pandas as pd
 
-        if type == 'deaths':
+        if case_type == 'deaths':
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
             if save_html:
                 df.to_html('covid_19_global_deaths.html')
 
         else:
-            assert True, 'invalid query type: %r (valid: "deaths"'%(type)
+            assert True, 'invalid query type: %r (valid: "deaths"'%(case_type)
 
         df = df.drop(['Lat', 'Long'],axis=1)
         df = df.rename(columns={'Province/State':'state/province','Country/Region':'country/region'})

@@ -9,7 +9,6 @@ Expand on this later.
 '''
 
 import numpy as np
-import sys
 
 from covid_surge import Surge
 
