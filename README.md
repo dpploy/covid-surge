@@ -26,7 +26,7 @@ This development is in progress...
 | [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
 | Distribution of mortality critical surge periods for the countries with the most evolved epidemics. The range of the critical period for the countries is between 17 to 29 days. That is, the number of days that stresses the health system the most. Countries to the right are less stressed than countries to the left. The colored bar plot shows countries grouped by 2-day bin widths. |
 | The world average critical surge period at the date indicated by the plot is **22 days with a 3-day standard deviation**.|
-| *To update this plot with live data, run the Jupyter Notebook examples in the notebook directory. Or run Binder by clicking on the Binder badge above.* |
+| *To update this plot with live data, [run this Jupyter Notebook](https://nbviewer.jupyter.org/github/dpploy/covid-surge/blob/master/notebooks/countries-surge.ipynb)* |
 |-------------------------------------------------------------------------------------------------------------------------|
 |<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/us_states_group_surge_periods.png" title="Surge Periods"> |
 | [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
