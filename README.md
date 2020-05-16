@@ -18,6 +18,8 @@ COVID-19 surge period calculation and clustering for communities afflicted by th
 
 This development is in progress...
 
+-----------
+
 |   |
 |:---|
 |<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/global_group_surge_periods.png" title="Surge Periods"> |
