@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 
 class Surge:
 
-    def __init__(self, locale='US', sub_locale=None, countywise=False,
-            save_all_original_data_html=False, 
-            log_filename='covid_surge'):
+    def __init__( self, locale='US', sub_locale=None, 
+                  save_all_original_data_html=False, 
+                  log_filename='covid_surge' ):
         '''
         Parameters
         ----------
@@ -25,9 +25,9 @@ class Surge:
             US will store the states data. Global will store all countries data.
             Default: 'US'.
         sub_locale: str
-            The sub-place data is retrived from. This dependens of `locale`.
+            The sub-place data is retrived from. This depends of `locale`.
             If `locale` is US, then `sub_locale` must be one of the state
-            names.
+            names. There is no `sub_locale` for countries.
         '''
 
         if locale=='global':
@@ -95,7 +95,7 @@ class Surge:
 
         if self.__end_date is not None:
             assert isinstance(self.__end_date,str)
-            assert isinstance(self.__cases,np.ndarray):
+            assert isinstance(self.__cases,np.ndarray)
             (id,) = np.where(self.dates==self.__end_date)
             assert id.size == 1
             self.dates = np.copy(self.dates[:id[0]+1])

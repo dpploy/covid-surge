@@ -16,7 +16,7 @@ from covid_surge import Surge
 def main():
 
     # Get US surge data
-    c_surge = Surge(countywise=True)
+    c_surge = Surge(locale='US',sub_locale='Massachusetts')
 
 #    print(county_surge.state_names)
 #    print(c_surge.state_county_names)
