@@ -27,7 +27,7 @@ def main():
     print('# of days:      ',g_surge.cases.shape[0])
 
     # Fit data to all states
-    fit_data = g_surge.multi_fit_data('countries',blocked_list=['China'],
+    fit_data = g_surge.multi_fit_data(blocked_list=['China'],
             verbose=True, plot=True, save_plots=True)
 
     # Plot all data in one plot

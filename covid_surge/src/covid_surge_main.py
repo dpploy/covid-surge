@@ -14,11 +14,27 @@ import matplotlib.pyplot as plt
 
 class Surge:
 
-    def __init__(self, locale='US', countywise=False,
+    def __init__(self, locale='US', sub_locale=None, countywise=False,
             save_all_original_data_html=False, 
             log_filename='covid_surge'):
+        '''
+        Parameters
+        ----------
+        locale: str
+            The place data is retrieved from. Values: 'US' or 'global'.
+            US will store the states data. Global will store all countries data.
+            Default: 'US'.
+        sub_locale: str
+            The sub-place data is retrived from. This dependens of `locale`.
+            If `locale` is US, then `sub_locale` must be one of the state
+            names.
+        '''
 
-        self.locale = locale
+        if locale=='global':
+            assert sub_locale is None
+
+        self.locale     = locale
+        self.sub_locale = sub_locale
 
         self.__end_date           = None
         self.__ignore_last_n_days = 0
@@ -28,31 +44,30 @@ class Surge:
 
         self.deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
-        self.state_names        = list()
-        self.state_county_names = list()
-        self.populations   = None
-        self.country_names = list()
+        self.populations = None
 
         if self.locale == 'US':
-            if countywise:
+            if self.sub_locale:
                 ( state_names, county_names, populations, dates, cases ) = \
-                self.__get_covid_us_data( countywise=countywise,
+                self.__get_covid_us_data( self.sub_locale,
                             save_html=save_all_original_data_html )
+
                 self.state_county_names = county_names
+                #TODO sanity checks
             else:
                 ( state_names, populations, dates, cases ) = \
                 self.__get_covid_us_data( save_html=save_all_original_data_html )
 
-            assert dates.size == cases.shape[0]
-            assert len(state_names) == cases.shape[1]
+                assert dates.size == cases.shape[0]
+                assert len(state_names) == cases.shape[1]
 
-            self.state_names = state_names
+            self.names = state_names
             self.populations = populations
 
         elif self.locale == 'global':
             ( country_names, dates, cases ) = \
                                    self.__get_covid_global_data(cumulative=True)
-            self.country_names = country_names
+            self.names = country_names
 
         else:
             assert False, 'Bad locale: %r (US, global)'%(self.locale)
@@ -68,6 +83,7 @@ class Surge:
 
         self.cases = np.copy(self.__cases)
         self.dates = np.copy(self.__dates)
+
         return
 
     def __set_end_date(self, v):
@@ -79,6 +95,7 @@ class Surge:
 
         if self.__end_date is not None:
             assert isinstance(self.__end_date,str)
+            assert isinstance(self.__cases,np.ndarray):
             (id,) = np.where(self.dates==self.__end_date)
             assert id.size == 1
             self.dates = np.copy(self.dates[:id[0]+1])
@@ -207,9 +224,8 @@ class Surge:
         if countywise:
 
             county_names      = dict() # per state
-            county_population = dict() # per state
             county_cases      = dict() # per state
-
+            county_population = dict() # per state
 
             for (i,istate) in enumerate(df['state/province']):
 
@@ -225,19 +241,14 @@ class Surge:
                 else:
                     county_names[istate] = [county]
 
-                cases = np.zeros( (len(df.columns[3:]), len(state_names)),
-                                  dtype=np.float64 )
+                cases = np.array(list(df.loc[i, df.columns[3:]]),dtype=np.float64)
 
-                cases[:,state_id] = np.array(list(df.loc[i, df.columns[3:]]))
-
-                if istate in county_names.keys():
+                if istate in county_cases.keys():
                     county_cases[istate].append( cases )
                 else:
-                    county_cases[istate] = [cases]
-                    cases[istate] = county_cases
+                    county_cases[istate] = [cases] # list of 1-d numpy arrays
 
-
-            return ( state_names, county_names, population, dates, cases )
+            return ( state_names, county_names, county_population, dates, county_cases )
 
 
     def __get_covid_global_data(self, case_type='deaths', 
@@ -315,23 +326,23 @@ class Surge:
 
         return ( country_names, dates, cases )
 
-    def plot_covid_data(self, name, save=False):
+    def plot_covid_data(self, name=None, save=False):
 
         population = None
 
-        if name == 'US' and self.locale == 'US':
-            # Combine all column data in the surge
+        if name is None: # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
-            population = np.sum(self.populations)
-        elif name in self.state_names:
-            state_id = self.state_names.index(name)
-            population = self.populations[state_id]
-            cases_plot = self.cases[:,state_id]
-        elif name in self.country_names:
-            country_id = self.country_names.index(name)
-            cases_plot = self.cases[:,country_id]
+            if self.populations:
+                population = np.sum(self.populations)
+        elif name in self.names:
+            name_id = self.names.index(name)
+            if self.populations:
+                population = self.populations[name_id]
+            cases_plot = self.cases[:,name_id]
         else:
-            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
+            assert name in self.names,\
+            '\n\n Name: %r not in %r'%(name,self.names)
+
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
@@ -348,11 +359,15 @@ class Surge:
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
+        if name is None:
+            locale = self.locale+' Combined '
+        else:
+            locale = name
         if population:
-            title = 'COVID-19 in '+name+'; population: '+str(population)+\
+            title = 'COVID-19 in '+locale+'; population: '+str(population)+\
                     '; deaths per 100k/y: '+str(deaths_100k_y)
         else:
-            title = 'COVID-19 in '+name
+            title = 'COVID-19 in '+locale
 
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
@@ -371,7 +386,7 @@ class Surge:
         plt.grid(True)
         plt.tight_layout(1)
 
-        filename = name.lower().strip().split(' ')
+        filename = locale.lower().strip().split(' ')
         if len(filename) == 1:
             filename = filename[0]
         else:
@@ -389,19 +404,16 @@ class Surge:
 
         return
 
-    def fit_data(self, name ):
+    def fit_data(self, name=None):
 
-        if name == 'US' and self.locale == 'US':
-            # Combine all column data in the surge
-            cases      = np.sum(self.cases,axis=1)
-        elif name in self.state_names:
-            state_id = self.state_names.index(name)
-            cases = self.cases[:,state_id]
-        elif name in self.country_names:
-            country_id = self.country_names.index(name)
-            cases = self.cases[:,country_id]
+        if name is None: # Combine all column data in the surge
+            cases = np.sum(self.cases,axis=1)
+        elif name in self.names:
+            name_id = self.names.index(name)
+            cases = self.cases[:,name_id]
         else:
-            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
+            assert name in self.names,\
+                '\n\n Name: %r not in %r'%(name,self.names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
@@ -439,7 +451,7 @@ class Surge:
 
         return param_vec
 
-    def plot_covid_nlfit(self, name, param_vec, 
+    def plot_covid_nlfit(self, param_vec, name=None, 
             save=False, plot_prime=False, plot_double_prime=False,
             option='dates', ylabel='null-ylabel',
             legend='null-legend', title='null-title', formula='null-formula'):
@@ -448,19 +460,18 @@ class Surge:
 
         population = None
 
-        if name == 'US' and self.locale == 'US':
-            # Combine all column data in the surge
+        if name is None: # Combine all column data in the surge
             cases_plot = np.sum(self.cases,axis=1)
-            population = np.sum(self.populations)
-        elif name in self.state_names:
-            state_id = self.state_names.index(name)
-            population = self.populations[state_id]
-            cases_plot = self.cases[:,state_id]
-        elif name in self.country_names:
-            country_id = self.country_names.index(name)
-            cases_plot = self.cases[:,country_id]
+            if self.populations:
+                population = np.sum(self.populations)
+        elif name in self.names:
+            name_id = self.names.index(name)
+            if self.populations:
+                population = self.populations[name_id]
+            cases_plot = self.cases[:,name_id]
         else:
-            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
+            assert name in self.names,\
+                '\n\n Name: %r not in %r'%(name,self.names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
@@ -475,11 +486,15 @@ class Surge:
                     cases_plot[-1]*100000/population * 365/cases_plot.size, 1
                              )
 
+        if name is None:
+            locale = self.locale+' Combined '
+        else:
+            locale = name
         if population:
-            title = 'COVID-19 in '+name+'; population: '+str(population)+\
+            title = 'COVID-19 in '+locale+'; population: '+str(population)+\
                 '; deaths per 100k/y: '+str(deaths_100k_y)
         else:
-            title = 'COVID-19 in '+name
+            title = 'COVID-19 in '+locale
 
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
@@ -495,7 +510,7 @@ class Surge:
 
         cases_fit = self.sigmoid_func( dates_fit, param_vec )
 
-        plt.plot( dates_fit,cases_fit,'b-',label='covid-surge fitting' )
+        plt.plot( dates_fit,cases_fit,'b-',label='Covid-surge fitting' )
 
         if option == 'dates':
             plt.xticks( range(len(dates_plot)),dates_plot,rotation=60,fontsize=14)
@@ -508,7 +523,7 @@ class Surge:
         plt.ylabel(ylabel,fontsize=16)
         plt.title(title,fontsize=20)
 
-        (tc,dtc) = self.critical_times(name,param_vec,verbose=False)
+        (tc,dtc) = self.critical_times(param_vec,name,verbose=False)
 
         time_max_prime = tc
         time_min_max_double_prime = [tc-dtc,tc+dtc]
@@ -587,7 +602,7 @@ class Surge:
         plt.grid(True)
         plt.tight_layout(1)
 
-        filename = name.lower().strip().split(' ')
+        filename = locale.lower().strip().split(' ')
         if len(filename) == 1:
             filename = filename[0]
         else:
@@ -628,7 +643,7 @@ class Surge:
 
             cases_fit = fit_func_prime( dates_fit, param_vec )
 
-            plt.plot(dates_fit,cases_fit,'b-',label='Fitting derivative' )
+            plt.plot(dates_fit,cases_fit,'b-',label='Covid-surge fitting derivative' )
 
             if time_max_prime is not None:
 
@@ -652,7 +667,7 @@ class Surge:
             plt.legend(loc='best',fontsize=12)
             plt.tight_layout(1)
 
-            filename = name.lower().strip().split(' ')
+            filename = locale.lower().strip().split(' ')
             if len(filename) == 1:
                 filename = filename[0]
             else:
@@ -724,7 +739,7 @@ class Surge:
             plt.grid(True)
             plt.tight_layout(1)
 
-            filename = name.lower().strip().split(' ')
+            filename = locale.lower().strip().split(' ')
             if len(filename) == 1:
                 filename = filename[0]
             else:
@@ -920,7 +935,7 @@ class Surge:
 
         return (param_vec, r2, k)
 
-    def critical_times(self, name, param_vec, verbose=False):
+    def critical_times(self, param_vec, name=None, verbose=False):
 
         a0 = param_vec[0]
         a1 = param_vec[1]
@@ -928,18 +943,16 @@ class Surge:
 
         import math
 
-        if name == 'US' and self.locale == 'US':
-            # Combine all column data in the surge
+        if name is None: # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
-        elif name in self.state_names:
-            state_id = self.state_names.index(name)
-            population = self.populations[state_id]
-            cases = self.cases[:,state_id]
-        elif name in self.country_names:
-            country_id = self.country_names.index(name)
-            cases = self.cases[:,country_id]
+        elif name in self.names:
+            name_id = self.names.index(name)
+            if self.populations:
+                population = self.populations[name_id]
+            cases = self.cases[:,name_id]
         else:
-            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
+            assert name in self.names, \
+              '\n\n Name: %r not in %r'%(name,self.names)
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases>0)
@@ -1041,22 +1054,20 @@ class Surge:
 
         assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
 
-    def error_analysis(self, name, param_vec, tc, dtc):
+    def error_analysis(self, param_vec, tc, dtc, name=None):
 
         population = None
 
-        if name == 'US' and self.locale == 'US':
-            # Combine all column data in the surge
+        if name is None: # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
-        elif name in self.state_names:
-            state_id = self.state_names.index(name)
-            population = self.populations[state_id]
-            cases = self.cases[:,state_id]
-        elif name in self.country_names:
-            country_id = self.country_names.index(name)
-            cases = self.cases[:,country_id]
+        elif name in self.names:
+            name_id = self.names.index(name)
+            if self.populations:
+                population = self.populations[name_id]
+            cases = self.cases[:,name_id]
         else:
-            assert name in self.state_names or name in self.country_names, 'Name: %r not in %r or %r'%(name,self.state_names,self.country_names)
+            assert name in self.names,\
+                 'Name: %r not in %r'%(name,self.names)
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
@@ -1113,17 +1124,11 @@ class Surge:
 
         return
 
-    def multi_fit_data(self, name, 
+    def multi_fit_data(self, 
             blocked_list=[],
             verbose=False, plot=False, save_plots=False):
 
-        if name == 'states':
-            names = self.state_names
-        elif name == 'countries':
-            names = self.country_names
-        else:
-            assert False,'Bad name %r (states or countries)'%name
-
+        names = self.names
         cases = self.cases
 
         # Sort the states by descending number of total cases
@@ -1233,7 +1238,7 @@ class Surge:
                 print('')
 
             # Compute critical times
-            (tc,dtc) = self.critical_times(name,param_vec,verbose=verbose)
+            (tc,dtc) = self.critical_times(param_vec,name,verbose=verbose)
 
             if tc > times[-1]:
                 if verbose:
@@ -1256,7 +1261,7 @@ class Surge:
 
 
             if plot:
-                self.plot_covid_nlfit( name, param_vec, save=save_plots )
+                self.plot_covid_nlfit( param_vec, name, save=save_plots )
 
 
             n_last_days = 7
@@ -1273,7 +1278,7 @@ class Surge:
 
             # Report erros
             if verbose:
-                self.error_analysis(name, param_vec, tc, dtc)
+                self.error_analysis(param_vec, tc, dtc, name)
 
             # 60-day look-ahead
             n_prediction_days = 60
@@ -1371,10 +1376,10 @@ class Surge:
 
             ax1.grid(True)
 
-            (key,data)=fit_data[0]
-            if data[0] in self.state_names:
+            data_name = 'null-data-name'
+            if self.locale == 'US':
                 data_name = 'US States'
-            if data[0] in self.country_names:
+            elif self.locale == 'global':
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for Top '+
@@ -1423,10 +1428,10 @@ class Surge:
 
             ax1.grid(True)
 
-            (key,data)=fit_data[0]
-            if data[0] in self.state_names:
+            data_name = 'null-data-name'
+            if self.locale == 'US':
                 data_name = 'US States'
-            if data[0] in self.country_names:
+            elif self.locale == 'global':
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for Top '+
@@ -1533,10 +1538,10 @@ class Surge:
 
             ax1.grid(True)
 
-            (key,data)=fit_data[0]
-            if data[0] in self.state_names:
+            data_name = 'null-data-name'
+            if self.locale == 'US':
                 data_name = 'US States'
-            if data[0] in self.country_names:
+            elif self.locale == 'global':
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for Top '+
@@ -1611,10 +1616,11 @@ class Surge:
         ax.set_ylabel('Surge Period [day]',fontsize=16)
         ax.set_xlabel('',fontsize=20)
         ax.xaxis.grid(True,linestyle='-',which='major',color='lightgrey',alpha=0.9)
-        (key,data)=fit_data[0]
-        if data[0] in self.state_names:
+
+        data_name = 'null-data-name'
+        if self.locale == 'US':
             data_name = 'US States'
-        if data[0] in self.country_names:
+        elif self.locale == 'global':
             data_name = 'Countries'
 
         plt.title('COVID-19 Pandemic 2020 for Top '+

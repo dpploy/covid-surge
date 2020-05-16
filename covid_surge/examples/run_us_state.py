@@ -53,14 +53,14 @@ def main():
     print('')
 
     # Plot the fit data to model function
-    us_surge.plot_covid_nlfit(name, param_vec, save=True,
+    us_surge.plot_covid_nlfit(param_vec, name, save=True,
             plot_prime=True, plot_double_prime=True)
 
     # Report critical times
-    (tc,dtc) = us_surge.critical_times( name, param_vec, verbose=True )
+    (tc,dtc) = us_surge.critical_times( param_vec, name, verbose=True )
 
     # Report errors 
-    us_surge.error_analysis( name, param_vec, tc, dtc )
+    us_surge.error_analysis( param_vec, tc, dtc, name )
 
     # 60-day look-ahead
     n_prediction_days = 60

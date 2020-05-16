@@ -15,7 +15,7 @@ from covid_surge import Surge
 def main():
 
     # Get global surge data
-    g_surge = Surge('global')
+    g_surge = Surge(locale='global')
 
     print('# of countries: ',g_surge.cases.shape[1])
     print('# of days:      ',g_surge.cases.shape[0])
@@ -29,7 +29,7 @@ def main():
     print('*                        Single Country                            *')
     print('********************************************************************')
 
-    name = 'Spain'
+    name = 'US'
     print(name)
     print('')
 
@@ -53,14 +53,14 @@ def main():
     print('')
 
     # Plot the fit data to model function
-    g_surge.plot_covid_nlfit(name, param_vec, save=True,
-            plot_prime=True, plot_double_prime=True)
+    g_surge.plot_covid_nlfit( param_vec, name, save=True,
+            plot_prime=True, plot_double_prime=True )
 
     # Report critical times
-    (tc,dtc) = g_surge.critical_times( name, param_vec, verbose=True )
+    (tc,dtc) = g_surge.critical_times( param_vec, name, verbose=True )
 
     # Report errors 
-    g_surge.error_analysis( name, param_vec, tc, dtc )
+    g_surge.error_analysis( param_vec, tc, dtc, name )
 
     # 60-day look-ahead
     n_prediction_days = 60

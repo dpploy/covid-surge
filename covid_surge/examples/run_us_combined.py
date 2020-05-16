@@ -14,7 +14,7 @@ from covid_surge import Surge
 
 def main():
 
-    # Get US surge data
+    # Get all US surge data including states.
     us_surge = Surge()
 
     # Set parameters
@@ -33,33 +33,31 @@ def main():
     print('# of days:           ',us_surge.dates.shape[0])
 
     # Plot the data
-    us_surge.plot_covid_data( 'US', save=True )
+    us_surge.plot_covid_data( save=True )
 
     n_last_days = 7
     print('')
-    print('Last %i days'%n_last_days,
-          ' # of cumulative cases = ',
+    print('Last %i days'%n_last_days, ' # of cumulative cases = ',
           np.sum(us_surge.cases,axis=1)[-n_last_days:])
-    print('Last %i days'%n_last_days,
-          ' # of added cases =',
+    print('Last %i days'%n_last_days, ' # of added cases =',
           [b-a for (b,a) in zip( np.sum(us_surge.cases,axis=1)[-(n_last_days-1):],
                                np.sum(us_surge.cases,axis=1)[-n_last_days:-1] )
         ])
     print('')
 
     # Fit data to model function
-    param_vec = us_surge.fit_data( 'US' )
+    param_vec = us_surge.fit_data()
     print('')
 
-    # Plot the fit data to model function
-    us_surge.plot_covid_nlfit('US', param_vec, save=True,
+    # Plot the fit data to model function of combined US data
+    us_surge.plot_covid_nlfit( param_vec, save=True,
             plot_prime=True, plot_double_prime=True )
 
     # Report critical times
-    (tc,dtc) = us_surge.critical_times( 'US', param_vec, verbose=True )
+    (tc,dtc) = us_surge.critical_times( param_vec, verbose=True )
 
     # Report errors 
-    us_surge.error_analysis( 'US', param_vec, tc, dtc )
+    us_surge.error_analysis( param_vec, tc, dtc )
 
     # 60-day look-ahead
     n_prediction_days = 60
