@@ -56,6 +56,22 @@ def color_map( num_colors ):
 
     return color_map
 #*********************************************************************************
+def filename(name):
+
+    filename = name.lower().strip().split(' ')
+
+    if len(filename) == 1:
+        filename = filename[0]
+    else:
+        tmp = filename[0]
+        for (i,v) in enumerate(filename):
+            if i == 0:
+                continue
+            tmp = tmp+'_'+v
+        filename = tmp
+
+    return filename
+
 def get_covid_19_us_data( type='deaths' ):
     '''
     Load COVID-19 pandemic cumulative data from:

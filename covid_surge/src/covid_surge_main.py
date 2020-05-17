@@ -406,20 +406,15 @@ class Surge:
         plt.grid(True)
         plt.tight_layout(1)
 
-        filename = locale.lower().strip().split(' ')
-        if len(filename) == 1:
-            filename = filename[0]
-        else:
-            tmp = filename[0]
-            for (i,v) in enumerate(filename):
-                if i == 0:
-                    continue
-                tmp = tmp+'_'+v
-            filename = tmp
-
         plt.show()
         if save:
-            plt.savefig('data_'+filename+'.png', dpi=100)
+            from covid_surge import filename
+            if self.sub_locale is None:
+                stem = filename(self.locale)
+            else:
+                stem = filename(self.locale+'_'+self.sub_locale)
+            stem += '_'+filename(locale)
+            plt.savefig('data_'+stem+'.png', dpi=100)
         plt.close()
 
         return
@@ -622,20 +617,15 @@ class Surge:
         plt.grid(True)
         plt.tight_layout(1)
 
-        filename = locale.lower().strip().split(' ')
-        if len(filename) == 1:
-            filename = filename[0]
-        else:
-            tmp = filename[0]
-            for (i,v) in enumerate(filename):
-                if i == 0:
-                    continue
-                tmp = tmp+'_'+v
-            filename = tmp
-
         plt.show()
         if save:
-            plt.savefig('data_fit_'+filename+'_0'+'.png', dpi=100)
+            from covid_surge import filename
+            if self.sub_locale is None:
+                stem = filename(self.locale)
+            else:
+                stem = filename(self.locale+'_'+self.sub_locale)
+            stem += '_'+filename(locale)
+            plt.savefig('fit_'+stem+'_0'+'.png', dpi=100)
 
         plt.close()
 
@@ -687,20 +677,15 @@ class Surge:
             plt.legend(loc='best',fontsize=12)
             plt.tight_layout(1)
 
-            filename = locale.lower().strip().split(' ')
-            if len(filename) == 1:
-                filename = filename[0]
-            else:
-                tmp = filename[0]
-                for (i,v) in enumerate(filename):
-                    if i == 0:
-                        continue
-                    tmp = tmp+'_'+v
-                filename = tmp
-
             plt.show()
             if save:
-                plt.savefig('fit_'+filename+'_1'+'.png', dpi=100)
+                from covid_surge import filename
+                if self.sub_locale is None:
+                    stem = filename(self.locale)
+                else:
+                    stem = filename(self.locale+'_'+self.sub_locale)
+                stem += '_'+filename(locale)
+                plt.savefig('fit_'+stem+'_1'+'.png', dpi=100)
             plt.close()
 
         # Additional plot for second derivative 
@@ -759,20 +744,15 @@ class Surge:
             plt.grid(True)
             plt.tight_layout(1)
 
-            filename = locale.lower().strip().split(' ')
-            if len(filename) == 1:
-                filename = filename[0]
-            else:
-                tmp = filename[0]
-                for (i,v) in enumerate(filename):
-                    if i == 0:
-                        continue
-                    tmp = tmp+'_'+v
-                filename = tmp
-
             plt.show()
             if save:
-                plt.savefig('fit_'+filename+'_2'+'.png', dpi=100)
+                from covid_surge import filename
+                if self.sub_locale is None:
+                    stem = filename(self.locale)
+                else:
+                    stem = filename(self.locale+'_'+self.sub_locale)
+                stem += '_'+filename(locale)
+                plt.savefig('fit_'+stem+'_2.png', dpi=100)
             plt.close()
 
         return
@@ -1265,7 +1245,9 @@ class Surge:
                     print('')
                     print('WARNING: Time at peak surge rate exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                assert int(tc-dtc)+1 >= dates.size
+                assert int(tc-dtc)+1 <= dates.size,\
+                        '\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc-dtc)+1,dates.size,times.size)
+
                 names_no_peak_surge_period.append( (name, tc-dtc, dates[int(tc-dtc)+1], dtc) )
                 continue
 
@@ -1274,7 +1256,8 @@ class Surge:
                     print('')
                     print('WARNING: Time at mininum acceleration exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                assert int(tc)+1 >= dates.size
+                assert int(tc)+1 <= dates.size,\
+                        '\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc)+1,dates.size,times.size)
                 names_past_peak_surge_period.append( (name, tc, dates[int(tc)+1], dtc) )
                 continue
 
@@ -1418,7 +1401,12 @@ class Surge:
 
             plt.show()
             if save:
-                plt.savefig('data_overlap'+'_0'+'.png', dpi=100)
+                from covid_surge import filename
+                if self.sub_locale is None:
+                    stem = filename(self.locale)
+                else:
+                    stem = filename(self.locale+'_'+self.sub_locale)
+                plt.savefig('data_'+stem+'_overlap'+'.png', dpi=100)
             plt.close()
 
 
@@ -1472,7 +1460,12 @@ class Surge:
 
             plt.show()
             if save:
-                plt.savefig('fit_overlap'+'_1'+'.png', dpi=100)
+                from covid_surge import filename
+                if self.sub_locale is None:
+                    stem = filename(self.locale)
+                else:
+                    stem = filename(self.locale+'_'+self.sub_locale)
+                plt.savefig('fit_'+stem+'_overlap'+'.png', dpi=100)
             plt.close()
 
         return
@@ -1584,7 +1577,12 @@ class Surge:
 
             plt.show()
             if save:
-                plt.savefig('fit_group_'+str(ig)+'.png', dpi=100)
+                from covid_surge import filename
+                if self.sub_locale is None:
+                    stem = filename(self.locale)
+                else:
+                    stem = filename(self.locale+'_'+self.sub_locale)
+                plt.savefig('fit_group_'+str(ig)+'_'+stem+'.png', dpi=100)
             plt.close()
 
         return
@@ -1667,7 +1665,13 @@ class Surge:
 
         plt.show()
         if save:
-            plt.savefig('group_surge_periods.png', dpi=100)
+            from covid_surge import filename
+            if self.sub_locale is None:
+                stem = filename(self.locale)
+            else:
+                stem = filename(self.locale+'_'+self.sub_locale)
+            plt.savefig('group_surge_periods_'+stem+'.png', dpi=100)
         plt.close()
 
         return
+

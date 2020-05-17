@@ -29,7 +29,7 @@ def main():
     print('*                             US                                   *')
     print('********************************************************************')
 
-    print('# of states/distric: ',len(us_surge.state_names))
+    print('# of states/distric: ',len(us_surge.names))
     print('# of days:           ',us_surge.dates.shape[0])
 
     # Plot the data
