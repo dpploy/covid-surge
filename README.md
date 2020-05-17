@@ -40,6 +40,8 @@ This development is in progress...
 | The average critical surge period at the date indicated by the plot is **20 days with a 3-day standard deviation**.|
 | *To update this plot with live data, [run this Jupyter Notebook](https://nbviewer.jupyter.org/github/dpploy/covid-surge/blob/master/notebooks/us-state-counties.ipynb).*  |
 |-------------------------------------------------------------------------------------------------------------------------|
+|<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/group_surge_periods_us_new_jersey.png" title="Surge Periods"> |
+| [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
+|-------------------------------------------------------------------------------------------------------------------------|
 |<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/group_surge_periods_us_massachusetts.png" title="Surge Periods"> |
 | [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
-
