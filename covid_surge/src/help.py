@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
+# Valmor F. de Almeida dealmeidavf@gmail.com
 def color_map( num_colors ):
     '''
     Nice colormap for plotting.

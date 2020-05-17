@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
+# Valmor F. de Almeida dealmeidavf@gmail.com
 '''
 Global COVID-19 surge period analysis.
 
