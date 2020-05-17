@@ -25,16 +25,11 @@ def main():
     c_surge.end_date = '4/20/20'   # set end date wanted
     c_surge.end_date = None        # get all the data available
     c_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
-    c_surge.min_n_cases_abs = 200  # min # of absolute cases for analysis
+    c_surge.min_n_cases_abs = 100  # min # of absolute cases for analysis
     c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
     # Fit data to all counties/cities
     fit_data = c_surge.multi_fit_data(verbose=True, plot=True, save_plots=True)
-
-    #print('')
-    #for (sort_key,data) in fit_data:
-    #    county = data[0]
-    #    print('%15s: surge period %1.2f [day]'%(county,sort_key))
 
     # Plot all data in one plot
     c_surge.plot_multi_fit_data( fit_data, 'experimental', save=True )

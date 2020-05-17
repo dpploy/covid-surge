@@ -1265,6 +1265,7 @@ class Surge:
                     print('')
                     print('WARNING: Time at peak surge rate exceeds time data.')
                     print('WARNING: Skipping this data set.')
+                assert int(tc-dtc)+1 >= dates.size
                 names_no_peak_surge_period.append( (name, tc-dtc, dates[int(tc-dtc)+1], dtc) )
                 continue
 
@@ -1273,6 +1274,7 @@ class Surge:
                     print('')
                     print('WARNING: Time at mininum acceleration exceeds time data.')
                     print('WARNING: Skipping this data set.')
+                assert int(tc)+1 >= dates.size
                 names_past_peak_surge_period.append( (name, tc, dates[int(tc)+1], dtc) )
                 continue
 
@@ -1411,7 +1413,7 @@ class Surge:
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+                str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
                 data[1][-1]+')',fontsize=20)
 
             plt.show()
@@ -1465,7 +1467,7 @@ class Surge:
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+                str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
                 data[1][-1]+')',fontsize=20)
 
             plt.show()
@@ -1577,7 +1579,7 @@ class Surge:
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+                str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
                 data[1][-1]+')',fontsize=20)
 
             plt.show()
@@ -1658,7 +1660,7 @@ class Surge:
             data_name = 'Countries'
 
         plt.title('COVID-19 Pandemic 2020 for Top '+
-            str(len(fit_data))+' '+data_name+' in Evolved Mortality ('+
+            str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
             data[1][-1]+')',fontsize=20)
 
         plt.tight_layout(1)
