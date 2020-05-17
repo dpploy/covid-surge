@@ -25,7 +25,7 @@ def main():
     us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
     print('')
-    print('# of states/distric: ',len(us_surge.state_names))
+    print('# of states/distric: ',len(us_surge.names))
     print('# of days:           ',us_surge.dates.shape[0])
 
     # Fit data to all states
@@ -52,7 +52,6 @@ def main():
     for (sort_key,data) in fit_data:
         state = data[0]
         param_vec = data[3]
-        tshift = data[4]
         key = us_surge.get_bin_id(sort_key,bins)
         if key in state_groups:
             state_groups[key].append(state)

@@ -37,7 +37,7 @@ def main():
     g_surge.plot_covid_data( name, save=True )
 
     n_last_days = 7
-    country_id = g_surge.country_names.index(name)
+    country_id = g_surge.names.index(name)
     print('')
     print('Last %i days'%n_last_days,
           ' # of cumulative cases = ', g_surge.cases[-n_last_days:,country_id])
@@ -70,7 +70,7 @@ def main():
 
     print('')
     print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,g_surge.dates[-1],total_deaths_predicted))
-    print('# of cumulative deaths today, %s               = %6i'%(g_surge.dates[-1],g_surge.cases[-1,g_surge.country_names.index(name)]))
+    print('# of cumulative deaths today, %s               = %6i'%(g_surge.dates[-1],g_surge.cases[-1,g_surge.names.index(name)]))
     print('')
 
 if __name__ == '__main__':

@@ -48,12 +48,15 @@ class Surge:
 
         if self.locale == 'US':
             if self.sub_locale:
-                ( state_names, county_names, populations, dates, cases ) = \
+                ( county_names, populations, dates, cases ) = \
                 self.__get_covid_us_data( self.sub_locale,
                             save_html=save_all_original_data_html )
 
-                self.state_county_names = county_names
-                #TODO sanity checks
+                assert dates.size == cases.shape[0]
+                assert len(county_names) == cases.shape[1]
+
+                self.names = county_names
+
             else:
                 ( state_names, populations, dates, cases ) = \
                 self.__get_covid_us_data( save_html=save_all_original_data_html )
@@ -61,7 +64,9 @@ class Surge:
                 assert dates.size == cases.shape[0]
                 assert len(state_names) == cases.shape[1]
 
-            self.names = state_names
+
+                self.names = state_names
+
             self.populations = populations
 
         elif self.locale == 'global':
@@ -132,7 +137,7 @@ class Surge:
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days, __set_ignore_last_n_days, None, None)
 
-    def __get_covid_us_data(self, statewise=True, countywise=False,
+    def __get_covid_us_data(self, sub_locale=None, 
             case_type='deaths', save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
@@ -151,9 +156,6 @@ class Surge:
                (population, dates, cases)
 
         '''
-
-        if countywise:
-            statewise = False
 
         import pandas as pd
 
@@ -177,16 +179,14 @@ class Surge:
 
         df = df.rename(columns={'Province_State':'state/province','Admin2':'county'})
 
-        import numpy as np
-
         state_names = list()
-
         state_names_tmp = list()
 
         for (i,istate) in enumerate(df['state/province']):
 
             if istate.strip() == 'Wyoming' and df.loc[i,'county']=='Weston':
                 break
+
             state_names_tmp.append(istate)
 
         state_names_set = set(state_names_tmp)
@@ -196,7 +196,7 @@ class Surge:
 
         dates = np.array(list(df.columns[3:]))
 
-        if statewise:
+        if sub_locale is None:
 
             population = [0]*len(state_names)
 
@@ -221,34 +221,54 @@ class Surge:
 
             return ( state_names, population, dates, cases )
 
-        if countywise:
+        elif sub_locale in state_names:
 
-            county_names      = dict() # per state
-            county_cases      = dict() # per state
-            county_population = dict() # per state
+            county_names = list()
+            county_names_tmp = list()
 
             for (i,istate) in enumerate(df['state/province']):
 
-                if istate.strip() == 'Wyoming' and\
-                    (df.loc[i,'county']).strip() == 'Weston':
+                if istate.strip()=='Wyoming' and df.loc[i,'county']=='Weston':
                     break
 
-                state_id = state_names.index(istate)
-                county = df.loc[i,'county']
+                if istate.strip() == sub_locale:
 
-                if istate in county_names.keys():
-                    county_names[istate].append( county )
-                else:
-                    county_names[istate] = [county]
+                    county_names_tmp.append( df.loc[i,'county'] )
 
-                cases = np.array(list(df.loc[i, df.columns[3:]]),dtype=np.float64)
+            county_names_set = set(county_names_tmp)
 
-                if istate in county_cases.keys():
-                    county_cases[istate].append( cases )
-                else:
-                    county_cases[istate] = [cases] # list of 1-d numpy arrays
+            county_names = list(county_names_set)
+            county = sorted(county_names)
 
-            return ( state_names, county_names, county_population, dates, county_cases )
+            population = [0]*len(county_names)
+
+            cases = np.zeros( (len(df.columns[3:]), len(county_names)),
+                    dtype=np.float64)
+
+            for (i,istate) in enumerate(df['state/province']):
+
+                if istate.strip()=='Wyoming' and df.loc[i,'county']=='Weston':
+                    break
+
+                icounty = df.loc[i,'county']
+
+                if istate.strip() == sub_locale:
+
+                    county_id = county_names.index(icounty)
+
+                    if case_type == 'confirmed':
+                        population[county_id] += int(df_pop.loc[i,'Population'])
+                    else:
+                        population[county_id] += int(df.loc[i,'Population'])
+
+                    cases[:,county_id] = np.array(
+                            list(df.loc[i, df.columns[3:]]) )
+
+            return ( county_names, population, dates, cases )
+
+        else:
+            assert sub_locale in state_names,\
+                    '\n\n sub_locale %r not in %r'%(sub_locale,state_names)
 
 
     def __get_covid_global_data(self, case_type='deaths', 
@@ -1323,7 +1343,7 @@ class Surge:
 
             print('')
 
-            print('States with deaths below the absolute mininum:')
+            print('Names with deaths below the absolute mininum:')
             print('')
             for (name, case) in names_below_deaths_abs_minimum:
                 print( '%15s deaths = %5.2f'%(name,case) )
@@ -1339,6 +1359,12 @@ class Surge:
                  key = lambda entry: entry[0], reverse=False )
 
         sorted_fit_data = sorted_by_surge_period
+
+        if verbose:
+            print('')
+            for (sort_key,data) in sorted_fit_data:
+                name = data[0]
+                print('%15s: surge period %1.2f [day]'%(name,sort_key))
 
         return sorted_fit_data
 
@@ -1377,8 +1403,10 @@ class Surge:
             ax1.grid(True)
 
             data_name = 'null-data-name'
-            if self.locale == 'US':
+            if self.locale == 'US' and self.sub_locale is None:
                 data_name = 'US States'
+            if self.locale == 'US' and self.sub_locale != None:
+                data_name = self.sub_locale+' Counties/Cities'
             elif self.locale == 'global':
                 data_name = 'Countries'
 
@@ -1429,8 +1457,10 @@ class Surge:
             ax1.grid(True)
 
             data_name = 'null-data-name'
-            if self.locale == 'US':
+            if self.locale == 'US' and self.sub_locale is None:
                 data_name = 'US States'
+            if self.locale == 'US' and self.sub_locale != None:
+                data_name = self.sub_locale+' Counties/Cities'
             elif self.locale == 'global':
                 data_name = 'Countries'
 
@@ -1539,8 +1569,10 @@ class Surge:
             ax1.grid(True)
 
             data_name = 'null-data-name'
-            if self.locale == 'US':
+            if self.locale == 'US' and self.sub_locale is None:
                 data_name = 'US States'
+            if self.locale == 'US' and self.sub_locale != None:
+                data_name = self.sub_locale+' Counties/Cities'
             elif self.locale == 'global':
                 data_name = 'Countries'
 
@@ -1618,8 +1650,10 @@ class Surge:
         ax.xaxis.grid(True,linestyle='-',which='major',color='lightgrey',alpha=0.9)
 
         data_name = 'null-data-name'
-        if self.locale == 'US':
+        if self.locale == 'US' and self.sub_locale is None:
             data_name = 'US States'
+        if self.locale == 'US' and self.sub_locale != None:
+            data_name = self.sub_locale+' Counties/Cities'
         elif self.locale == 'global':
             data_name = 'Countries'
 
