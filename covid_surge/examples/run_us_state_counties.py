@@ -16,7 +16,7 @@ from covid_surge import Surge
 def main():
 
     # Get US surge data
-    c_surge = Surge(locale='US',sub_locale='New York')
+    c_surge = Surge(locale='US',sub_locale='Massachusetts')
 
     print('')
     print('# of counties: ',len(c_surge.names))
