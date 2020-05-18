@@ -17,7 +17,7 @@ from covid_surge import Surge
 def main():
 
     # Get US surge data
-    c_surge = Surge(locale='US',sub_locale='Massachusetts')
+    c_surge = Surge(locale='US',sub_locale='North Carolina')
 
     print('')
     print('# of counties: ',len(c_surge.names))
@@ -32,8 +32,15 @@ def main():
     # Fit data to all counties/cities
     fit_data = c_surge.multi_fit_data(verbose=True, plot=True, save_plots=True)
 
+    print('# of fittings done = ',len(fit_data))
+
     # Plot all data in one plot
     c_surge.plot_multi_fit_data( fit_data, 'experimental', save=True )
+
+    if len(fit_data) == 0:
+        print('Done here...')
+        return
+
     # Plot all fit data in one plot
     c_surge.plot_multi_fit_data( fit_data, 'fit', save=True )
 

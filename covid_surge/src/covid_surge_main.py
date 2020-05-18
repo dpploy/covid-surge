@@ -1478,6 +1478,10 @@ class Surge:
         max_value = max([key for (key,data) in sorted_fit_data])
         min_value = min([key for (key,data) in sorted_fit_data])
 
+        if len(sorted_fit_data) == 1:
+            bins = {0:[float(int(min_value)),float(int(max_value)+1)]}
+            return bins
+
         small_value = (max_value - min_value)* 1./100.0
 
         max_value = round(max_value,1) + small_value
@@ -1489,6 +1493,7 @@ class Surge:
             min_value = int(min_value)
 
         n_bins = int((max_value - min_value)/bin_width)
+
         pts = np.linspace(min_value, max_value, n_bins+1)
 
 
@@ -1502,11 +1507,15 @@ class Surge:
 
     def get_bin_id(self,value,bins):
 
+        if len(bins) == 0:
+            return None
+
         for (key,val) in bins.items():
             if value >= val[0] and value < val[1]:
                 return key
 
-        assert False,'FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
+        assert False,\
+          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
 
     def plot_group_fit_data(self, state_groups, fit_data, save=False):
         '''

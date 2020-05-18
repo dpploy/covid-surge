@@ -19,11 +19,33 @@ def main():
     # Get US surge data
     us_surge = Surge()
 
-    states = [ a for (a,b) in
-                     sorted( zip(us_surge.names, us_surge.cases[-1,:]),
-                     key = lambda entry: entry[1], reverse=True )]
+    #states = [ a for (a,b) in
+    #                 sorted( zip(us_surge.names, us_surge.cases[-1,:]),
+    #                 key = lambda entry: entry[1], reverse=True )]
 
-    for state in states[:5]:
+    # Set parameters
+    us_surge.end_date = '4/20/20'   # set end date wanted
+    us_surge.end_date = None        # get all the data available
+    us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    us_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
+    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+
+    print('')
+    print('# of states/distric: ',len(us_surge.names))
+    print('# of days:           ',us_surge.dates.shape[0])
+
+    # Fit data to all states of fully-evolved surge
+    fit_data = us_surge.multi_fit_data() # silent
+
+    states = list()
+
+    print('')
+    for (i,(sort_key,data)) in enumerate(fit_data):
+        name = data[0]
+        states.append(name)
+        print('%2i) %15s: surge period %1.2f [day]'%(i,name,sort_key))
+
+    for state in states:
 
         print('')
         print('***************************************************************')
@@ -42,6 +64,15 @@ def main():
 
         # Fit data to all counties/cities
         fit_data = c_surge.multi_fit_data(verbose=False, plot=True, save_plots=True)
+        print('# of fittings done = ',len(fit_data))
+
+        if len(fit_data) == 0:
+            continue
+
+        print('')
+        for (sort_key,data) in fit_data:
+            name = data[0]
+            print('%15s: surge period %1.2f [day]'%(name,sort_key))
 
         # Create clustering bins based on surge period
         bins = c_surge.clustering(fit_data,2,'surge_period')
