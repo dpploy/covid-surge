@@ -39,7 +39,7 @@ This development is in progress...
 | [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
 | Distribution of mortality critical surge periods for the counties/towns in US New York state with the most evolved epidemics. The range of the critical period is between 16 to 23 days. That is, the number of days that stresses the health system the most. Groups to the right are less stressed than groups to the left. The colored bar plot shows locations grouped by 2-day bin widths.|
 | The average critical surge period at the date indicated by the plot is **20 days with a 3-day standard deviation**.|
-| *To update this plot with live data, [run this Jupyter Notebook](https://nbviewer.jupyter.org/github/dpploy/covid-surge/blob/master/notebooks/us-state-counties.ipynb).*  |
+| *To update this plot with live data, [run this Jupyter Notebook](https://nbviewer.jupyter.org/github/dpploy/covid-surge/blob/master/notebooks/us-state-counties-surge.ipynb).*  |
 |-------------------------------------------------------------------------------------------------------------------------|
 |<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/group_surge_periods_us_new_jersey.png" title="Surge Periods"> |
 | [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
