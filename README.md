@@ -16,7 +16,7 @@ COVID-19 surge period calculation and clustering for communities afflicted by th
 [![Repo Size](https://img.shields.io/github/repo-size/dpploy/covid-surge)](https://github.com/dpploy/covid-surge)
 
 
-This development is in progress...
+Pre-print publication is forthcoming...link will be here later...
 
 -----------
 
