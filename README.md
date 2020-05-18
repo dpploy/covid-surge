@@ -15,10 +15,10 @@ COVID-19 surge period calculation and clustering for communities afflicted by th
 [![PyPI Python Version](https://img.shields.io/pypi/pyversions/covid-surge)](https://pypi.org/project/covid-surge/)
 [![Repo Size](https://img.shields.io/github/repo-size/dpploy/covid-surge)](https://github.com/dpploy/covid-surge)
 
+------------
 
 Pre-print publication is forthcoming...link will be here later...
 
------------
 
 |   |
 |:---|
