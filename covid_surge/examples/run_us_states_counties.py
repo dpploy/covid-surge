@@ -45,6 +45,8 @@ def main():
         states.append(name)
         print('%2i) %15s: surge period %1.2f [day]'%(i,name,sort_key))
 
+    surge_periods = list()  # collect surge period of all counties/towns
+
     for state in states:
 
         print('')
@@ -72,6 +74,7 @@ def main():
         print('')
         for (sort_key,data) in fit_data:
             name = data[0]
+            surge_periods.append(sort_key)
             print('%15s: surge period %1.2f [day]'%(name,sort_key))
 
         # Create clustering bins based on surge period
@@ -112,6 +115,10 @@ def main():
 
         print('')
         print('')
+
+    print('Total # of counties/towns = ',len(surge_periods))
+    print('Average surge period %1.2f [day], std %1.2f'%
+         (np.mean(np.array(surge_periods)),np.std(np.array(surge_periods))))
 
 if __name__ == '__main__':
     main()
