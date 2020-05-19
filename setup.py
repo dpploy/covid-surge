@@ -16,8 +16,7 @@ setuptools.setup(
     version='0.0.29',
     author='Valmor F. de Almeida',
     author_email='valmor_dealmeida@uml.edu',
-    description='Covid-Surge is a utility for computing and comparing surge periods\
-            of communities afflicted by the COVID-19 virus pandemic.',
+    description='Covid-Surge is a utility for computing and comparing mortality surge periods of communities afflicted by the COVID-19 virus pandemic.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     setup_requires=['wheel'],
