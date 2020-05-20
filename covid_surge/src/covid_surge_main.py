@@ -40,7 +40,8 @@ class Surge:
         self.__ignore_last_n_days = 0
 
         self.min_n_cases_abs = 100 # absolute minimum # of cases (go-no-go)
-        self.min_n_cases_rel = 0.5 # 0.5% of total
+
+        self.trim_rel_small_n_cases = 0.5 # 0.5% of total; clean up early data
 
         self.deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
@@ -270,7 +271,6 @@ class Surge:
             assert sub_locale in state_names,\
                     '\n\n sub_locale %r not in %r'%(sub_locale,state_names)
 
-
     def __get_covid_global_data(self, case_type='deaths', 
             distribution=True, cumulative=False, save_html=False ):
         '''
@@ -365,7 +365,7 @@ class Surge:
 
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
+        (nz_cases_ids,) = np.where(cases_plot>self.trim_rel_small_n_cases/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -431,7 +431,7 @@ class Surge:
                 '\n\n Name: %r not in %r'%(name,self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
+        (nz_cases_ids,) = np.where(cases>self.trim_rel_small_n_cases/100*cases[-1])
         cases = np.copy(cases[nz_cases_ids])
         dates = self.dates[nz_cases_ids]
 
@@ -489,7 +489,7 @@ class Surge:
                 '\n\n Name: %r not in %r'%(name,self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases_plot>self.min_n_cases_rel/100*cases_plot[-1])
+        (nz_cases_ids,) = np.where(cases_plot>self.trim_rel_small_n_cases/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -1070,7 +1070,7 @@ class Surge:
                  'Name: %r not in %r'%(name,self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases>self.min_n_cases_rel/100*cases[-1])
+        (nz_cases_ids,) = np.where(cases>self.trim_rel_small_n_cases/100*cases[-1])
         cases = cases[nz_cases_ids]
         dates = self.dates[nz_cases_ids]
 
@@ -1166,7 +1166,7 @@ class Surge:
                 continue
 
             # Select data with # of cases greater than the minimum
-            (nz_cases_ids,) = np.where(icases>self.min_n_cases_rel/100*icases[-1])
+            (nz_cases_ids,) = np.where(icases>self.trim_rel_small_n_cases/100*icases[-1])
 
             if nz_cases_ids.size == 0:
                 if verbose:
@@ -1245,10 +1245,10 @@ class Surge:
                     print('')
                     print('WARNING: Time at peak surge rate exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                assert int(tc-dtc)+1 <= dates.size,\
-                        '\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc-dtc)+1,dates.size,times.size)
+                #assert int(tc-dtc)+1 <= dates.size,\
+                        #'\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc-dtc)+1,dates.size,times.size)
 
-                names_no_peak_surge_period.append( (name, tc-dtc, dates[int(tc-dtc)+1], dtc) )
+                names_no_peak_surge_period.append( (name, tc, dtc, times[-1], dates[-1]) )
                 continue
 
             if tc + dtc > times[-1]:
@@ -1316,8 +1316,8 @@ class Surge:
 
             print('Names with significant deaths before peak in surge period:')
             print('')
-            for (name, tc_minus_dtc, tc_minus_dtc_date, dtc) in names_no_peak_surge_period:
-                print( '%15s tc-dtc = %3.1f [d] tc-dtc_date = %8s pending days = %3.1f'%(name,tc_minus_dtc,tc_minus_dtc_date,dtc))
+            for (name, tc, dtc, t_max, d_max) in names_no_peak_surge_period:
+                print( '%15s tc = %3.1f [d] dtc = %3.1f [d] t_max = %3.1f [d] d_max %7s'%(name,tc,dtc,t_max,d_max))
 
             print('')
 
@@ -1395,9 +1395,8 @@ class Surge:
             elif self.locale == 'global':
                 data_name = 'Countries'
 
-            plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
-                data[1][-1]+')',fontsize=20)
+            plt.title('COVID-19 Pandemic 2020 for '+data_name+
+                      ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
 
             plt.show()
             if save:
@@ -1454,9 +1453,8 @@ class Surge:
             elif self.locale == 'global':
                 data_name = 'Countries'
 
-            plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
-                data[1][-1]+')',fontsize=20)
+            plt.title('COVID-19 Pandemic 2020 for '+ data_name+
+                      ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
 
             plt.show()
             if save:
@@ -1580,9 +1578,8 @@ class Surge:
             elif self.locale == 'global':
                 data_name = 'Countries'
 
-            plt.title('COVID-19 Pandemic 2020 for Top '+
-                str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
-                data[1][-1]+')',fontsize=20)
+            plt.title('COVID-19 Pandemic 2020 for '+data_name+
+                      ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
 
             plt.show()
             if save:
@@ -1666,9 +1663,8 @@ class Surge:
         elif self.locale == 'global':
             data_name = 'Countries'
 
-        plt.title('COVID-19 Pandemic 2020 for Top '+
-            str(len(fit_data))+' '+data_name+' w/ Evolved Mortality ('+
-            data[1][-1]+')',fontsize=20)
+        plt.title('COVID-19 Pandemic 2020 for '+data_name+
+                  ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
 
         plt.tight_layout(1)
 
@@ -1683,4 +1679,3 @@ class Surge:
         plt.close()
 
         return
-

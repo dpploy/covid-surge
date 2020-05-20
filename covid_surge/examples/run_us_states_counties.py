@@ -47,6 +47,8 @@ def main():
 
     surge_periods = list()  # collect surge period of all counties/towns
 
+    total_n_counties = 0 # count all counties/towns inspected w/ nonzero cases
+
     for state in states:
 
         print('')
@@ -55,13 +57,17 @@ def main():
         print('***************************************************************')
 
         c_surge = Surge(locale='US',sub_locale=state)
+
         print('# of counties: ',len(c_surge.names))
+
+        (ids,) = np.where(c_surge.cases[-1,:]>0)
+        total_n_counties += ids.size
 
         # Set parameters
         c_surge.end_date = '4/20/20'   # set end date wanted
         c_surge.end_date = None        # get all the data available
         c_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
-        c_surge.min_n_cases_abs = 200  # min # of absolute cases for analysis
+        c_surge.min_n_cases_abs = 100 # min # of absolute cases for analysis
         c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
 
         # Fit data to all counties/cities
@@ -116,9 +122,11 @@ def main():
         print('')
         print('')
 
-    print('Total # of counties/towns = ',len(surge_periods))
+    print('Total # of counties/towns with surge period = ',len(surge_periods))
     print('Average surge period %1.2f [day], std %1.2f'%
          (np.mean(np.array(surge_periods)),np.std(np.array(surge_periods))))
+    print('Total # of inspected counties/towns w/ non-zero cases = %4i'%
+            total_n_counties)
 
 if __name__ == '__main__':
     main()
