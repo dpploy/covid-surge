@@ -26,7 +26,7 @@ Pre-print publication is forthcoming...link will be here later...
 |<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/group_surge_periods_global.png" title="Surge Periods"> |
 | [Data source](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data). |
 | Distribution of mortality critical surge periods for the countries with fully evolved epidemics. The average critical surge period is the number of days between the points of maximum and minimum curvatures on the sigmoid curve approximating the data. Countries to the right are less stressed than countries to the left. The colored bar plot shows locations grouped by 2-day bin widths. |
-| The world average critical surge period at the date indicated by the plot is **22 days with a 3-day standard deviation**.|
+| The world average critical surge period at the date indicated by the plot is **23 days with a 3-day standard deviation**.|
 | *To update this plot with live data, [run this Jupyter Notebook](https://nbviewer.jupyter.org/github/dpploy/covid-surge/blob/master/notebooks/countries-surge.ipynb).* |
 |---------------------------------------------------------\|**US**\|-------------------------------------------------------|
 |<img  width="900" src="https://raw.githubusercontent.com/dpploy/covid-surge/master/readme/group_surge_periods_us.png" title="Surge Periods"> |
