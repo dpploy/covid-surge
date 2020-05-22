@@ -13,7 +13,7 @@ with open('requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='covid-surge',
-    version='0.0.30',
+    version='0.0.31',
     author='Valmor F. de Almeida',
     author_email='valmor_dealmeida@uml.edu',
     description='Covid-Surge is a utility for computing and comparing mortality surge periods of communities afflicted by the COVID-19 virus pandemic.',
