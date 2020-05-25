@@ -14,7 +14,7 @@ jobs:
       - run:
           name: test
           command: |
-              pipenv run pytest
+              pytest
 
 workflows:
   main:
