@@ -3,6 +3,20 @@
 # This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
+'''
+Surge class for manipulating various forms of COVID-19 data.
+Usage examples can be found in the examples/ directory.
+In addition, the Jupyter notebooks/ directory also shows how to use the
+class in various ways.
+
+Notes
+-----
+This single class is a rather long file. `Vim` is used with various
+highlighting and folding configurations to make it simple to navigate a
+single file.
+
+'''
+
 import os
 import logging
 import time
@@ -13,6 +27,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 class Surge:
+    '''
+    This class uses auxiliary methods
+    '''
 
     def __init__( self, locale='US', sub_locale=None, 
                   save_all_original_data_html=False, 
@@ -28,6 +45,23 @@ class Surge:
             The sub-place data is retrived from. This depends of `locale`.
             If `locale` is US, then `sub_locale` must be one of the state
             names. There is no `sub_locale` for countries.
+            Default: None
+        log_filename: str
+            Name of the file to save logging information. Not used at the moment.
+
+        Attributes
+        ----------
+        names: str
+        populations:
+        dates
+        cases
+        __dates
+        __cases
+        __end_date
+        __ignore_last_n_days
+        min_n_cases_abs
+        trim_rel_small_n_cases
+        deaths_100k_minimum
         '''
 
         if locale=='global':
@@ -48,7 +82,9 @@ class Surge:
         self.populations = None
 
         if self.locale == 'US':
+
             if self.sub_locale:
+
                 ( county_names, populations, dates, cases ) = \
                 self.__get_covid_us_data( self.sub_locale,
                             save_html=save_all_original_data_html )
@@ -59,6 +95,7 @@ class Surge:
                 self.names = county_names
 
             else:
+
                 ( state_names, populations, dates, cases ) = \
                 self.__get_covid_us_data( save_html=save_all_original_data_html )
 
@@ -1679,3 +1716,57 @@ class Surge:
         plt.close()
 
         return
+
+def __color_map( num_colors ):
+    '''
+    Nice colormap internal helper method for plotting.
+
+    Parameters
+    ----------
+    num_colors: int, required
+        Number of colors.
+
+    Returns
+    -------
+    color_map: list(tuple(R,G,B,A))
+        List with colors interpolated from internal list of primary colors.
+
+    '''
+
+    assert num_colors >= 1
+
+    import numpy as np
+
+    # primary colors
+    # use the RGBA decimal code
+    red     = np.array((1,0,0,1))
+    blue    = np.array((0,0,1,1))
+    magenta = np.array((1,0,1,1))
+    green   = np.array((0,1,0,1))
+    orange  = np.array((1,0.5,0,1))
+    black   = np.array((0,0,0,1))
+    yellow  = np.array((1,1,0,1))
+    cyan    = np.array((0,1,1,1))
+
+    # order the primary colors here
+    color_map = list()
+    color_map = [red, blue, orange, magenta, green, yellow, cyan, black]
+
+    num_primary_colors = len(color_map)
+
+    if num_colors <= num_primary_colors:
+        return color_map[:num_colors]
+
+    # interpolate primary colors
+    while len(color_map) < num_colors:
+        j = 0
+        for i in range(len(color_map)-1):
+            color_a = color_map[2*i]
+            color_b = color_map[2*i+1]
+            mid_color = (color_a+color_b)/2.0
+            j = 2*i+1
+            color_map.insert(j,mid_color) # insert before index
+            if len(color_map) == num_colors:
+                break
+
+    return color_map
