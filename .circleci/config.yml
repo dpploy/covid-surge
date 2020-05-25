@@ -12,8 +12,11 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          command: 
+          command: |
+              # pytest dep in requirements.txt file
               pytest
+          name:
+              Test
 
 workflows:
   main:
