@@ -13,6 +13,7 @@ jobs:
       - python/save-cache
       - run:
           command: export PYTHONPATH=$PYTHONPATH:$(pwd)
+      - run:
           command: cd covid-surge/tests && py.test *.py
           name: Test
 
