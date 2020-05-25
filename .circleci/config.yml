@@ -12,11 +12,15 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
+          name: covid-surge build
+          command: |
+              pip install covid-surge
+      - run:
+          name: test
           command: |
               # pytest dep in requirements.txt file
+              cd covid_surge/tests
               pytest
-          name:
-              Test
 
 workflows:
   main:
