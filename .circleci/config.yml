@@ -1,22 +1,22 @@
 version: 2.1
 
-orbs:
-  python: circleci/python@0.2.1
+workflows:
+  version: 2
+  build_deploy:
+    jobs:
+      - build
 
 jobs:
-  build-and-test:
-    executor: python/default
+  build:
+
+    docker:
+      - image: circleci/python:3.7.5
+
     steps:
       - checkout
-      - python/load-cache
-      - python/install-deps
-      - python/save-cache
       - run:
+          name: Pytest Install and Test
           command: |
-              export PYTHONPATH=$PYTHONPATH:$(pwd)
-              cd covid_surge/tests && python/pytest
-
-workflows:
-  main:
-    jobs:
-      - build-and-test
+              sudo pip install -U pytest
+              echo "Pytest installed"
+              pytest
