@@ -7,16 +7,15 @@ jobs:
   build-and-test:
     executor: python/default
     steps:
-      - checkout
+      - checkout  # checkout covid-surge to working dir
       - python/load-cache
-      - python/install-deps
+      - python/install-deps 
       - python/save-cache
       - run:
           name: test
           command: |
-              # pytest dep in requirements.txt file
-              cd covid_surge/tests
-              python3/pytest
+              export PYTHONPATH=$PYTHONPATH:$(pwd)
+              cd cortix/tests && py.test *.py
 
 workflows:
   main:
