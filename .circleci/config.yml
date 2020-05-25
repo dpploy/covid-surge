@@ -14,7 +14,7 @@ jobs:
       - run:
           command: |
               export PYTHONPATH=$PYTHONPATH:$(pwd)
-              cd covid_surge/tests && python/pytest
+              cd covid_surge/tests && *.py
 
 workflows:
   main:
