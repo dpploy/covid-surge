@@ -12,9 +12,9 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          command: export PYTHONPATH=$PYTHONPATH:$(pwd)
-      - run:
-          command: cd covid_surge/tests  &&  pytest
+          command: |
+              export PYTHONPATH=$PYTHONPATH:$(pwd)
+              cd covid_surge/tests && python/pytest
 
 workflows:
   main:
