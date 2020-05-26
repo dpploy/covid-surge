@@ -18,6 +18,8 @@ jobs:
           name: Pytest Install and Test
           command: |
               sudo pip install -U -r requirements.txt
+              echo " "
               echo "requirements installed"
+              echo " "
               export PYTHONPATH=$PYTHONPATH:$(pwd)
               pytest
