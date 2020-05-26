@@ -15,8 +15,7 @@ COVID-19 mortality surge period calculation for communities afflicted by the cor
 [![PyPI Python Version](https://img.shields.io/pypi/pyversions/covid-surge)](https://pypi.org/project/covid-surge/)
 [![Repo Size](https://img.shields.io/github/repo-size/dpploy/covid-surge)](https://github.com/dpploy/covid-surge)
 
-[![CircleCI](https://circleci.com/gh/dpploy/covid-surge/tree/master.svg?style=svg)](https://circleci.com/gh/dpploy/covid-surge/tree/master)
-
+![CircleCI](https://img.shields.io/circleci/build/github/dpploy/covid-surge/master)
 ------------
 
 [Preprint: How Long is the Worst Part of the COVID-19 Mortality Surge?](https://doi.org/10.31219/osf.io/z59uy)
