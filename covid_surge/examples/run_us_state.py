@@ -9,8 +9,6 @@ US COVID-19 surge period analysis.
 Expand on this later.
 '''
 
-import numpy as np
-
 from covid_surge import Surge
 
 def main():
