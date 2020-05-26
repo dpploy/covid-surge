@@ -445,12 +445,11 @@ class Surge:
 
         plt.show()
         if save:
-            from covid_surge import filename
             if self.sub_locale is None:
-                stem = filename(self.locale)
+                stem = self.__filename(self.locale)
             else:
-                stem = filename(self.locale+'_'+self.sub_locale)
-            stem += '_'+filename(locale)
+                stem = self.__filename(self.locale+'_'+self.sub_locale)
+            stem += '_'+self.__filename(locale)
             plt.savefig('data_'+stem+'.png', dpi=100)
         plt.close()
 
@@ -656,12 +655,11 @@ class Surge:
 
         plt.show()
         if save:
-            from covid_surge import filename
             if self.sub_locale is None:
-                stem = filename(self.locale)
+                stem = self.__filename(self.locale)
             else:
-                stem = filename(self.locale+'_'+self.sub_locale)
-            stem += '_'+filename(locale)
+                stem = self.__filename(self.locale+'_'+self.sub_locale)
+            stem += '_'+self.__filename(locale)
             plt.savefig('fit_'+stem+'_0'+'.png', dpi=100)
 
         plt.close()
@@ -716,12 +714,11 @@ class Surge:
 
             plt.show()
             if save:
-                from covid_surge import filename
                 if self.sub_locale is None:
-                    stem = filename(self.locale)
+                    stem = self.__filename(self.locale)
                 else:
-                    stem = filename(self.locale+'_'+self.sub_locale)
-                stem += '_'+filename(locale)
+                    stem = self.__filename(self.locale+'_'+self.sub_locale)
+                stem += '_'+self.__filename(locale)
                 plt.savefig('fit_'+stem+'_1'+'.png', dpi=100)
             plt.close()
 
@@ -783,12 +780,11 @@ class Surge:
 
             plt.show()
             if save:
-                from covid_surge import filename
                 if self.sub_locale is None:
-                    stem = filename(self.locale)
+                    stem = self.__filename(self.locale)
                 else:
-                    stem = filename(self.locale+'_'+self.sub_locale)
-                stem += '_'+filename(locale)
+                    stem = self.__filename(self.locale+'_'+self.sub_locale)
+                stem += '_'+self.__filename(locale)
                 plt.savefig('fit_'+stem+'_2.png', dpi=100)
             plt.close()
 
@@ -1392,8 +1388,6 @@ class Surge:
 
     def plot_multi_fit_data(self, fit_data, option=None, save=False):
 
-        from covid_surge import color_map
-
         if option == 'experimental':
 
             legend_title = 'Max. Relative Death Rate [%/day]'
@@ -1401,7 +1395,7 @@ class Surge:
 
             fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
-            colors = color_map(len(fit_data))
+            colors = self.__color_map(len(fit_data))
 
             for (sort_key,data) in fit_data:
                 color = colors[fit_data.index((sort_key,data))]
@@ -1437,11 +1431,10 @@ class Surge:
 
             plt.show()
             if save:
-                from covid_surge import filename
                 if self.sub_locale is None:
-                    stem = filename(self.locale)
+                    stem = self.__filename(self.locale)
                 else:
-                    stem = filename(self.locale+'_'+self.sub_locale)
+                    stem = self.__filename(self.locale+'_'+self.sub_locale)
                 plt.savefig('data_'+stem+'_overlap'+'.png', dpi=100)
             plt.close()
 
@@ -1453,7 +1446,7 @@ class Surge:
 
             fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
-            colors = color_map(len(fit_data))
+            colors = self.__color_map(len(fit_data))
 
             for (sort_key,data) in fit_data:
                 color = colors[fit_data.index((sort_key,data))]
@@ -1495,11 +1488,10 @@ class Surge:
 
             plt.show()
             if save:
-                from covid_surge import filename
                 if self.sub_locale is None:
-                    stem = filename(self.locale)
+                    stem = self.__filename(self.locale)
                 else:
-                    stem = filename(self.locale+'_'+self.sub_locale)
+                    stem = self.__filename(self.locale+'_'+self.sub_locale)
                 plt.savefig('fit_'+stem+'_overlap'+'.png', dpi=100)
             plt.close()
 
@@ -1557,15 +1549,13 @@ class Surge:
         Plot fit functions for each country group
         '''
 
-        from covid_surge import color_map
-
         legend_title = 'Max. Relative Death Rate [%/day]'
         legend_title = 'Surge Period [day]'
 
         for (ig,states) in enumerate(state_groups):
 
             fig, ax1 = plt.subplots(1, figsize=(20, 8))
-            colors = color_map(len(states))
+            colors = self.__color_map(len(states))
 
             for state in states:
                 color = colors[states.index(state)]
@@ -1620,19 +1610,16 @@ class Surge:
 
             plt.show()
             if save:
-                from covid_surge import filename
                 if self.sub_locale is None:
-                    stem = filename(self.locale)
+                    stem = self.__filename(self.locale)
                 else:
-                    stem = filename(self.locale+'_'+self.sub_locale)
+                    stem = self.__filename(self.locale+'_'+self.sub_locale)
                 plt.savefig('fit_group_'+str(ig)+'_'+stem+'.png', dpi=100)
             plt.close()
 
         return
 
     def plot_group_surge_periods(self, fit_data, bins, save=False):
-
-        from covid_surge import color_map
 
         #plt.rcParams['figure.figsize'] = [20, 4]
         fig, ax = plt.subplots(figsize=(20,6))
@@ -1651,7 +1638,7 @@ class Surge:
         sorted_list = sorted( zip(states,surge_periods),
                 key = lambda entry: entry[1], reverse=False )
 
-        colors = color_map(len(bins))
+        colors = self.__color_map(len(bins))
 
         for (id,(state,val)) in enumerate(sorted_list):
 
@@ -1707,66 +1694,81 @@ class Surge:
 
         plt.show()
         if save:
-            from covid_surge import filename
             if self.sub_locale is None:
-                stem = filename(self.locale)
+                stem = self.__filename(self.locale)
             else:
-                stem = filename(self.locale+'_'+self.sub_locale)
+                stem = self.__filename(self.locale+'_'+self.sub_locale)
             plt.savefig('group_surge_periods_'+stem+'.png', dpi=100)
         plt.close()
 
         return
 
-def __color_map( num_colors ):
-    '''
-    Nice colormap internal helper method for plotting.
+    def __color_map(self, num_colors ):
+        '''
+        Nice colormap internal helper method for plotting.
 
-    Parameters
-    ----------
-    num_colors: int, required
-        Number of colors.
+        Parameters
+        ----------
+        num_colors: int, required
+            Number of colors.
 
-    Returns
-    -------
-    color_map: list(tuple(R,G,B,A))
-        List with colors interpolated from internal list of primary colors.
+        Returns
+        -------
+        color_map: list(tuple(R,G,B,A))
+            List with colors interpolated from internal list of primary colors.
 
-    '''
+        '''
 
-    assert num_colors >= 1
+        assert num_colors >= 1
 
-    import numpy as np
+        import numpy as np
 
-    # primary colors
-    # use the RGBA decimal code
-    red     = np.array((1,0,0,1))
-    blue    = np.array((0,0,1,1))
-    magenta = np.array((1,0,1,1))
-    green   = np.array((0,1,0,1))
-    orange  = np.array((1,0.5,0,1))
-    black   = np.array((0,0,0,1))
-    yellow  = np.array((1,1,0,1))
-    cyan    = np.array((0,1,1,1))
+        # primary colors
+        # use the RGBA decimal code
+        red     = np.array((1,0,0,1))
+        blue    = np.array((0,0,1,1))
+        magenta = np.array((1,0,1,1))
+        green   = np.array((0,1,0,1))
+        orange  = np.array((1,0.5,0,1))
+        black   = np.array((0,0,0,1))
+        yellow  = np.array((1,1,0,1))
+        cyan    = np.array((0,1,1,1))
 
-    # order the primary colors here
-    color_map = list()
-    color_map = [red, blue, orange, magenta, green, yellow, cyan, black]
+        # order the primary colors here
+        color_map = list()
+        color_map = [red, blue, orange, magenta, green, yellow, cyan, black]
 
-    num_primary_colors = len(color_map)
+        num_primary_colors = len(color_map)
 
-    if num_colors <= num_primary_colors:
-        return color_map[:num_colors]
+        if num_colors <= num_primary_colors:
+            return color_map[:num_colors]
 
-    # interpolate primary colors
-    while len(color_map) < num_colors:
-        j = 0
-        for i in range(len(color_map)-1):
-            color_a = color_map[2*i]
-            color_b = color_map[2*i+1]
-            mid_color = (color_a+color_b)/2.0
-            j = 2*i+1
-            color_map.insert(j,mid_color) # insert before index
-            if len(color_map) == num_colors:
-                break
+        # interpolate primary colors
+        while len(color_map) < num_colors:
+            j = 0
+            for i in range(len(color_map)-1):
+                color_a = color_map[2*i]
+                color_b = color_map[2*i+1]
+                mid_color = (color_a+color_b)/2.0
+                j = 2*i+1
+                color_map.insert(j,mid_color) # insert before index
+                if len(color_map) == num_colors:
+                    break
 
-    return color_map
+        return color_map
+
+    def __filename(self, name):
+
+        filename = name.lower().strip().split(' ')
+
+        if len(filename) == 1:
+            filename = filename[0]
+        else:
+            tmp = filename[0]
+            for (i,v) in enumerate(filename):
+                if i == 0:
+                    continue
+                tmp = tmp+'_'+v
+            filename = tmp
+
+        return filename
