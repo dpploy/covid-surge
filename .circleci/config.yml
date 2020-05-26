@@ -14,9 +14,10 @@ jobs:
 
     steps:
       - checkout
+      - python/install-deps
       - run:
           name: Pytest Install and Test
           command: |
-              sudo pip install -U pytest numpy pandas matplotlib
+              #sudo pip install -U pytest numpy pandas matplotlib
               echo "Pytest installed"
               pytest
