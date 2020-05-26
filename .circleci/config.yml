@@ -15,8 +15,9 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Pytest Install and Test
+          name: Requirements install and pytest
           command: |
+              sudo pip install --upgrade pip
               sudo pip install -U -r requirements.txt
               echo " "
               echo "requirements installed"
