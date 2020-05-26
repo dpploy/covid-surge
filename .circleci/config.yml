@@ -17,6 +17,6 @@ jobs:
       - run:
           name: Pytest Install and Test
           command: |
-              sudo pip install -U pytest
+              sudo pip install -U pytest numpy pandas
               echo "Pytest installed"
               pytest
