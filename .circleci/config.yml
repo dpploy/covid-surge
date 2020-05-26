@@ -19,10 +19,10 @@ jobs:
           command: |
               sudo pip install --upgrade pip
               sudo pip install -U -r requirements.txt
-              echo " "
               echo "requirements installed"
-              echo " "
+      - run:
+          name: Pytest
+          command: |    
               export PYTHONPATH=$PYTHONPATH:$(pwd)
-              pytest --cov=./
-              #bash <(curl -s https://codecov.io/bash) 
+              pytest --cov=./ 
               codecov
