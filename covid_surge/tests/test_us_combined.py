@@ -41,8 +41,7 @@ def test_main():
     param_vec = us_surge.fit_data()
 
     #print(list(param_vec))
-    param_gold = np.array([97537.82769142388,24.4213468857896,
-                          -0.09760783162924842])
+    param_gold = np.array([98258.11249350989, 24.16030887578648, -0.09667519121651309])
     assert np.allclose(param_vec,param_gold)
     print('')
 
@@ -54,8 +53,8 @@ def test_main():
     (tc,dtc) = us_surge.critical_times( param_vec, verbose=True )
 
     #print(tc,dtc)
-    tc_gold  = 32.737717546347874
-    dtc_gold = 13.492338421440632
+    tc_gold  = 32.942382813045036
+    dtc_gold = 13.622501081744613
     assert np.allclose( np.array([tc,dtc]), np.array([tc_gold,dtc_gold]) )
 
     # Report errors 
