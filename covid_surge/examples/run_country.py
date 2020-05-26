@@ -9,8 +9,6 @@ Global COVID-19 surge period analysis.
 Expand on this later.
 '''
 
-import numpy as np
-
 from covid_surge import Surge
 
 def main():
@@ -60,7 +58,7 @@ def main():
     # Report critical times
     (tc,dtc) = g_surge.critical_times( param_vec, name, verbose=True )
 
-    # Report errors 
+    # Report errors
     g_surge.error_analysis( param_vec, tc, dtc, name )
 
     # 60-day look-ahead
