@@ -20,7 +20,7 @@ COVID-19 mortality surge period calculation for communities afflicted by the cor
 
 ------------
 
-Preprint: [How Long is the Worst Part of the COVID-19 Mortality Surge?](https://doi.org/10.31219/osf.io/z59uy)
+**Preprint**: [How Long is the Worst Part of the COVID-19 Mortality Surge?](https://doi.org/10.31219/osf.io/z59uy)
 
 
 |   |
