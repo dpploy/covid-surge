@@ -1,9 +1,9 @@
 # Covid-surge
 COVID-19 mortality surge period calculation for communities afflicted by the corona virus SARS-CoV-2.
 
-  + [University of Massachusetts Lowell](https://www.uml.edu/)
-  + [Dept. of Chemical Engineering](https://www.uml.edu/Engineering/Chemical/) (Nuclear Program)
-  + [Prof. Valmor F. de Almeida](https://www.uml.edu/Engineering/Chemical/faculty/de-Almeida-Valmor.aspx) (valmor_dealmeida@uml.edu)
++ [University of Massachusetts Lowell](https://www.uml.edu/)
++ [Dept. of Chemical Engineering](https://www.uml.edu/Engineering/Chemical/) (Nuclear Program)
++ [Prof. Valmor F. de Almeida](https://www.uml.edu/Engineering/Chemical/faculty/de-Almeida-Valmor.aspx) (valmor_dealmeida@uml.edu)
 
 -----------
 
