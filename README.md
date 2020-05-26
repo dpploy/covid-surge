@@ -17,6 +17,7 @@ COVID-19 mortality surge period calculation for communities afflicted by the cor
 
 ![CircleCI](https://img.shields.io/circleci/build/github/dpploy/covid-surge/master)
 ![Codecov](https://img.shields.io/codecov/c/github/dpploy/covid-surge)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8ba73ff25b264beb8a15f2172cf81aa7)](https://www.codacy.com/gh/dpploy/covid-surge?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dpploy/covid-surge&amp;utm_campaign=Badge_Grade)
 
 ------------
 
