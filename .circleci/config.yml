@@ -15,15 +15,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Requirements install and pytest
+          name: Requirements install
           command: |
               sudo pip install --upgrade pip
               sudo pip install -U -r requirements.txt
               echo " "
               echo "requirements installed"
-              sudo pip install codecov
-              echo "codecov installed"
               echo " "
               export PYTHONPATH=$PYTHONPATH:$(pwd)
-              pytest
+              pytest --cov=./
               bash <(curl -s https://codecov.io/bash) 
