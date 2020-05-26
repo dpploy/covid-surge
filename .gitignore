@@ -6,6 +6,7 @@ __pycache__/
 covid_surge/examples/*.png
 notebooks/*.png
 covid_surge/tests/*.png
+covid_surge/*.png
 *.swp
 *.DS_Store
 *.html
