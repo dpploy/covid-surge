@@ -57,7 +57,7 @@ def main():
     # Report critical times
     (tc,dtc) = us_surge.critical_times( param_vec, verbose=True )
 
-    # Report errors 
+    # Report errors
     us_surge.error_analysis( param_vec, tc, dtc )
 
     # 60-day look-ahead
