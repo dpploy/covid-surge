@@ -21,7 +21,7 @@ jobs:
               sudo pip install -U -r requirements.txt
               echo "requirements installed"
       - run:
-          name: Pytest
+          name: Pytest w/ code coverage
           command: |    
               export PYTHONPATH=$PYTHONPATH:$(pwd)
               pytest --cov=./ 
