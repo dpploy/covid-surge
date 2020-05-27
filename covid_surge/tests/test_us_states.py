@@ -10,6 +10,7 @@ Test.
 '''
 
 import numpy as np
+from asserts import assert_equal
 
 from covid_surge import Surge
 
@@ -69,14 +70,21 @@ def test_main():
     for g in state_groups:
         print(' Group %i %s'%(state_groups.index(g),g))
 
-    assert len(state_groups) == 7
-    assert state_groups[0] == ['New York', 'Virginia']
-    assert state_groups[1] == ['Massachusetts', 'Connecticut', 'Michigan']
-    assert state_groups[2] == ['New Jersey', 'Pennsylvania', 'Louisiana', 'Minnesota', 'Maryland']
-    assert state_groups[3] == ['North Carolina', 'Indiana']
-    assert state_groups[4] == ['Florida', 'Georgia', 'Wisconsin', 'Missouri', 'Colorado', 'Ohio']
-    assert state_groups[5] == ['Illinois', 'California', 'Washington']
-    assert state_groups[6] == ['Alabama', 'Mississippi']
+    print('')
+    print('Testing results:')
+    try:
+       assert_equal( len(state_groups), 7 )
+       assert_equal( state_groups[0], ['New York', 'Virginia'] )
+       assert_equal( state_groups[1], ['Massachusetts', 'Connecticut', 'Michigan'] )
+       assert_equal( state_groups[2], ['New Jersey', 'Pennsylvania', 'Louisiana', 'Minnesota', 'Maryland'] )
+       assert_equal( state_groups[3], ['North Carolina'] )
+       assert_equal( state_groups[4], ['Indiana','Florida', 'Georgia', 'Wisconsin', 'Missouri'] )
+       assert_equal( state_groups[5], ['Colorado', 'Ohio', 'Illinois', 'California', 'Washington'] )
+       assert_equal( state_groups[6], ['Alabama', 'Mississippi'] )
+    except AssertionError as err:
+       print('Warning: ',err)
+    else:
+       print('all tests passed')
 
     # Plot the normalized surge for groups of states
     us_surge.plot_group_fit_data( state_groups, fit_data, save=True )

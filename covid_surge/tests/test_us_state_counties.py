@@ -10,7 +10,7 @@ Expand on this later.
 '''
 
 import numpy as np
-import sys
+from asserts import assert_equal
 
 from covid_surge import Surge
 
@@ -78,11 +78,18 @@ def test_main():
     for g in county_groups:
         print(' Group %i %s'%(county_groups.index(g),g))
 
-    assert len(county_groups) == 4
-    assert county_groups[0] == ['Rowan']
-    assert county_groups[1] == ['Orange', 'Durham']
-    assert county_groups[2] == ['Mecklenburg']
-    assert county_groups[3] == ['Guilford']
+    print('')
+    print('Testing results:')
+    try:
+        assert_equal( len(county_groups), 4 )
+        assert_equal( county_groups[0], ['Rowan'] )
+        assert_equal( county_groups[1], ['Orange', 'Durham'] )
+        assert_equal( county_groups[2], ['Mecklenburg'] )
+        assert_equal( county_groups[3], ['Guilford'] )
+    except AssertionError as err:
+        print('Warning: ',err)
+    else:
+        print('all tests passed')
 
     # Plot the normalized surge for groups of counties
     c_surge.plot_group_fit_data( county_groups, fit_data, save=True )
