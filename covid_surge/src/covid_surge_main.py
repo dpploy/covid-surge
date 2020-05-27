@@ -3,6 +3,7 @@
 # This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
+
 '''
 Surge class for manipulating various forms of COVID-19 data.
 Usage examples can be found in the examples/ directory.
@@ -18,7 +19,6 @@ single file.
 '''
 
 import os
-import logging
 import time
 import datetime
 
