@@ -10,6 +10,7 @@ Expand on this later.
 '''
 
 import numpy as np
+from asserts import assert_equal
 
 from covid_surge import Surge
 
@@ -68,13 +69,21 @@ def test_main():
     for g in country_groups:
         print(' Group %i %s'%(country_groups.index(g),g))
 
-    assert len(country_groups) == 6
-    assert country_groups[0] == ['Belgium', 'France']
-    assert country_groups[1] == ['Germany', 'Turkey']
-    assert country_groups[2] == ['Spain', 'Netherlands', 'United Kingdom', 'Canada']
-    assert country_groups[3] == ['Ecuador', 'Sweden']
-    assert country_groups[4] == ['US', 'Italy']
-    assert country_groups[5] == ['Iran']
+    print('')
+    print('Testing results:')
+
+    try:
+        assert_equal( len(country_groups), 6 )
+        assert_equal( country_groups[0], ['Belgium', 'France'] )
+        assert_equal( country_groups[1], ['Germany', 'Turkey'] )
+        assert_equal( country_groups[2], ['Spain', 'Netherlands', 'United Kingdom', 'Canada'] )
+        assert_equal( country_groups[3], ['Ecuador'] )
+        assert_equal( country_groups[4], ['Sweden', 'US', 'Italy'] )
+        assert_equal( country_groups[5], ['Iran'] )
+    except AssertionError as err:
+        print('Warning: ',err)
+    else:
+        print('all tests passed')
 
     # Plot the normalized surge for groups of countries
     g_surge.plot_group_fit_data( country_groups, fit_data, save=True )

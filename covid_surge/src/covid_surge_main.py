@@ -26,6 +26,9 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
+from asserts import assert_is_none, assert_equal, assert_true, assert_is_instance
+from asserts import assert_in
+
 class Surge:
     '''
     This class uses auxiliary methods
@@ -65,7 +68,8 @@ class Surge:
         '''
 
         if locale=='global':
-            assert sub_locale is None
+            #assert sub_locale is None
+            assert_is_none(sub_locale)
 
         self.locale     = locale
         self.sub_locale = sub_locale
@@ -89,8 +93,10 @@ class Surge:
                 self.__get_covid_us_data( self.sub_locale,
                             save_html=save_all_original_data_html )
 
-                assert dates.size == cases.shape[0]
-                assert len(county_names) == cases.shape[1]
+                #assert dates.size == cases.shape[0]
+                assert_equal( dates.size , cases.shape[0] )
+                #assert len(county_names) == cases.shape[1]
+                assert_equal( len(county_names) , cases.shape[1] )
 
                 self.names = county_names
 
@@ -99,9 +105,10 @@ class Surge:
                 ( state_names, populations, dates, cases ) = \
                 self.__get_covid_us_data( save_html=save_all_original_data_html )
 
-                assert dates.size == cases.shape[0]
-                assert len(state_names) == cases.shape[1]
-
+                #assert dates.size == cases.shape[0]
+                assert_equal( dates.size , cases.shape[0] )
+                #assert len(state_names) == cases.shape[1]
+                assert_equal( len(state_names) , cases.shape[1] )
 
                 self.names = state_names
 
@@ -113,7 +120,8 @@ class Surge:
             self.names = country_names
 
         else:
-            assert False, 'Bad locale: %r (US, global)'%(self.locale)
+            #assert False, 'Bad locale: %r (US, global)'%(self.locale)
+            assert_true( False, 'Bad locale: %r (US, global)'%(self.locale) )
 
         self.__dates = dates
         self.__cases = cases
@@ -131,16 +139,20 @@ class Surge:
 
     def __set_end_date(self, v):
 
-        assert isinstance(v,str) or v is None
+        #assert isinstance(v,str) or v is None
+        assert_true( isinstance(v,str) or v is None )
 
         self.__end_date = v
         self.__reset_data()
 
         if self.__end_date is not None:
-            assert isinstance(self.__end_date,str)
-            assert isinstance(self.__cases,np.ndarray)
+            #assert isinstance(self.__end_date,str)
+            assert_is_instance( self.__end_date, str )
+            #assert isinstance(self.__cases,np.ndarray)
+            assert_is_instance( self.__cases, np.ndarray )
             (id,) = np.where(self.dates==self.__end_date)
-            assert id.size == 1
+            #assert id.size == 1
+            assert_equal( id.size, 1 )
             self.dates = np.copy(self.dates[:id[0]+1])
             self.cases = np.copy(self.cases[:id[0]+1,:])
         elif self.__ignore_last_n_days != 0:
@@ -157,8 +169,10 @@ class Surge:
 
     def __set_ignore_last_n_days(self, v):
 
-        assert isinstance(v,int)
-        assert v >= 0
+        #assert isinstance(v,int)
+        assert_is_instance( v, int )
+        #assert v >= 0
+        assert_true( v >= 0 )
 
         self.__ignore_last_n_days = v
         self.__reset_data()
@@ -211,7 +225,8 @@ class Surge:
                 df.to_html('covid_19_confirmed.html')
 
         else:
-            assert True, 'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type)
+            #assert False, 'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type)
+            assert_true( False, 'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type) )
 
         df = df.drop(['UID','iso2','iso3','Combined_Key','code3','FIPS','Lat', 'Long_','Country_Region'],axis=1)
 
@@ -305,8 +320,9 @@ class Surge:
             return ( county_names, population, dates, cases )
 
         else:
-            assert sub_locale in state_names,\
-                    '\n\n sub_locale %r not in %r'%(sub_locale,state_names)
+            #assert sub_locale in state_names,\
+            #        '\n\n sub_locale %r not in %r'%(sub_locale,state_names)
+            assert_in( sub_locale, state_names )
 
     def __get_covid_global_data(self, case_type='deaths', 
             distribution=True, cumulative=False, save_html=False ):
@@ -347,7 +363,8 @@ class Surge:
                 df.to_html('covid_19_global_deaths.html')
 
         else:
-            assert True, 'invalid query type: %r (valid: "deaths"'%(case_type)
+            #assert True, 'invalid query type: %r (valid: "deaths"'%(case_type)
+            assert_true( False, 'invalid query type: %r (valid: "deaths"'%(case_type) )
 
         df = df.drop(['Lat', 'Long'],axis=1)
         df = df.rename(columns={'Province/State':'state/province','Country/Region':'country/region'})
@@ -397,8 +414,9 @@ class Surge:
                 population = self.populations[name_id]
             cases_plot = self.cases[:,name_id]
         else:
-            assert name in self.names,\
-            '\n\n Name: %r not in %r'%(name,self.names)
+            #assert name in self.names,\
+            #'\n\n Name: %r not in %r'%(name,self.names)
+            assert_in( name, self.names )
 
 
         # Select data with # of cases greater than the minimum
@@ -463,8 +481,9 @@ class Surge:
             name_id = self.names.index(name)
             cases = self.cases[:,name_id]
         else:
-            assert name in self.names,\
-                '\n\n Name: %r not in %r'%(name,self.names)
+            #assert name in self.names,\
+            #    '\n\n Name: %r not in %r'%(name,self.names)
+            assert_in( name, self.names )
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases>self.trim_rel_small_n_cases/100*cases[-1])
@@ -489,9 +508,13 @@ class Surge:
                            self.sigmoid_func, self.__grad_p_sigmoid_func,
                            param_vec_0, k_max, rel_tol, verbose=False )
 
-        assert param_vec[0] > 0.0
-        assert param_vec[1] > 0.0
-        assert param_vec[2] < 0.0
+        #assert param_vec[0] > 0.0
+        #assert param_vec[1] > 0.0
+        #assert param_vec[2] < 0.0
+
+        assert_true( param_vec[0] > 0.0 )
+        assert_true( param_vec[1] > 0.0 )
+        assert_true( param_vec[2] < 0.0 )
 
         param_vec[0] *= scaling
 
@@ -521,8 +544,10 @@ class Surge:
                 population = self.populations[name_id]
             cases_plot = self.cases[:,name_id]
         else:
-            assert name in self.names,\
-                '\n\n Name: %r not in %r'%(name,self.names)
+            #assert name in self.names,\
+            #    '\n\n Name: %r not in %r'%(name,self.names)
+
+            assert_in( name, self.names )
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases_plot>self.trim_rel_small_n_cases/100*cases_plot[-1])
@@ -569,7 +594,8 @@ class Surge:
         elif option == 'days':
             plt.xlabel(r'Time [day]',fontsize=16)
         else:
-            assert False
+            #assert False
+            assert_true( False )
 
         plt.ylabel(ylabel,fontsize=16)
         plt.title(title,fontsize=20)
@@ -855,7 +881,8 @@ class Surge:
                       param_vec_0,
                       k_max=10, rel_tol=1.0e-3, verbose=True ):
 
-        assert x_vec.size == y_vec.size
+        #assert x_vec.size == y_vec.size
+        assert_equal( x_vec.size, y_vec.size )
 
         import numpy as np
         import numpy.linalg
@@ -876,7 +903,8 @@ class Surge:
         #         1234567890 12345678901 123456789012345 123456789012 123456789 12345678
 
         import math
-        assert k_max >= 1
+        #assert k_max >= 1
+        assert_true( k_max >= 1 )
         k = 1
 
         while (np.linalg.norm(delta_vec_k/param_vec) > rel_tol or np.linalg.norm(j_mtrx_k.transpose()@r_vec_k) > 1e-3 ) and k <= k_max:
@@ -984,8 +1012,9 @@ class Surge:
                 population = self.populations[name_id]
             cases = self.cases[:,name_id]
         else:
-            assert name in self.names, \
-              '\n\n Name: %r not in %r'%(name,self.names)
+            #assert name in self.names, \
+            #  '\n\n Name: %r not in %r'%(name,self.names)
+            assert_in( name, self.names )
 
         # Select data with non-zero cases only
         (nz_cases_ids,) = np.where(cases>0)
@@ -1018,7 +1047,8 @@ class Surge:
         else:
             time_max_id = int(time_max_double_prime)
 
-        assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        #assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        assert_true( abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
 
         if verbose:
             print('Maximum growth acceleration            = %3.2e [case/day^2]'%(a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3))
@@ -1040,7 +1070,8 @@ class Surge:
         else:
             time_min_id = int(time_min_double_prime)
 
-        assert abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
+        #assert abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
+        assert_true( abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8 )
 
         if verbose:
             print('')
@@ -1056,7 +1087,8 @@ class Surge:
             print('')
             print('Surge period = %3.1f [day]'%(time_min_double_prime-time_max_double_prime))
 
-        assert abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5
+        #assert abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5
+        assert_true( abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5 )
 
 
         return ( time_max_prime, time_max_prime-time_max_double_prime )
@@ -1072,7 +1104,8 @@ class Surge:
 
         prime_max = -a0*a2/4.0
 
-        assert abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8
+        #assert abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8
+        assert_true( abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8 )
 
         return (tc, prime_max)
 
@@ -1085,7 +1118,8 @@ class Surge:
 
         time_max_double_prime = -math.log(a1/(2+math.sqrt(3)))/a2 # time at maximum growth acceleration
 
-        assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        #assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        assert_true( abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
 
     def error_analysis(self, param_vec, tc, dtc, name=None):
 
@@ -1099,8 +1133,9 @@ class Surge:
                 population = self.populations[name_id]
             cases = self.cases[:,name_id]
         else:
-            assert name in self.names,\
-                 'Name: %r not in %r'%(name,self.names)
+            #assert name in self.names,\
+            #     'Name: %r not in %r'%(name,self.names)
+            assert_in( name,self.names )
 
         # Select data with # of cases greater than the minimum
         (nz_cases_ids,) = np.where(cases>self.trim_rel_small_n_cases/100*cases[-1])
@@ -1184,7 +1219,8 @@ class Surge:
             if name in blocked_list:
                 continue
 
-            assert name in names, 'Name: %r not in %r'%(name,names)
+            #assert name in names, 'Name: %r not in %r'%(name,names)
+            assert_in( name, names )
             name_id = names.index(name)
             if self.populations:
                 population = self.populations[name_id]
@@ -1258,9 +1294,13 @@ class Surge:
                 print('Fitting coeff. of det. R2 = %1.3f'%r2)
                 print('')
 
-            assert param_vec[0] > 0.0
-            assert param_vec[1] > 0.0
-            assert param_vec[2] < 0.0
+            #assert param_vec[0] > 0.0
+            #assert param_vec[1] > 0.0
+            #assert param_vec[2] < 0.0
+
+            assert_true( param_vec[0] > 0.0 )
+            assert_true( param_vec[1] > 0.0 )
+            assert_true( param_vec[2] < 0.0 )
 
             param_vec[0] *= scaling
             icases  *= scaling
@@ -1278,6 +1318,7 @@ class Surge:
                     print('')
                     print('WARNING: Time at peak surge rate exceeds time data.')
                     print('WARNING: Skipping this data set.')
+                # not needed or incorrect
                 #assert int(tc-dtc)+1 <= dates.size,\
                         #'\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc-dtc)+1,dates.size,times.size)
 
@@ -1289,8 +1330,9 @@ class Surge:
                     print('')
                     print('WARNING: Time at mininum acceleration exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                assert int(tc)+1 <= dates.size,\
-                        '\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc)+1,dates.size,times.size)
+                #assert int(tc)+1 <= dates.size,\
+                #        '\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc)+1,dates.size,times.size)
+                assert_true( int(tc)+1 <= dates.size )
                 names_past_peak_surge_period.append( (name, tc, dates[int(tc)+1], dtc) )
                 continue
 
@@ -1541,8 +1583,10 @@ class Surge:
             if value >= val[0] and value < val[1]:
                 return key
 
-        assert False,\
-          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
+        #assert False,\
+        #  '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
+        assert_true( False,
+          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins) )
 
     def plot_group_fit_data(self, state_groups, fit_data, save=False):
         '''
@@ -1719,7 +1763,8 @@ class Surge:
 
         '''
 
-        assert num_colors >= 1
+        #assert num_colors >= 1
+        assert_true( num_colors >= 1 )
 
         import numpy as np
 
