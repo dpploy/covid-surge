@@ -23,6 +23,7 @@ from asserts import assert_is_none, assert_equal, assert_true, assert_is_instanc
 from asserts import assert_in
 
 class Surge:
+
     '''Surge class for period analysis of COVID-19 data.'''
 
     def __init__( self, locale='US', sub_locale=None,
@@ -54,8 +55,7 @@ class Surge:
         __ignore_last_n_days
         min_n_cases_abs
         trim_rel_small_n_cases
-        deaths_100k_minimum
-        '''
+        deaths_100k_minimum'''
         if locale=='global':
             #assert sub_locale is None
             assert_is_none(sub_locale)
