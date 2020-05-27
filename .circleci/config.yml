@@ -19,13 +19,13 @@ jobs:
           command: |
               sudo pip install --upgrade pip
               sudo pip install -U -r requirements.txt
-              echo "**********************************"
+              echo "=================================="
               echo "covid-surge requirements installed"
-              echo "**********************************"
+              echo "=================================="
               sudo pip install -U pytest pytest-cov codecov
-              echo "***************************"
+              echo "==========================="
               echo "test requirements installed"
-              echo "***************************"
+              echo "==========================="
       - run:
           name: Pytest w/ code coverage
           command: |    
