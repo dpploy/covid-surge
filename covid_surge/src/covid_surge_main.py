@@ -27,14 +27,12 @@ from asserts import assert_in
 
 class Surge:
     '''Surge class for period analysis of COVID-19 data.
-
     '''
 
     def __init__( self, locale='US', sub_locale=None,
                   save_all_original_data_html=False,
                   log_filename='covid_surge' ):
         '''Surge constructor.
-
         Parameters
         ----------
         locale: str
