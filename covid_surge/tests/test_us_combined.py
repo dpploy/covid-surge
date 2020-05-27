@@ -3,11 +3,6 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-'''
-US COVID-19 surge period analysis.
-
-Expand on this later.
-'''
 
 import numpy as np
 from asserts import assert_almost_equal
@@ -89,7 +84,7 @@ def test_main():
         print('all tests passed')
         print('')
 
-    # Report errors 
+    # Report errors
     us_surge.error_analysis( param_vec, tc, dtc )
 
 if __name__ == '__main__':

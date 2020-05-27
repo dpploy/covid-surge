@@ -3,13 +3,7 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-'''
-US States COVID-19 surge period analysis.
 
-Test.
-'''
-
-import numpy as np
 from asserts import assert_equal
 
 from covid_surge import Surge
@@ -52,7 +46,7 @@ def test_main():
 
     for (sort_key,data) in fit_data:
         state = data[0]
-        param_vec = data[3]
+        #param_vec = data[3]
         key = us_surge.get_bin_id(sort_key,bins)
         if key in state_groups:
             state_groups[key].append(state)
