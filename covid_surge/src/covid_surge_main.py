@@ -4,9 +4,8 @@
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
 
-'''
+'''Surge period analysis of COVID-19 data.
 
-Surge class for manipulating various forms of COVID-19 data.
 Usage examples can be found in the examples/ directory.
 In addition, the Jupyter notebooks/ directory also shows how to use the
 class in various ways.
@@ -27,14 +26,15 @@ from asserts import assert_is_none, assert_equal, assert_true, assert_is_instanc
 from asserts import assert_in
 
 class Surge:
-    '''
-    This class uses auxiliary methods
+    '''Surge class for period analysis of COVID-19 data.
+
     '''
 
     def __init__( self, locale='US', sub_locale=None,
                   save_all_original_data_html=False,
                   log_filename='covid_surge' ):
-        '''
+        '''Surge constructor.
+
         Parameters
         ----------
         locale: str
@@ -188,7 +188,8 @@ class Surge:
 
     def __get_covid_us_data(self, sub_locale=None,
             case_type='deaths', save_html=False ):
-        '''
+        '''COVID-19 data loader.
+
         Load COVID-19 pandemic cumulative data from:
 
          https://github.com/CSSEGISandData/COVID-19.
@@ -323,7 +324,8 @@ class Surge:
 
     def __get_covid_global_data(self, case_type='deaths',
             distribution=True, cumulative=False, save_html=False ):
-        '''
+        '''COVID-19 data loader.
+
         Load COVID-19 pandemic cumulative data from:
 
             https://github.com/CSSEGISandData/COVID-19
