@@ -89,7 +89,7 @@ def test_main():
         print('all tests passed')
         print('')
 
-    # Report errors 
+    # Report errors
     us_surge.error_analysis( param_vec, tc, dtc )
 
 if __name__ == '__main__':

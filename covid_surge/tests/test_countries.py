@@ -51,7 +51,7 @@ def test_main():
 
     for (sort_key,data) in fit_data:
         country = data[0]
-        param_vec = data[3]
+        #param_vec = data[3]
         key = g_surge.get_bin_id(sort_key,bins)
         if key in country_groups:
             country_groups[key].append(country)

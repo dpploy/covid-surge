@@ -5,6 +5,7 @@
 # Valmor F. de Almeida dealmeidavf@gmail.com
 
 '''
+
 Surge class for manipulating various forms of COVID-19 data.
 Usage examples can be found in the examples/ directory.
 In addition, the Jupyter notebooks/ directory also shows how to use the
@@ -17,10 +18,6 @@ highlighting and folding configurations to make it simple to navigate a
 single file.
 
 '''
-
-import os
-import time
-import datetime
 
 import numpy as np
 import matplotlib
@@ -291,7 +288,7 @@ class Surge:
             county_names_set = set(county_names_tmp)
 
             county_names = list(county_names_set)
-            county = sorted(county_names)
+            county_names = sorted(county_names)
 
             population = [0]*len(county_names)
 
@@ -522,6 +519,7 @@ class Surge:
         np.set_printoptions(precision=3,threshold=20,edgeitems=12,linewidth=100)
         print('Unscaled root =',param_vec)
         print('R2            = %1.3f'%r2)
+        print('k iterations  = %3i'%k)
 
         return param_vec
 
@@ -554,7 +552,6 @@ class Surge:
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
-        xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
 
         if population:
@@ -869,8 +866,6 @@ class Surge:
         a1 = param_vec[1]
         a2 = param_vec[2]
 
-        grad_p_f = np.zeros(param_vec.size, dtype=np.float64)
-
         grad_p_f_0 =   1./( 1. + a1 * np.exp(a2*x) )
         grad_p_f_1 = - a0/( 1. + a1 * np.exp(a2*x) )**2 * np.exp(a2*x)
         grad_p_f_2 = - a0/( 1. + a1 * np.exp(a2*x) )**2 * a1 * x*np.exp(a2*x)
@@ -1008,8 +1003,6 @@ class Surge:
             cases = np.sum(self.cases,axis=1)
         elif name in self.names:
             name_id = self.names.index(name)
-            if self.populations:
-                population = self.populations[name_id]
             cases = self.cases[:,name_id]
         else:
             #assert name in self.names, \
@@ -1410,9 +1403,9 @@ class Surge:
 
         # Order fit_data 
 
-        sorted_by_max_rel_death_rate = sorted(
-             [ (self.__sigmoid_func_prime(i[4],i[3])/i[3][0]*100, i )
-                for i in fit_data ], key = lambda entry: entry[0], reverse=True )
+        #sorted_by_max_rel_death_rate = sorted(
+        #     [ (self.__sigmoid_func_prime(i[4],i[3])/i[3][0]*100, i )
+        #        for i in fit_data ], key = lambda entry: entry[0], reverse=True )
 
         sorted_by_surge_period = sorted(
                 [ (2*i[5], i ) for i in fit_data ],

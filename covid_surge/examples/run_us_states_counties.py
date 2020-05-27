@@ -92,7 +92,7 @@ def main():
 
         for (sort_key,data) in fit_data:
             county = data[0]
-            param_vec = data[3]
+            #param_vec = data[3]
             key = c_surge.get_bin_id(sort_key,bins)
             if key in county_groups:
                 county_groups[key].append(county)
