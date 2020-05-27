@@ -1671,10 +1671,10 @@ class Surge:
 
         colors = self.__color_map(len(bins))
 
-        for (iid,(state,val)) in enumerate(sorted_list):
+        for (mid,(state,val)) in enumerate(sorted_list):
 
             color = colors[ self.get_bin_id(val,bins) ]
-            ax.bar( iid, val, color=color )
+            ax.bar( mid, val, color=color )
 
         # Fine tunning the axes
         ax.set_xlim((-.75,len(fit_data)))
