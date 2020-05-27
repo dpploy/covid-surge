@@ -5,17 +5,14 @@
 # Valmor F. de Almeida dealmeidavf@gmail.com
 
 '''Surge period analysis of COVID-19 data.
-
 Usage examples can be found in the examples/ directory.
 In addition, the Jupyter notebooks/ directory also shows how to use the
 class in various ways.
-
 Notes
 -----
 This single class is a rather long file. `Vim` is used with various
 highlighting and folding configurations to make it simple to navigate a
 single file.
-
 '''
 
 import numpy as np
@@ -26,8 +23,7 @@ from asserts import assert_is_none, assert_equal, assert_true, assert_is_instanc
 from asserts import assert_in
 
 class Surge:
-    '''Surge class for period analysis of COVID-19 data.
-    '''
+    '''Surge class for period analysis of COVID-19 data.'''
 
     def __init__( self, locale='US', sub_locale=None,
                   save_all_original_data_html=False,
@@ -46,7 +42,6 @@ class Surge:
             Default: None
         log_filename: str
             Name of the file to save logging information. Not used at the moment.
-
         Attributes
         ----------
         names: str
@@ -61,7 +56,6 @@ class Surge:
         trim_rel_small_n_cases
         deaths_100k_minimum
         '''
-
         if locale=='global':
             #assert sub_locale is None
             assert_is_none(sub_locale)
