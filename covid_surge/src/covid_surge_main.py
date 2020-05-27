@@ -149,7 +149,7 @@ class Surge:
             assert_is_instance( self.__cases, np.ndarray )
             (ids,) = np.where(self.dates==self.__end_date)
             #assert id.size == 1
-            assert_equal( id.size, 1 )
+            assert_equal( ids.size, 1 )
             self.dates = np.copy(self.dates[:ids[0]+1])
             self.cases = np.copy(self.cases[:ids[0]+1,:])
         elif self.__ignore_last_n_days != 0:
@@ -775,9 +775,9 @@ class Surge:
 
                 (y_min,y_max) = plt.ylim()
                 dy = abs(y_max-y_min)
-                y_text = max + dy*0.00
+                y_text = max_val + dy*0.00
 
-                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max),
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max_val),
                     fontsize=14)
 
                 min_val = fit_func_double_prime(t_min,param_vec)
@@ -789,9 +789,9 @@ class Surge:
 
                 (y_min,y_max) = plt.ylim()
                 dy = abs(y_max-y_min)
-                y_text = min + dy*0.00
+                y_text = min_val + dy*0.00
 
-                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,min),
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,min_val),
                     fontsize=14)
 
             plt.title(title,fontsize=20)
@@ -1671,10 +1671,10 @@ class Surge:
 
         colors = self.__color_map(len(bins))
 
-        for (id,(state,val)) in enumerate(sorted_list):
+        for (iid,(state,val)) in enumerate(sorted_list):
 
             color = colors[ self.get_bin_id(val,bins) ]
-            ax.bar( id, val, color=color )
+            ax.bar( iid, val, color=color )
 
         # Fine tunning the axes
         ax.set_xlim((-.75,len(fit_data)))
