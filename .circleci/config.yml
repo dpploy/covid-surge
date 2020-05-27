@@ -20,6 +20,8 @@ jobs:
               sudo pip install --upgrade pip
               sudo pip install -U -r requirements.txt
               echo "requirements installed"
+              sudo pip install -U pytest pytest-cov codecov
+              echo "test extra installed"
       - run:
           name: Pytest w/ code coverage
           command: |    
