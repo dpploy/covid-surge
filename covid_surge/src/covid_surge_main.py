@@ -31,8 +31,8 @@ class Surge:
     This class uses auxiliary methods
     '''
 
-    def __init__( self, locale='US', sub_locale=None, 
-                  save_all_original_data_html=False, 
+    def __init__( self, locale='US', sub_locale=None,
+                  save_all_original_data_html=False,
                   log_filename='covid_surge' ):
         '''
         Parameters
@@ -147,11 +147,11 @@ class Surge:
             assert_is_instance( self.__end_date, str )
             #assert isinstance(self.__cases,np.ndarray)
             assert_is_instance( self.__cases, np.ndarray )
-            (id,) = np.where(self.dates==self.__end_date)
+            (ids,) = np.where(self.dates==self.__end_date)
             #assert id.size == 1
             assert_equal( id.size, 1 )
-            self.dates = np.copy(self.dates[:id[0]+1])
-            self.cases = np.copy(self.cases[:id[0]+1,:])
+            self.dates = np.copy(self.dates[:ids[0]+1])
+            self.cases = np.copy(self.cases[:ids[0]+1,:])
         elif self.__ignore_last_n_days != 0:
             self.__set_ignore_last_n_days(self.__ignore_last_n_days)
         else:
@@ -186,7 +186,7 @@ class Surge:
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days, __set_ignore_last_n_days, None, None)
 
-    def __get_covid_us_data(self, sub_locale=None, 
+    def __get_covid_us_data(self, sub_locale=None,
             case_type='deaths', save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
@@ -321,7 +321,7 @@ class Surge:
             #        '\n\n sub_locale %r not in %r'%(sub_locale,state_names)
             assert_in( sub_locale, state_names )
 
-    def __get_covid_global_data(self, case_type='deaths', 
+    def __get_covid_global_data(self, case_type='deaths',
             distribution=True, cumulative=False, save_html=False ):
         '''
         Load COVID-19 pandemic cumulative data from:
@@ -365,8 +365,6 @@ class Surge:
 
         df = df.drop(['Lat', 'Long'],axis=1)
         df = df.rename(columns={'Province/State':'state/province','Country/Region':'country/region'})
-
-        import numpy as np
 
         country_names = list()
 
@@ -523,7 +521,7 @@ class Surge:
 
         return param_vec
 
-    def plot_covid_nlfit(self, param_vec, name=None, 
+    def plot_covid_nlfit(self, param_vec, name=None,
             save=False, plot_prime=False, plot_double_prime=False,
             option='dates', ylabel='null-ylabel',
             legend='null-legend', title='null-title', formula='null-formula'):
@@ -688,7 +686,7 @@ class Surge:
         plt.close()
 
 
-        # Additional plot for first derivative 
+        # Additional plot for first derivative
         if plot_prime:
 
             fit_func_prime = self.__sigmoid_func_prime
@@ -745,7 +743,7 @@ class Surge:
                 plt.savefig('fit_'+stem+'_1'+'.png', dpi=100)
             plt.close()
 
-        # Additional plot for second derivative 
+        # Additional plot for second derivative
         if plot_double_prime:
 
             fit_func_double_prime = self.__sigmoid_func_double_prime
@@ -768,8 +766,8 @@ class Surge:
                 t_min = time_min_max_double_prime[0]
                 t_max = time_min_max_double_prime[1]
 
-                max = fit_func_double_prime(t_max,param_vec)
-                plt.plot(t_max, max,'*',color='orange',markersize=16)
+                max_val = fit_func_double_prime(t_max,param_vec)
+                plt.plot(t_max, max_val,'*',color='orange',markersize=16)
 
                 (x_min,x_max) = plt.xlim()
                 dx = abs(x_max-x_min)
@@ -782,8 +780,8 @@ class Surge:
                 plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max),
                     fontsize=14)
 
-                min = fit_func_double_prime(t_min,param_vec)
-                plt.plot(t_min, min,'*',color='orange',markersize=16)
+                min_val = fit_func_double_prime(t_min,param_vec)
+                plt.plot(t_min, min_val,'*',color='orange',markersize=16)
 
                 (x_min,x_max) = plt.xlim()
                 dx = abs(x_max-x_min)
@@ -872,7 +870,7 @@ class Surge:
 
         return (grad_p_f_0, grad_p_f_1, grad_p_f_2)
 
-    def __newton_nlls_solve(self, x_vec, y_vec, fit_func, grad_p_fit_func, 
+    def __newton_nlls_solve(self, x_vec, y_vec, fit_func, grad_p_fit_func,
                       param_vec_0,
                       k_max=10, rel_tol=1.0e-3, verbose=True ):
 
@@ -1116,14 +1114,10 @@ class Surge:
 
     def error_analysis(self, param_vec, tc, dtc, name=None):
 
-        population = None
-
         if name is None: # Combine all column data in the surge
             cases = np.sum(self.cases,axis=1)
         elif name in self.names:
             name_id = self.names.index(name)
-            if self.populations:
-                population = self.populations[name_id]
             cases = self.cases[:,name_id]
         else:
             #assert name in self.names,\
@@ -1185,7 +1179,7 @@ class Surge:
 
         return
 
-    def multi_fit_data(self, 
+    def multi_fit_data(self,
             blocked_list=[],
             verbose=False, plot=False, save_plots=False):
 
@@ -1401,7 +1395,7 @@ class Surge:
             for (name, case) in names_below_deaths_abs_minimum:
                 print( '%15s deaths = %5.2f'%(name,case) )
 
-        # Order fit_data 
+        # Order fit_data
 
         #sorted_by_max_rel_death_rate = sorted(
         #     [ (self.__sigmoid_func_prime(i[4],i[3])/i[3][0]*100, i )

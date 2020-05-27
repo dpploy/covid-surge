@@ -3,13 +3,7 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-'''
-Global COVID-19 surge period analysis.
 
-Expand on this later.
-'''
-
-import numpy as np
 from asserts import assert_equal
 
 from covid_surge import Surge
