@@ -3,7 +3,6 @@
 # This file is part of the covid-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-
 """Surge period analysis of COVID-19 data.
 
 Usage examples can be found in the examples/ directory.
@@ -33,8 +32,9 @@ class Surge:
 
     def __init__(self, locale='US', sub_locale=None,
                  save_all_original_data_html=False):
-        # log_filename='covid_surge'):
         """Construct a Surge object.
+
+        # TODO log_filename='covid_surge'):
 
         Parameters
         ----------
@@ -474,9 +474,9 @@ class Surge:
         k_max = 25
         rel_tol = 0.01 / 100.0  # (0.01%)
 
-        (param_vec, r2, k) = self.__newton_nlls_solve(times, cases,
-                             self.sigmoid_func, self.__grad_p_sigmoid_func,
-                             param_vec_0, k_max, rel_tol, verbose=False)
+        (param_vec, rr2, k) = self.__newton_nlls_solve(times, cases,
+                              self.sigmoid_func, self.__grad_p_sigmoid_func,
+                              param_vec_0, k_max, rel_tol, verbose=False)
 
         assert_true(param_vec[0] > 0.0)
         assert_true(param_vec[1] > 0.0)
@@ -488,7 +488,7 @@ class Surge:
         np.set_printoptions(precision=3, threshold=20, edgeitems=12,
                             linewidth=100)
         print('Unscaled root =', param_vec)
-        print('R2            = %1.3f'%r2)
+        print('R2            = %1.3f'%rr2)
         print('k iterations  = %3i'%k)
 
         return param_vec
@@ -932,12 +932,12 @@ class Surge:
 
             k = k + 1
 
-        r2 = 1.0 - np.sum(r_vec_k**2) / np.sum((y_vec-np.mean(y_vec))**2)
+        rr2 = 1.0 - np.sum(r_vec_k**2) / np.sum((y_vec-np.mean(y_vec))**2)
 
         if verbose is True:
             print('******************************************************')
             print('Root = ', param_vec)
-            print('R2   = ', r2)
+            print('R2   = ', rr2)
 
         if k > k_max:
             print('')
@@ -946,7 +946,7 @@ class Surge:
             print('******************************************************')
             print('')
 
-        return (param_vec, r2, k)
+        return (param_vec, rr2, k)
 
     def critical_times(self, param_vec, name=None, verbose=False):
 
@@ -1130,15 +1130,18 @@ class Surge:
         return
 
     def multi_fit_data(self,
-            blocked_list=[],
-            verbose=False, plot=False, save_plots=False):
+                       blocked_list=None,
+                       verbose=False, plot=False, save_plots=False):
+
+        if blocked_list is None:
+            blocked_list = list()
 
         names = self.names
         cases = self.cases
 
         # Sort the states by descending number of total cases
-        sorted_list = sorted( zip(names, cases[-1, :]),
-                              key = lambda entry: entry[1], reverse=True)
+        sorted_list = sorted(zip(names, cases[-1, :]),
+                             key = lambda entry: entry[1], reverse=True)
 
         # Post processing data storage
         fit_data = list()
@@ -1216,7 +1219,7 @@ class Surge:
             k_max = 25
             rel_tol = 0.01 / 100.0 # (0.1%)
 
-            (param_vec, r2, k) = self.__newton_nlls_solve(times, icases,
+            (param_vec, rr2, k) = self.__newton_nlls_solve(times, icases,
                                self.sigmoid_func, self.__grad_p_sigmoid_func,
                                param_vec_0, k_max, rel_tol, verbose=False)
 
@@ -1226,19 +1229,19 @@ class Surge:
 
             if verbose:
                 print('')
-                print('Fitting coeff. of det. R2 = %1.3f'%r2)
+                print('Fitting coeff. of det. R2 = %1.3f'%rr2)
                 print('')
 
-            assert_true( param_vec[0] > 0.0 )
-            assert_true( param_vec[1] > 0.0 )
-            assert_true( param_vec[2] < 0.0 )
+            assert_true(param_vec[0] > 0.0)
+            assert_true(param_vec[1] > 0.0)
+            assert_true(param_vec[2] < 0.0)
 
             param_vec[0] *= scaling
             icases *= scaling
 
             if verbose:
                 print('')
-                print('Unscaled root =',param_vec)
+                print('Unscaled root =', param_vec)
                 print('')
 
             # Compute critical times
