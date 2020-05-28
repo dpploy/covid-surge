@@ -3,13 +3,15 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-"""Example of Surge usage for US states counties data."""
+"""Pytest of Surge US states counties data."""
 
 import numpy as np
 
+from asserts import assert_almost_equal
+
 from covid_surge import Surge
 
-def main():
+def test_main():
     """Main function executed at the bottom."""
 
     # Get US surge data
@@ -22,9 +24,11 @@ def main():
     # Set parameters
     us_surge.end_date = '4/20/20'   # set end date wanted
     us_surge.end_date = None        # get all the data available
-    us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    us_surge.ignore_last_n_days = 2 # allow for data repo to be updated
     us_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
-    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic
+    #                                   Lower Respiratory Diseases per
+    #                                   year: 41 (2019)
 
     print('')
     print('# of states/distric: ', len(us_surge.names))
@@ -48,9 +52,9 @@ def main():
     for state in states:
 
         print('')
-        print('***************************************************************')
+        print('**************************************************************')
         print('                          ', state)
-        print('***************************************************************')
+        print('**************************************************************')
 
         c_surge = Surge(locale='US', sub_locale=state)
 
@@ -62,12 +66,15 @@ def main():
         # Set parameters
         c_surge.end_date = '4/20/20'   # set end date wanted
         c_surge.end_date = None        # get all the data available
-        c_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+        c_surge.ignore_last_n_days = 2 # allow for data repo to be updated
         c_surge.min_n_cases_abs = 100 # min # of absolute cases for analysis
-        c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+        c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic
+        #                                  Lower Respiratory Diseases per
+        #                                  year: 41 (2019)
 
         # Fit data to all counties/cities
-        fit_data = c_surge.multi_fit_data(verbose=False, plot=True, save_plots=True)
+        fit_data = c_surge.multi_fit_data(verbose=False, plot=True,
+                                          save_plots=True)
         print('# of fittings done = ', len(fit_data))
 
         if len(fit_data) == 0:
@@ -83,9 +90,9 @@ def main():
         bins = c_surge.clustering(fit_data, 2, 'surge_period')
 
         print('')
-        print('----------------------------------------------------------------')
-        print('                            Bins                                ')
-        print('----------------------------------------------------------------')
+        print('--------------------------------------------------------------')
+        print('                            Bins                              ')
+        print('--------------------------------------------------------------')
         for k in sorted(bins.keys()):
             print(' Bin %i %s'%(k, bins[k]))
 
@@ -106,9 +113,9 @@ def main():
                          sorted(county_groups.keys(), reverse=False)]
 
         print('')
-        print('----------------------------------------------------------------')
-        print('                        County Groups                           ')
-        print('----------------------------------------------------------------')
+        print('--------------------------------------------------------------')
+        print('                        County Groups                         ')
+        print('--------------------------------------------------------------')
         for grp in county_groups:
             print(' Group %i %s'%(county_groups.index(grp), grp))
 
@@ -120,13 +127,27 @@ def main():
 
     print('')
     print('')
-
     print('Total # of counties/towns with surge period = ', len(surge_periods))
     print('Average surge period %1.2f [day], std %1.2f'%
           (np.mean(np.array(surge_periods)), np.std(np.array(surge_periods))))
     print('Total # of inspected counties/towns w/ non-zero cases = %4i'%
           total_n_counties)
 
+    gold_n_counties = 99
+    gold_ave_surge_period = 25
+    gold_total_n_counties = 1158
+
+    try:
+        assert_almost_equal(len(surge_periods), gold_n_counties, delta=3)
+        assert_almost_equal(np.mean(np.array(surge_periods)),
+                            gold_ave_surge_period, delta=5)
+        assert_almost_equal(total_n_counties, gold_total_n_counties, delta=10)
+    except AssertionError as err:
+        print('Warning: ', err)
+    else:
+        print('all tests passed')
+        print('')
+
 
 if __name__ == '__main__':
-    main()
+    test_main()
