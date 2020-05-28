@@ -1,7 +1,14 @@
-import setuptools
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# This file is part of the COVID-surge application.
+# https://github/dpploy/covid-surge
+# Valmor F. de Almeida dealmeidavf@gmail.com
+""""Setup config forPyPI."""
 
 # Read contents of README file.
 from os import path
+
+import setuptools
 
 this_directory = path.abspath(path.dirname(__file__))
 
@@ -13,7 +20,7 @@ with open('requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='covid-surge',
-    version='0.0.38',
+    version='0.0.39',
     author='Valmor F. de Almeida',
     author_email='valmor_dealmeida@uml.edu',
     description='Covid-Surge is a utility for computing and comparing mortality surge periods of communities afflicted by the COVID-19 virus pandemic.',
