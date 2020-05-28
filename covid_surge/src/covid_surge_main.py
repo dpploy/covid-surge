@@ -18,23 +18,26 @@ single file.
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import pandas as pd
 
-from asserts import assert_is_none, assert_equal, assert_true, assert_is_instance
+
+from asserts import assert_is_none, assert_equal, assert_true
+from asserts import assert_is_instance
 from asserts import assert_in
 
 class Surge:
-
     '''Surge class for period analysis of COVID-19 data.'''
 
-    def __init__( self, locale='US', sub_locale=None,
-                  save_all_original_data_html=False,
-                  log_filename='covid_surge' ):
+    def __init__(self, locale='US', sub_locale=None,
+                 save_all_original_data_html=False):
+        # log_filename='covid_surge'):
         '''Surge constructor.
         Parameters
         ----------
         locale: str
             The place data is retrieved from. Values: 'US' or 'global'.
-            US will store the states data. Global will store all countries data.
+            US will store the states data. Global will store all countries
+            data.
             Default: 'US'.
         sub_locale: str
             The sub-place data is retrived from. This depends of `locale`.
@@ -42,7 +45,8 @@ class Surge:
             names. There is no `sub_locale` for countries.
             Default: None
         log_filename: str
-            Name of the file to save logging information. Not used at the moment.
+            Name of the file to save logging information. Not used at the
+            moment.
         Attributes
         ----------
         names: str
@@ -56,21 +60,24 @@ class Surge:
         min_n_cases_abs
         trim_rel_small_n_cases
         deaths_100k_minimum'''
-        if locale=='global':
-            #assert sub_locale is None
+
+        if locale == 'global':
+            # assert sub_locale is None
             assert_is_none(sub_locale)
 
-        self.locale     = locale
+        self.locale = locale
         self.sub_locale = sub_locale
 
-        self.__end_date           = None
+        self.__end_date = None
         self.__ignore_last_n_days = 0
 
-        self.min_n_cases_abs = 100 # absolute minimum # of cases (go-no-go)
+        self.min_n_cases_abs = 100  # absolute minimum # of cases (go-no-go)
 
-        self.trim_rel_small_n_cases = 0.5 # 0.5% of total; clean up early data
+        self.trim_rel_small_n_cases = 0.5  # 0.5% of total; clean up early data
 
-        self.deaths_100k_minimum = 40 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+        self.deaths_100k_minimum = 40  # US death per 100,000 for
+        #                                Chronic Lower Respiratory Diseases
+        #                                per year: 41 (2019)
 
         self.populations = None
 
@@ -78,92 +85,75 @@ class Surge:
 
             if self.sub_locale:
 
-                ( county_names, populations, dates, cases ) = \
-                self.__get_covid_us_data( self.sub_locale,
-                            save_html=save_all_original_data_html )
+                (county_names, populations, dates, cases) = \
+                 self.__get_covid_us_data(self.sub_locale,
+                                          save_html=save_all_original_data_html)
 
-                #assert dates.size == cases.shape[0]
-                assert_equal( dates.size , cases.shape[0] )
-                #assert len(county_names) == cases.shape[1]
-                assert_equal( len(county_names) , cases.shape[1] )
+                assert_equal(dates.size, cases.shape[0])
+                assert_equal(len(county_names), cases.shape[1])
 
                 self.names = county_names
 
             else:
 
-                ( state_names, populations, dates, cases ) = \
-                self.__get_covid_us_data( save_html=save_all_original_data_html )
+                (state_names, populations, dates, cases) = \
+                 self.__get_covid_us_data(save_html=save_all_original_data_html)
 
-                #assert dates.size == cases.shape[0]
-                assert_equal( dates.size , cases.shape[0] )
-                #assert len(state_names) == cases.shape[1]
-                assert_equal( len(state_names) , cases.shape[1] )
+                assert_equal(dates.size, cases.shape[0])
+                assert_equal(len(state_names), cases.shape[1])
 
                 self.names = state_names
 
             self.populations = populations
 
         elif self.locale == 'global':
-            ( country_names, dates, cases ) = \
-                                   self.__get_covid_global_data(cumulative=True)
+            (country_names, dates, cases) = \
+             self.__get_covid_global_data(cumulative=True)
             self.names = country_names
 
         else:
-            #assert False, 'Bad locale: %r (US, global)'%(self.locale)
-            assert_true( False, 'Bad locale: %r (US, global)'%(self.locale) )
+            assert_true(False, 'Bad locale: %r (US, global)'%(self.locale))
 
         self.__dates = dates
         self.__cases = cases
 
         self.__reset_data()
 
-        return
-
     def __reset_data(self):
 
         self.cases = np.copy(self.__cases)
         self.dates = np.copy(self.__dates)
 
-        return
-
     def __set_end_date(self, v):
 
-        #assert isinstance(v,str) or v is None
-        assert_true( isinstance(v,str) or v is None )
+        assert_true(isinstance(v, str) or v is None)
 
         self.__end_date = v
         self.__reset_data()
 
         if self.__end_date is not None:
-            #assert isinstance(self.__end_date,str)
-            assert_is_instance( self.__end_date, str )
-            #assert isinstance(self.__cases,np.ndarray)
-            assert_is_instance( self.__cases, np.ndarray )
-            (ids,) = np.where(self.dates==self.__end_date)
-            #assert id.size == 1
-            assert_equal( ids.size, 1 )
+            assert_is_instance(self.__end_date, str)
+            assert_is_instance(self.__cases, np.ndarray)
+            (ids,) = np.where(self.dates == self.__end_date)
+            assert_equal(ids.size, 1)
             self.dates = np.copy(self.dates[:ids[0]+1])
-            self.cases = np.copy(self.cases[:ids[0]+1,:])
+            self.cases = np.copy(self.cases[:ids[0]+1, :])
         elif self.__ignore_last_n_days != 0:
             self.__set_ignore_last_n_days(self.__ignore_last_n_days)
         else:
             pass
-
-        return
 
     def __get_end_date(self):
 
         return self.__end_date
     end_date = property(__get_end_date, __set_end_date, None, None)
 
-    def __set_ignore_last_n_days(self, v):
+    def __set_ignore_last_n_days(self, val):
 
-        #assert isinstance(v,int)
-        assert_is_instance( v, int )
-        #assert v >= 0
-        assert_true( v >= 0 )
+        assert_is_instance(val, int)
+        assert_true(val >= 0)
 
-        self.__ignore_last_n_days = v
+        self.__ignore_last_n_days = val
         self.__reset_data()
 
         if self.__ignore_last_n_days != 0:
@@ -171,15 +161,14 @@ class Surge:
             self.dates = np.copy(self.dates[:-self.__ignore_last_n_days])
             self.cases = np.copy(self.cases[:-self.__ignore_last_n_days])
 
-        return
-
     def __get_ignore_last_n_days(self):
 
         return self.__ignore_last_n_days
-    ignore_last_n_days = property(__get_ignore_last_n_days, __set_ignore_last_n_days, None, None)
+    ignore_last_n_days = property(__get_ignore_last_n_days,
+                                  __set_ignore_last_n_days, None, None)
 
     def __get_covid_us_data(self, sub_locale=None,
-            case_type='deaths', save_html=False ):
+                            case_type='deaths', save_html=False):
         '''COVID-19 data loader.
 
         Load COVID-19 pandemic cumulative data from:
@@ -189,8 +178,8 @@ class Surge:
         Parameters
         ----------
         case_type:  str, optional
-                Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
-                Default: 'deaths'.
+                Type of data. Deaths ('deaths') and confirmed cases
+                ('confirmed'). Default: 'deaths'.
 
         Returns
         -------
@@ -198,8 +187,6 @@ class Surge:
                (population, dates, cases)
 
         '''
-
-        import pandas as pd
 
         if case_type == 'deaths':
 
@@ -215,19 +202,19 @@ class Surge:
                 df.to_html('covid_19_confirmed.html')
 
         else:
-            #assert False, 'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type)
-            assert_true( False, 'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type) )
+            assert_true(False,
+            'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type))
 
-        df = df.drop(['UID','iso2','iso3','Combined_Key','code3','FIPS','Lat', 'Long_','Country_Region'],axis=1)
+        df = df.drop(['UID', 'iso2', 'iso3', 'Combined_Key', 'code3', 'FIPS', 'Lat', 'Long_', 'Country_Region'], axis=1)
 
-        df = df.rename(columns={'Province_State':'state/province','Admin2':'county'})
+        df = df.rename(columns={'Province_State':'state/province', 'Admin2':'county'})
 
         state_names = list()
         state_names_tmp = list()
 
-        for (i,istate) in enumerate(df['state/province']):
+        for (i, istate) in enumerate(df['state/province']):
 
-            if istate.strip() == 'Wyoming' and df.loc[i,'county']=='Weston':
+            if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
                 break
 
             state_names_tmp.append(istate)
@@ -243,40 +230,40 @@ class Surge:
 
             population = [0]*len(state_names)
 
-            cases = np.zeros( (len(df.columns[3:]), len(state_names)),
-                    dtype=np.float64)
+            cases = np.zeros((len(df.columns[3:]), len(state_names)),
+                             dtype=np.float64)
 
-            for (i,istate) in enumerate(df['state/province']):
+            for (i, istate) in enumerate(df['state/province']):
 
                 if istate.strip() == 'Wyoming' and\
-                    (df.loc[i,'county']).strip() == 'Weston':
+                    (df.loc[i, 'county']).strip() == 'Weston':
                     break
 
                 state_id = state_names.index(istate)
 
                 if case_type == 'confirmed':
-                    population[state_id] += int(df_pop.loc[i,'Population'])
+                    population[state_id] += int(df_pop.loc[i, 'Population'])
                 else:
-                    population[state_id] += int(df.loc[i,'Population'])
+                    population[state_id] += int(df.loc[i, 'Population'])
 
                 # Add all counties/city/towns columnwise states
-                cases[:,state_id] += np.array(list(df.loc[i, df.columns[3:]]))
+                cases[:, state_id] += np.array(list(df.loc[i, df.columns[3:]]))
 
-            return ( state_names, population, dates, cases )
+            return (state_names, population, dates, cases)
 
         elif sub_locale in state_names:
 
             county_names = list()
             county_names_tmp = list()
 
-            for (i,istate) in enumerate(df['state/province']):
+            for (i, istate) in enumerate(df['state/province']):
 
-                if istate.strip()=='Wyoming' and df.loc[i,'county']=='Weston':
+                if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
                     break
 
                 if istate.strip() == sub_locale:
 
-                    county_names_tmp.append( df.loc[i,'county'] )
+                    county_names_tmp.append(df.loc[i, 'county'])
 
             county_names_set = set(county_names_tmp)
 
@@ -285,37 +272,36 @@ class Surge:
 
             population = [0]*len(county_names)
 
-            cases = np.zeros( (len(df.columns[3:]), len(county_names)),
-                    dtype=np.float64)
+            cases = np.zeros((len(df.columns[3:]), len(county_names)),
+                             dtype=np.float64)
 
-            for (i,istate) in enumerate(df['state/province']):
+            for (i, istate) in enumerate(df['state/province']):
 
-                if istate.strip()=='Wyoming' and df.loc[i,'county']=='Weston':
+                if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
                     break
 
-                icounty = df.loc[i,'county']
+                icounty = df.loc[i, 'county']
 
                 if istate.strip() == sub_locale:
 
                     county_id = county_names.index(icounty)
 
                     if case_type == 'confirmed':
-                        population[county_id] += int(df_pop.loc[i,'Population'])
+                        population[county_id] += int(df_pop.loc[i, 'Population'])
                     else:
-                        population[county_id] += int(df.loc[i,'Population'])
+                        population[county_id] += int(df.loc[i, 'Population'])
 
-                    cases[:,county_id] = np.array(
-                            list(df.loc[i, df.columns[3:]]) )
+                    cases[:, county_id] = np.array(
+                          list(df.loc[i, df.columns[3:]]))
 
-            return ( county_names, population, dates, cases )
+            return (county_names, population, dates, cases)
 
         else:
-            #assert sub_locale in state_names,\
-            #        '\n\n sub_locale %r not in %r'%(sub_locale,state_names)
-            assert_in( sub_locale, state_names )
+            assert_in(sub_locale, state_names)
 
     def __get_covid_global_data(self, case_type='deaths',
-            distribution=True, cumulative=False, save_html=False ):
+                                distribution=True, cumulative=False,
+                                save_html=False):
         '''COVID-19 data loader.
 
         Load COVID-19 pandemic cumulative data from:
@@ -346,15 +332,12 @@ class Surge:
         if cumulative is True:
             distribution = False
 
-        import pandas as pd
-
         if case_type == 'deaths':
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
             if save_html:
                 df.to_html('covid_19_global_deaths.html')
 
         else:
-            #assert True, 'invalid query type: %r (valid: "deaths"'%(case_type)
             assert_true( False, 'invalid query type: %r (valid: "deaths"'%(case_type) )
 
         df = df.drop(['Lat', 'Long'],axis=1)
@@ -374,7 +357,8 @@ class Surge:
 
         dates = np.array(list(df.columns[2:]))
 
-        cases = np.zeros( (len(df.columns[2:]),len(country_names)), dtype=np.float64)
+        cases = np.zeros((len(df.columns[2:]), len(country_names)),
+                         dtype=np.float64)
 
         for (i,icountry) in enumerate(df['country/region']):
 
@@ -385,31 +369,28 @@ class Surge:
         if distribution:
 
             for j in range(cases.shape[1]):
-                cases[:,j] = np.round(np.gradient( cases[:,j] ),0)
+                cases[:, j] = np.round(np.gradient(cases[:, j]), 0)
 
-        return ( country_names, dates, cases )
+        return (country_names, dates, cases)
 
     def plot_covid_data(self, name=None, save=False):
 
         population = None
 
-        if name is None: # Combine all column data in the surge
-            cases_plot = np.sum(self.cases,axis=1)
+        if name is None:  # Combine all column data in the surge
+            cases_plot = np.sum(self.cases, axis=1)
             if self.populations:
                 population = np.sum(self.populations)
         elif name in self.names:
             name_id = self.names.index(name)
             if self.populations:
                 population = self.populations[name_id]
-            cases_plot = self.cases[:,name_id]
+            cases_plot = self.cases[:, name_id]
         else:
-            #assert name in self.names,\
-            #'\n\n Name: %r not in %r'%(name,self.names)
-            assert_in( name, self.names )
-
+            assert_in(name, self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases_plot>self.trim_rel_small_n_cases/100*cases_plot[-1])
+        (nz_cases_ids,) = np.where(cases_plot > self.trim_rel_small_n_cases/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -436,17 +417,17 @@ class Surge:
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
         fig, ax = plt.subplots(figsize=(15,6))
-        #plt.rcParams['figure.figsize'] = [12, 5]
+        # plt.rcParams['figure.figsize'] = [12, 5]
 
-        ax.plot( range(len(dates_plot)), cases_plot, 'r*', label=source )
+        ax.plot(range(len(dates_plot)), cases_plot, 'r*', label=source)
 
-        plt.xticks( range(len(dates_plot)), dates_plot, rotation=60, fontsize=14 )
+        plt.xticks(range(len(dates_plot)), dates_plot, rotation=60, fontsize=14)
 
-        ax.set_ylabel(ylabel,fontsize=16)
-        ax.set_xlabel(xlabel,fontsize=16)
+        ax.set_ylabel(ylabel, fontsize=16)
+        ax.set_xlabel(xlabel, fontsize=16)
 
-        plt.title(title,fontsize=20)
-        plt.legend(loc='best',fontsize=12)
+        plt.title(title, fontsize=20)
+        plt.legend(loc='best', fontsize=12)
         plt.grid(True)
         plt.tight_layout(1)
 
@@ -464,83 +445,76 @@ class Surge:
 
     def fit_data(self, name=None):
 
-        if name is None: # Combine all column data in the surge
-            cases = np.sum(self.cases,axis=1)
+        if name is None:  # Combine all column data in the surge
+            cases = np.sum(self.cases, axis=1)
         elif name in self.names:
             name_id = self.names.index(name)
-            cases = self.cases[:,name_id]
+            cases = self.cases[:, name_id]
         else:
-            #assert name in self.names,\
-            #    '\n\n Name: %r not in %r'%(name,self.names)
-            assert_in( name, self.names )
+            assert_in(name, self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases>self.trim_rel_small_n_cases/100*cases[-1])
+        (nz_cases_ids,) = np.where(cases > self.trim_rel_small_n_cases/100*cases[-1])
         cases = np.copy(cases[nz_cases_ids])
         dates = self.dates[nz_cases_ids]
 
         scaling = cases.max()
         cases /= scaling
 
-        a0 = cases[-1]
-        a1 = a0/cases[0] - 1
-        a2 = -0.15
+        a_0 = cases[-1]
+        a_1 = a_0/cases[0] - 1
+        a_2 = -0.15
 
-        param_vec_0 = np.array([a0,a1,a2])
+        param_vec_0 = np.array([a_0,a_1,a_2])
 
         times = np.array(range(dates.size),dtype=np.float64)
 
         k_max = 25
-        rel_tol = 0.01 / 100.0 # (0.01%)
+        rel_tol = 0.01 / 100.0  # (0.01%)
 
-        (param_vec,r2,k) = self.__newton_nlls_solve( times, cases,
-                           self.sigmoid_func, self.__grad_p_sigmoid_func,
-                           param_vec_0, k_max, rel_tol, verbose=False )
+        (param_vec, r2, k) = self.__newton_nlls_solve(times, cases,
+                             self.sigmoid_func, self.__grad_p_sigmoid_func,
+                             param_vec_0, k_max, rel_tol, verbose=False)
 
-        #assert param_vec[0] > 0.0
-        #assert param_vec[1] > 0.0
-        #assert param_vec[2] < 0.0
-
-        assert_true( param_vec[0] > 0.0 )
-        assert_true( param_vec[1] > 0.0 )
-        assert_true( param_vec[2] < 0.0 )
+        assert_true(param_vec[0] > 0.0)
+        assert_true(param_vec[1] > 0.0)
+        assert_true(param_vec[2] < 0.0)
 
         param_vec[0] *= scaling
 
         print('')
-        np.set_printoptions(precision=3,threshold=20,edgeitems=12,linewidth=100)
-        print('Unscaled root =',param_vec)
+        np.set_printoptions(precision=3, threshold=20, edgeitems=12,
+                            linewidth=100)
+        print('Unscaled root =', param_vec)
         print('R2            = %1.3f'%r2)
         print('k iterations  = %3i'%k)
 
         return param_vec
 
     def plot_covid_nlfit(self, param_vec, name=None,
-            save=False, plot_prime=False, plot_double_prime=False,
-            option='dates', ylabel='null-ylabel',
-            legend='null-legend', title='null-title', formula='null-formula'):
+                         save=False, plot_prime=False,
+                         plot_double_prime=False, option='dates',
+                         ylabel='null-ylabel', legend='null-legend',
+                         title='null-title', formula='null-formula'):
 
         formula = self.sigmoid_formula
 
         population = None
 
-        if name is None: # Combine all column data in the surge
-            cases_plot = np.sum(self.cases,axis=1)
+        if name is None:  # Combine all column data in the surge
+            cases_plot = np.sum(self.cases, axis=1)
             if self.populations:
                 population = np.sum(self.populations)
         elif name in self.names:
             name_id = self.names.index(name)
             if self.populations:
                 population = self.populations[name_id]
-            cases_plot = self.cases[:,name_id]
+            cases_plot = self.cases[:, name_id]
         else:
-            #assert name in self.names,\
-            #    '\n\n Name: %r not in %r'%(name,self.names)
-
-            assert_in( name, self.names )
+            assert_in(name, self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases_plot>self.trim_rel_small_n_cases/100*cases_plot[-1])
+        (nz_cases_ids, ) = np.where(cases_plot > self.trim_rel_small_n_cases/100*cases_plot[-1])
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -563,54 +537,54 @@ class Surge:
 
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
-        plt.figure(1,figsize=(15,5))
+        plt.figure(1, figsize=(15, 5))
 
         if option == 'dates':
-            plt.plot(dates_plot, cases_plot,'r*',label=source)
+            plt.plot(dates_plot, cases_plot, 'r*', label=source)
         elif option == 'days':
             plt.plot(range(len(dates_plot)), cases_plot,'r*',label=source)
 
         n_plot_pts = 100
-        dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
+        dates_fit = np.linspace(0, range(len(dates_plot))[-1], n_plot_pts)
 
-        cases_fit = self.sigmoid_func( dates_fit, param_vec )
+        cases_fit = self.sigmoid_func(dates_fit, param_vec)
 
-        plt.plot( dates_fit,cases_fit,'b-',label='Covid-surge fitting' )
+        plt.plot(dates_fit, cases_fit, 'b-', label='Covid-surge fitting')
 
         if option == 'dates':
-            plt.xticks( range(len(dates_plot)),dates_plot,rotation=60,fontsize=14)
-            plt.xlabel(r'Date',fontsize=16)
+            plt.xticks(range(len(dates_plot)), dates_plot, rotation=60, fontsize=14)
+            plt.xlabel(r'Date', fontsize=16)
         elif option == 'days':
-            plt.xlabel(r'Time [day]',fontsize=16)
+            plt.xlabel(r'Time [day]', fontsize=16)
         else:
             #assert False
-            assert_true( False )
+            assert_true(False)
 
-        plt.ylabel(ylabel,fontsize=16)
-        plt.title(title,fontsize=20)
+        plt.ylabel(ylabel, fontsize=16)
+        plt.title(title, fontsize=20)
 
-        (tc,dtc) = self.critical_times(param_vec,name,verbose=False)
+        (tc, dtc) = self.critical_times(param_vec, name, verbose=False)
 
         time_max_prime = tc
-        time_min_max_double_prime = [tc-dtc,tc+dtc]
+        time_min_max_double_prime = [tc-dtc, tc+dtc]
 
         fit_func = self.sigmoid_func
 
         # Plot marker
         if time_max_prime is not None:
 
-            cases = fit_func(time_max_prime,param_vec)
-            plt.plot(time_max_prime, cases,'*',color='green',markersize=16)
+            cases = fit_func(time_max_prime, param_vec)
+            plt.plot(time_max_prime, cases, '*', color='green', markersize=16)
 
-            (x_min,x_max) = plt.xlim()
+            (x_min, x_max) = plt.xlim()
             dx = abs(x_max-x_min)
             x_text = time_max_prime - dx*0.15
 
-            (y_min,y_max) = plt.ylim()
+            (y_min, y_max) = plt.ylim()
             dy = abs(y_max-y_min)
             y_text = cases + dy*0.00
 
-            plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(time_max_prime,cases),
+            plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(time_max_prime, cases),
                 fontsize=16)
 
         # Plot marker
@@ -619,32 +593,32 @@ class Surge:
             t_min = time_min_max_double_prime[0]
             t_max = time_min_max_double_prime[1]
 
-            cases = self.sigmoid_func(t_max,param_vec)
-            plt.plot(t_max, cases,'*',color='orange',markersize=16)
+            cases = self.sigmoid_func(t_max, param_vec)
+            plt.plot(t_max, cases, '*', color='orange', markersize=16)
 
-            (x_min,x_max) = plt.xlim()
+            (x_min, x_max) = plt.xlim()
             dx = abs(x_max-x_min)
             x_text = t_max - dx*0.15
 
-            (y_min,y_max) = plt.ylim()
+            (y_min, y_max) = plt.ylim()
             dy = abs(y_max-y_min)
             y_text = cases + dy*0.00
 
-            plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,cases),
+            plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max, cases),
                 fontsize=16)
 
-            cases = self.sigmoid_func(t_min,param_vec)
-            plt.plot(t_min, cases,'*',color='orange',markersize=16)
+            cases = self.sigmoid_func(t_min, param_vec)
+            plt.plot(t_min, cases, '*', color='orange', markersize=16)
 
-            (x_min,x_max) = plt.xlim()
+            (x_min, x_max) = plt.xlim()
             dx = abs(x_max-x_min)
             x_text = t_min - dx*0.15
 
-            (y_min,y_max) = plt.ylim()
+            (y_min, y_max) = plt.ylim()
             dy = abs(y_max-y_min)
             y_text = cases + dy*0.00
 
-            plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,cases),
+            plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min, cases),
                 fontsize=16)
 
         # Plot fit formula
@@ -811,11 +785,11 @@ class Surge:
 
         self.sigmoid_formula = r'$y = \frac{\alpha_0}{1 + \alpha_1 \, e^{\alpha_2\,t}  }$'
 
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
-        f_x = a0 / ( 1 + a1 * np.exp(a2*x) )
+        f_x = a_0 / ( 1 + a_1 * np.exp(a_2*x) )
 
         return f_x
 
@@ -823,12 +797,12 @@ class Surge:
 
         import numpy as np
 
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
-        f_x = a0 / ( 1 + a1 * np.exp(a2*x) )
-        g_x = (-1) * a1 * a2 * np.exp(a2*x) / ( 1.0 + a1 * np.exp(a2*x) )
+        f_x = a_0 / ( 1 + a_1 * np.exp(a_2*x) )
+        g_x = (-1) * a_1 * a_2 * np.exp(a_2*x) / ( 1.0 + a_1 * np.exp(a_2*x) )
 
         fprime = g_x * f_x
 
@@ -838,13 +812,13 @@ class Surge:
 
         import numpy as np
 
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
-        f_x = a0 / ( 1 + a1 * np.exp(a2*x) )
-        g_x = (-1) * a1 * a2 * np.exp(a2*x) / ( 1.0 + a1 * np.exp(a2*x) )
-        g_prime_x = (-1) * a1 * a2**2 * np.exp(a2*x) / (1.0 + a1 * np.exp(a2*x) )**2
+        f_x = a_0 / ( 1 + a_1 * np.exp(a_2*x) )
+        g_x = (-1) * a_1 * a_2 * np.exp(a_2*x) / ( 1.0 + a_1 * np.exp(a_2*x) )
+        g_prime_x = (-1) * a_1 * a_2**2 * np.exp(a_2*x) / (1.0 + a_1 * np.exp(a_2*x) )**2
 
         double_prime = (g_prime_x + g_x**2 ) * f_x
 
@@ -854,13 +828,13 @@ class Surge:
 
         import numpy as np
 
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
-        grad_p_f_0 =   1./( 1. + a1 * np.exp(a2*x) )
-        grad_p_f_1 = - a0/( 1. + a1 * np.exp(a2*x) )**2 * np.exp(a2*x)
-        grad_p_f_2 = - a0/( 1. + a1 * np.exp(a2*x) )**2 * a1 * x*np.exp(a2*x)
+        grad_p_f_0 =   1./( 1. + a_1 * np.exp(a_2*x) )
+        grad_p_f_1 = - a_0/( 1. + a_1 * np.exp(a_2*x) )**2 * np.exp(a_2*x)
+        grad_p_f_2 = - a_0/( 1. + a_1 * np.exp(a_2*x) )**2 * a_1 * x*np.exp(a_2*x)
 
         return (grad_p_f_0, grad_p_f_1, grad_p_f_2)
 
@@ -985,9 +959,9 @@ class Surge:
 
     def critical_times(self, param_vec, name=None, verbose=False):
 
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
         import math
 
@@ -1015,7 +989,7 @@ class Surge:
 
         if verbose:
             print('Maximum growth rate            = %3.2e [case/day]'%(prime_max))
-            print('Maximum normalized growth rate = %3.2e [%%/day]'%(prime_max/a0*100))
+            print('Maximum normalized growth rate = %3.2e [%%/day]'%(prime_max/a_0*100))
             print('Time at maximum growth rate    = %3.1f [day]'%(time_max_prime))
             if time_max_id > dates.size-1:
                 print('WARNING: Ignore maximum growth rate; time at max. growth exceeds time length.')
@@ -1025,19 +999,19 @@ class Surge:
             print('')
 
         # Maximum curvature
-        time_max_double_prime = -math.log(a1/(2+math.sqrt(3)))/a2 # time at maximum growth acceleration
+        time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2 # time at maximum growth acceleration
 
         if time_max_double_prime%1:
             time_max_id = int(time_max_double_prime) + 1
         else:
             time_max_id = int(time_max_double_prime)
 
-        #assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
-        assert_true( abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
+        #assert abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
 
         if verbose:
-            print('Maximum growth acceleration            = %3.2e [case/day^2]'%(a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3))
-            print('Maximum normalized growth acceleration = %3.2e [%%/day^2]'%(a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3*100))
+            print('Maximum growth acceleration            = %3.2e [case/day^2]'%(a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3))
+            print('Maximum normalized growth acceleration = %3.2e [%%/day^2]'%(a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3*100))
             print('Time at maximum growth accel.          = %3.1f [day]'%(time_max_double_prime))
             print('Shifted time at maximum growth accel.  = %3.1f [day]'%(time_max_double_prime-time_max_prime))
             if time_max_id > dates.size-1:
@@ -1048,20 +1022,20 @@ class Surge:
             print('')
 
         # Minimum curvature
-        time_min_double_prime = -math.log(a1/(2-math.sqrt(3)))/a2 # time at minimum growth acceration
+        time_min_double_prime = -math.log(a_1/(2-math.sqrt(3)))/a_2 # time at minimum growth acceration
 
         if time_min_double_prime%1:
             time_min_id = int(time_min_double_prime) + 1
         else:
             time_min_id = int(time_min_double_prime)
 
-        #assert abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
-        assert_true( abs(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8 )
+        #assert abs(a_0*a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
+        assert_true( abs(a_0*a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8 )
 
         if verbose:
             print('')
-            print('Minimum growth acceleration            = %3.2e [case/day^2]'%(a0*a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3))
-            print('Minimum normalized growth acceleration = %3.2e [%%/day^2]'%(a2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3*100))
+            print('Minimum growth acceleration            = %3.2e [case/day^2]'%(a_0*a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3))
+            print('Minimum normalized growth acceleration = %3.2e [%%/day^2]'%(a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3*100))
             print('Time at minimum growth accel.          = %3.1f [day]'%(time_min_double_prime))
             print('Shifted time at maximum growth accel.  = %3.1f [day]'%(time_min_double_prime-time_max_prime))
             if time_min_id > dates.size-1:
@@ -1081,13 +1055,13 @@ class Surge:
     def __sigmoid_prime_max(self, param_vec):
 
         import math
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
-        tc = -math.log(a1)/a2 # time at maximum growth rate
+        tc = -math.log(a_1)/a_2 # time at maximum growth rate
 
-        prime_max = -a0*a2/4.0
+        prime_max = -a_0*a_2/4.0
 
         #assert abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8
         assert_true( abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8 )
@@ -1097,14 +1071,14 @@ class Surge:
     def __sigmoid_double_prime_max(self, param_vec):
 
         import math
-        a0 = param_vec[0]
-        a1 = param_vec[1]
-        a2 = param_vec[2]
+        a_0 = param_vec[0]
+        a_1 = param_vec[1]
+        a_2 = param_vec[2]
 
-        time_max_double_prime = -math.log(a1/(2+math.sqrt(3)))/a2 # time at maximum growth acceleration
+        time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2 # time at maximum growth acceleration
 
-        #assert abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
-        assert_true( abs( a0*a2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
+        #assert abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
+        assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
 
     def error_analysis(self, param_vec, tc, dtc, name=None):
 
@@ -1249,13 +1223,13 @@ class Surge:
             scaling = icases.max()
             icases /= scaling
 
-            a0 = icases[-1]
-            a1 = a0/icases[0] - 1
-            a2 = -0.15
+            a_0 = icases[-1]
+            a_1 = a_0/icases[0] - 1
+            a_2 = -0.15
             if name == 'Michigan':
-                a2 = -.1
+                a_2 = -.1
 
-            param_vec_0 = np.array([a0,a1,a2])
+            param_vec_0 = np.array([a_0,a_1,a_2])
 
             times = np.array(range(dates.size),dtype=np.float64)
 
