@@ -4,27 +4,29 @@
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
 
-'''Surge period analysis of COVID-19 data.
+"""Surge period analysis of COVID-19 data.
+
 Usage examples can be found in the examples/ directory.
 In addition, the Jupyter notebooks/ directory also shows how to use the
 class in various ways.
+
 Notes
 -----
 This single class is a rather long file. `Vim` is used with various
 highlighting and folding configurations to make it simple to navigate a
 single file.
-'''
+"""
 
 import math
-import numpy as np
-import numpy.linalg
+
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import numpy.linalg
 import pandas as pd
+from asserts import (assert_equal, assert_in, assert_is_instance,
+                     assert_is_none, assert_true)
 
-from asserts import assert_is_none, assert_equal, assert_true
-from asserts import assert_is_instance
-from asserts import assert_in
 
 class Surge:
     """Surge class for period analysis of COVID-19 data."""
@@ -64,6 +66,7 @@ class Surge:
         trim_rel_small_n_cases
         deaths_100k_minimum
         """
+
         if locale == 'global':
             # assert sub_locale is None
             assert_is_none(sub_locale)

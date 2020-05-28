@@ -3,15 +3,14 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-'''Example of Surge usage for US data.'''
+"""Example of Surge usage for US data."""
 
 import numpy as np
 
 from covid_surge import Surge
 
-
 def main():
-    '''Main function executed at the bottom.'''
+    """Main function executed at the bottom."""
 
     # Get all US surge data including states.
     us_surge = Surge()
