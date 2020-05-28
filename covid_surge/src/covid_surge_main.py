@@ -15,23 +15,25 @@ highlighting and folding configurations to make it simple to navigate a
 single file.
 '''
 
+import math
 import numpy as np
+import numpy.linalg
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
-
 
 from asserts import assert_is_none, assert_equal, assert_true
 from asserts import assert_is_instance
 from asserts import assert_in
 
 class Surge:
-    '''Surge class for period analysis of COVID-19 data.'''
+    """Surge class for period analysis of COVID-19 data."""
 
     def __init__(self, locale='US', sub_locale=None,
                  save_all_original_data_html=False):
         # log_filename='covid_surge'):
-        '''Surge constructor.
+        """Construct a Surge object.
+
         Parameters
         ----------
         locale: str
@@ -47,6 +49,7 @@ class Surge:
         log_filename: str
             Name of the file to save logging information. Not used at the
             moment.
+
         Attributes
         ----------
         names: str
@@ -59,8 +62,8 @@ class Surge:
         __ignore_last_n_days
         min_n_cases_abs
         trim_rel_small_n_cases
-        deaths_100k_minimum'''
-
+        deaths_100k_minimum
+        """
         if locale == 'global':
             # assert sub_locale is None
             assert_is_none(sub_locale)
@@ -169,7 +172,7 @@ class Surge:
 
     def __get_covid_us_data(self, sub_locale=None,
                             case_type='deaths', save_html=False):
-        '''COVID-19 data loader.
+        """COVID-19 data loader.
 
         Load COVID-19 pandemic cumulative data from:
 
@@ -185,9 +188,7 @@ class Surge:
         -------
         data: tuple(int, list(str), list(int))
                (population, dates, cases)
-
-        '''
-
+        """
         if case_type == 'deaths':
 
             df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
@@ -302,7 +303,7 @@ class Surge:
     def __get_covid_global_data(self, case_type='deaths',
                                 distribution=True, cumulative=False,
                                 save_html=False):
-        '''COVID-19 data loader.
+        """COVID-19 data loader.
 
         Load COVID-19 pandemic cumulative data from:
 
@@ -326,9 +327,7 @@ class Surge:
         -------
         data: tuple(int, list(str), list(int))
                (contry_names, dates, cases)
-
-        '''
-
+        """
         if cumulative is True:
             distribution = False
 
@@ -338,16 +337,16 @@ class Surge:
                 df.to_html('covid_19_global_deaths.html')
 
         else:
-            assert_true( False, 'invalid query type: %r (valid: "deaths"'%(case_type) )
+            assert_true(False, 'invalid query type: %r (valid: "deaths"'%(case_type))
 
-        df = df.drop(['Lat', 'Long'],axis=1)
-        df = df.rename(columns={'Province/State':'state/province','Country/Region':'country/region'})
+        df = df.drop(['Lat', 'Long'], axis=1)
+        df = df.rename(columns={'Province/State':'state/province', 'Country/Region':'country/region'})
 
         country_names = list()
 
         country_names_tmp = list()
 
-        for (i,icountry) in enumerate(df['country/region']):
+        for (i, icountry) in enumerate(df['country/region']):
             country_names_tmp.append(icountry)
 
         country_names_set = set(country_names_tmp)
@@ -360,11 +359,11 @@ class Surge:
         cases = np.zeros((len(df.columns[2:]), len(country_names)),
                          dtype=np.float64)
 
-        for (i,icountry) in enumerate(df['country/region']):
+        for (i, icountry) in enumerate(df['country/region']):
 
             country_id = country_names.index(icountry)
 
-            cases[:,country_id] += np.array(list(df.loc[i, df.columns[2:]]))
+            cases[:, country_id] += np.array(list(df.loc[i, df.columns[2:]]))
 
         if distribution:
 
@@ -416,7 +415,7 @@ class Surge:
 
         source = 'Johns Hopkins CSSE: https://github.com/CSSEGISandData/COVID-19'
 
-        fig, ax = plt.subplots(figsize=(15,6))
+        fig, ax = plt.subplots(figsize=(15, 6))
         # plt.rcParams['figure.figsize'] = [12, 5]
 
         ax.plot(range(len(dates_plot)), cases_plot, 'r*', label=source)
@@ -465,9 +464,9 @@ class Surge:
         a_1 = a_0/cases[0] - 1
         a_2 = -0.15
 
-        param_vec_0 = np.array([a_0,a_1,a_2])
+        param_vec_0 = np.array([a_0, a_1, a_2])
 
-        times = np.array(range(dates.size),dtype=np.float64)
+        times = np.array(range(dates.size), dtype=np.float64)
 
         k_max = 25
         rel_tol = 0.01 / 100.0  # (0.01%)
@@ -494,7 +493,7 @@ class Surge:
     def plot_covid_nlfit(self, param_vec, name=None,
                          save=False, plot_prime=False,
                          plot_double_prime=False, option='dates',
-                         ylabel='null-ylabel', legend='null-legend',
+                         ylabel='null-ylabel',
                          title='null-title', formula='null-formula'):
 
         formula = self.sigmoid_formula
@@ -542,7 +541,7 @@ class Surge:
         if option == 'dates':
             plt.plot(dates_plot, cases_plot, 'r*', label=source)
         elif option == 'days':
-            plt.plot(range(len(dates_plot)), cases_plot,'r*',label=source)
+            plt.plot(range(len(dates_plot)), cases_plot, 'r*', label=source)
 
         n_plot_pts = 100
         dates_fit = np.linspace(0, range(len(dates_plot))[-1], n_plot_pts)
@@ -563,10 +562,10 @@ class Surge:
         plt.ylabel(ylabel, fontsize=16)
         plt.title(title, fontsize=20)
 
-        (tc, dtc) = self.critical_times(param_vec, name, verbose=False)
+        (tcc, dtc) = self.critical_times(param_vec, name, verbose=False)
 
-        time_max_prime = tc
-        time_min_max_double_prime = [tc-dtc, tc+dtc]
+        time_max_prime = tcc
+        time_min_max_double_prime = [tcc-dtc, tcc+dtc]
 
         fit_func = self.sigmoid_func
 
@@ -622,23 +621,23 @@ class Surge:
                 fontsize=16)
 
         # Plot fit formula
-        (x_min,x_max) = plt.xlim()
+        (x_min, x_max) = plt.xlim()
         dx = abs(x_max-x_min)
         x_text = x_min + dx*0.02
 
-        (y_min,y_max) = plt.ylim()
+        (y_min, y_max) = plt.ylim()
         dy = abs(y_max-y_min)
         y_text = y_min + dy*0.7
 
-        plt.text(x_text, y_text, formula,fontsize=16)
+        plt.text(x_text, y_text, formula, fontsize=16)
 
-        for (i,p) in enumerate(param_vec):
+        for (i, p) in enumerate(param_vec):
             y_text -= dy*0.1
-            plt.text(x_text, y_text, r'$\alpha_{%i}$=%8.2e'%(i,p),fontsize=16)
+            plt.text(x_text, y_text, r'$\alpha_{%i}$=%8.2e'%(i, p),fontsize=16)
 
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
-        plt.legend(loc='best',fontsize=12)
+        plt.legend(loc='best', fontsize=12)
         plt.grid(True)
         plt.tight_layout(1)
 
@@ -653,24 +652,24 @@ class Surge:
 
         plt.close()
 
-
         # Additional plot for first derivative
         if plot_prime:
 
             fit_func_prime = self.__sigmoid_func_prime
 
-            plt.figure(2,figsize=(15,5))
+            plt.figure(2, figsize=(15, 5))
 
             n_rows = 1
             n_cols = 1
-            plt.subplot(n_rows,n_cols,1)
+            plt.subplot(n_rows, n_cols, 1)
 
             cases_rate_plot = [0.0]
-            for (b,a) in zip(cases_plot[1:],cases_plot[:-1]):
-                cases_rate_plot.append( b-a )
-            cases_rate_plot = np.array( cases_rate_plot )
+            for (b, a) in zip(cases_plot[1:],cases_plot[:-1]):
+                cases_rate_plot.append(b-a)
+            cases_rate_plot = np.array(cases_rate_plot)
 
-            plt.plot( np.array(range(dates_plot.size)),cases_rate_plot,'r*',label=source )
+            plt.plot(np.array(range(dates_plot.size)), cases_rate_plot,
+                    'r*', label=source)
 
             n_plot_pts = 100
             dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
@@ -681,24 +680,24 @@ class Surge:
 
             if time_max_prime is not None:
 
-                peak = fit_func_prime(time_max_prime,param_vec)
+                peak = fit_func_prime(time_max_prime, param_vec)
                 plt.plot(time_max_prime, peak,'*',color='green',markersize=16)
 
-                (x_min,x_max) = plt.xlim()
+                (x_min, x_max) = plt.xlim()
                 dx = abs(x_max-x_min)
                 x_text = time_max_prime - dx*0.35
 
-                (y_min,y_max) = plt.ylim()
+                (y_min, y_max) = plt.ylim()
                 dy = abs(y_max-y_min)
                 y_text = peak + dy*0.00
 
-                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(time_max_prime,peak),
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(time_max_prime, peak),
                     fontsize=14)
 
-            plt.title(title,fontsize=20)
-            plt.ylabel('Surge Speed [case/day]',fontsize=16)
+            plt.title(title, fontsize=20)
+            plt.ylabel('Surge Speed [case/day]', fontsize=16)
             plt.grid(True)
-            plt.legend(loc='best',fontsize=12)
+            plt.legend(loc='best', fontsize=12)
             plt.tight_layout(1)
 
             plt.show()
@@ -716,18 +715,18 @@ class Surge:
 
             fit_func_double_prime = self.__sigmoid_func_double_prime
 
-            plt.figure(3,figsize=(15,5))
+            plt.figure(3, figsize=(15, 5))
 
             n_rows = 1
             n_cols = 1
-            plt.subplot(n_rows,n_cols,1)
+            plt.subplot(n_rows, n_cols, 1)
 
             n_plot_pts = 100
-            dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
+            dates_fit = np.linspace(0, range(len(dates_plot))[-1], n_plot_pts)
 
-            cases_fit = fit_func_double_prime( dates_fit, param_vec )
+            cases_fit = fit_func_double_prime(dates_fit, param_vec)
 
-            plt.plot(dates_fit,cases_fit,'b-',label='Fitting derivative' )
+            plt.plot(dates_fit, cases_fit, 'b-', label='Fitting derivative')
 
             if time_min_max_double_prime is not None:
 
@@ -735,35 +734,35 @@ class Surge:
                 t_max = time_min_max_double_prime[1]
 
                 max_val = fit_func_double_prime(t_max,param_vec)
-                plt.plot(t_max, max_val,'*',color='orange',markersize=16)
+                plt.plot(t_max, max_val, '*', color='orange', markersize=16)
 
-                (x_min,x_max) = plt.xlim()
+                (x_min, x_max) = plt.xlim()
                 dx = abs(x_max-x_min)
                 x_text = t_max - dx*0.35
 
-                (y_min,y_max) = plt.ylim()
+                (y_min, y_max) = plt.ylim()
                 dy = abs(y_max-y_min)
                 y_text = max_val + dy*0.00
 
-                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max,max_val),
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_max, max_val),
                     fontsize=14)
 
-                min_val = fit_func_double_prime(t_min,param_vec)
-                plt.plot(t_min, min_val,'*',color='orange',markersize=16)
+                min_val = fit_func_double_prime(t_min, param_vec)
+                plt.plot(t_min, min_val, '*', color='orange', markersize=16)
 
-                (x_min,x_max) = plt.xlim()
+                (x_min, x_max) = plt.xlim()
                 dx = abs(x_max-x_min)
                 x_text = t_min - dx*0.35
 
-                (y_min,y_max) = plt.ylim()
+                (y_min, y_max) = plt.ylim()
                 dy = abs(y_max-y_min)
                 y_text = min_val + dy*0.00
 
-                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min,min_val),
+                plt.text(x_text, y_text, r'(%3.2f, %1.3e)'%(t_min, min_val),
                     fontsize=14)
 
-            plt.title(title,fontsize=20)
-            plt.ylabel('Surge Acceleration [case/day$^2$]',fontsize=16)
+            plt.title(title, fontsize=20)
+            plt.ylabel('Surge Acceleration [case/day$^2$]', fontsize=16)
             plt.grid(True)
             plt.tight_layout(1)
 
@@ -780,8 +779,7 @@ class Surge:
         return
 
     def sigmoid_func(self, x, param_vec):
-
-        import numpy as np
+        """Compute the sigmoid function at x."""
 
         self.sigmoid_formula = r'$y = \frac{\alpha_0}{1 + \alpha_1 \, e^{\alpha_2\,t}  }$'
 
@@ -789,20 +787,18 @@ class Surge:
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        f_x = a_0 / ( 1 + a_1 * np.exp(a_2*x) )
+        f_x = a_0 / (1 + a_1 * np.exp(a_2*x))
 
         return f_x
 
     def __sigmoid_func_prime(self, x, param_vec):
 
-        import numpy as np
-
         a_0 = param_vec[0]
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        f_x = a_0 / ( 1 + a_1 * np.exp(a_2*x) )
-        g_x = (-1) * a_1 * a_2 * np.exp(a_2*x) / ( 1.0 + a_1 * np.exp(a_2*x) )
+        f_x = a_0 / (1 + a_1 * np.exp(a_2*x))
+        g_x = (-1) * a_1 * a_2 * np.exp(a_2*x) / (1.0 + a_1 * np.exp(a_2*x))
 
         fprime = g_x * f_x
 
@@ -810,49 +806,41 @@ class Surge:
 
     def __sigmoid_func_double_prime(self, x, param_vec):
 
-        import numpy as np
-
         a_0 = param_vec[0]
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        f_x = a_0 / ( 1 + a_1 * np.exp(a_2*x) )
-        g_x = (-1) * a_1 * a_2 * np.exp(a_2*x) / ( 1.0 + a_1 * np.exp(a_2*x) )
-        g_prime_x = (-1) * a_1 * a_2**2 * np.exp(a_2*x) / (1.0 + a_1 * np.exp(a_2*x) )**2
+        f_x = a_0 / (1 + a_1 * np.exp(a_2*x))
+        g_x = (-1) * a_1 * a_2 * np.exp(a_2*x) / (1.0 + a_1 * np.exp(a_2*x))
+        g_prime_x = (-1) * a_1 * a_2**2 * np.exp(a_2*x) / (1.0 + a_1 * np.exp(a_2*x))**2
 
-        double_prime = (g_prime_x + g_x**2 ) * f_x
+        double_prime = (g_prime_x + g_x**2)*f_x
 
         return double_prime
 
     def __grad_p_sigmoid_func(self, x, param_vec):
 
-        import numpy as np
-
         a_0 = param_vec[0]
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        grad_p_f_0 =   1./( 1. + a_1 * np.exp(a_2*x) )
-        grad_p_f_1 = - a_0/( 1. + a_1 * np.exp(a_2*x) )**2 * np.exp(a_2*x)
-        grad_p_f_2 = - a_0/( 1. + a_1 * np.exp(a_2*x) )**2 * a_1 * x*np.exp(a_2*x)
+        grad_p_f_0 = 1./(1. + a_1 * np.exp(a_2*x))
+        grad_p_f_1 = - a_0/(1. + a_1 * np.exp(a_2*x))**2 * np.exp(a_2*x)
+        grad_p_f_2 = - a_0/(1. + a_1 * np.exp(a_2*x))**2 * a_1 * x*np.exp(a_2*x)
 
         return (grad_p_f_0, grad_p_f_1, grad_p_f_2)
 
     def __newton_nlls_solve(self, x_vec, y_vec, fit_func, grad_p_fit_func,
-                      param_vec_0,
-                      k_max=10, rel_tol=1.0e-3, verbose=True ):
+                            param_vec_0,
+                            k_max=10, rel_tol=1.0e-3, verbose=True):
 
-        #assert x_vec.size == y_vec.size
-        assert_equal( x_vec.size, y_vec.size )
-
-        import numpy as np
-        import numpy.linalg
+        assert_equal(x_vec.size, y_vec.size)
 
         # Other initialization
         delta_vec_k = np.ones(param_vec_0.size, dtype=np.float64)*1e10
-        r_vec_k     = np.ones(x_vec.size, dtype=np.float64)*1e10
-        j_mtrx_k    = np.ones((x_vec.size,param_vec_0.size),dtype=np.float64)*1e10
-        param_vec   = np.copy(param_vec_0)
+        r_vec_k = np.ones(x_vec.size, dtype=np.float64)*1e10
+        j_mtrx_k = np.ones((x_vec.size, param_vec_0.size), dtype=np.float64)*1e10
+        param_vec = np.copy(param_vec_0)
 
         if verbose is True:
             print('\n')
@@ -863,12 +851,11 @@ class Surge:
             print('--------------------------------------------------------------------------')
         #         1234567890 12345678901 123456789012345 123456789012 123456789 12345678
 
-        import math
         #assert k_max >= 1
-        assert_true( k_max >= 1 )
+        assert_true(k_max >= 1)
         k = 1
 
-        while (np.linalg.norm(delta_vec_k/param_vec) > rel_tol or np.linalg.norm(j_mtrx_k.transpose()@r_vec_k) > 1e-3 ) and k <= k_max:
+        while (np.linalg.norm(delta_vec_k/param_vec) > rel_tol or np.linalg.norm(j_mtrx_k.transpose()@r_vec_k) > 1e-3) and k <= k_max:
 
             # build the residual vector
             r_vec_k = y_vec - fit_func(x_vec, param_vec)
@@ -876,13 +863,13 @@ class Surge:
             # build the Jacobian matrix
             grad_p_f = grad_p_fit_func(x_vec, param_vec)
 
-            j_mtrx_k = np.zeros( (x_vec.size, param_vec.size), dtype=np.float64 ) # initialize matrix
-            for (i,grad_p_f_i) in enumerate(grad_p_f):
-                j_mtrx_k[:,i] = - grad_p_f_i
+            j_mtrx_k = np.zeros((x_vec.size, param_vec.size), dtype=np.float64 )  # initialize matrix
+            for (i, grad_p_f_i) in enumerate(grad_p_f):
+                j_mtrx_k[:, i] = - grad_p_f_i
 
             delta_vec_k_old = np.copy(delta_vec_k)
 
-            rank = numpy.linalg.matrix_rank( j_mtrx_k.transpose()@j_mtrx_k )
+            rank = numpy.linalg.matrix_rank(j_mtrx_k.transpose()@j_mtrx_k)
 
             if rank != param_vec.size and verbose == True:
                 print('')
@@ -892,19 +879,20 @@ class Surge:
                 print('rank(JTJ) = %3i; shape(JTJ) = (%3i,%3i)'%
                       (rank, (j_mtrx_k.transpose()@j_mtrx_k).shape[0],
                              (j_mtrx_k.transpose()@j_mtrx_k).shape[1]))
-                print('JTJ = \n',j_mtrx_k.transpose()@j_mtrx_k)
+                print('JTJ = \n', j_mtrx_k.transpose()@j_mtrx_k)
                 print('*********************************************************************')
                 print('')
 
             if rank == param_vec.size:
-                delta_vec_k = numpy.linalg.solve( j_mtrx_k.transpose()@j_mtrx_k,
-                                                 -j_mtrx_k.transpose()@r_vec_k )
+                delta_vec_k = numpy.linalg.solve(j_mtrx_k.transpose()@j_mtrx_k,
+                                                 -j_mtrx_k.transpose()@r_vec_k)
             else:
                 a_mtrx_k = j_mtrx_k.transpose()@j_mtrx_k
-                b_vec_k  = -j_mtrx_k.transpose()@r_vec_k
+                b_vec_k = -j_mtrx_k.transpose()@r_vec_k
                 delta_vec_k = numpy.linalg.solve(
-                       a_mtrx_k.transpose()@a_mtrx_k + 1e-3*np.eye(param_vec.size),
-                       a_mtrx_k.transpose()@b_vec_k )
+                       a_mtrx_k.transpose()@a_mtrx_k +
+                       1e-3*np.eye(param_vec.size),
+                       a_mtrx_k.transpose()@b_vec_k)
 
             r_vec_k_old = np.copy(r_vec_k)
             step_size = 1.0
@@ -918,8 +906,8 @@ class Surge:
                 n_steps += 1
 
             if step_size != 1.0 and verbose is True:
-                print('Step_size = ',step_size,' n_steps = ',n_steps,
-                        ' n_steps_max = ',n_steps_max)
+                print('Step_size = ', step_size, ' n_steps = ', n_steps,
+                        ' n_steps_max = ', n_steps_max)
 
             # compute the update to the root candidate
             param_vec += step_size * delta_vec_k
@@ -934,19 +922,19 @@ class Surge:
 
             if verbose is True:
                 print('%2i %+10.2e %+11.2e %+15.2e %+12.2e %+9.2e %8.2f'%\
-                    (k,np.linalg.norm(r_vec_k),np.linalg.norm(j_mtrx_k),
+                    (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
                        np.linalg.norm(j_mtrx_k.transpose()@r_vec_k),
                        np.linalg.norm(delta_vec_k), np.linalg.norm(param_vec),
-                       convergence_factor) )
+                       convergence_factor))
 
             k = k + 1
 
-        r2 = 1.0 - np.sum(r_vec_k**2) / np.sum((y_vec-np.mean(y_vec))**2 )
+        r2 = 1.0 - np.sum(r_vec_k**2) / np.sum((y_vec-np.mean(y_vec))**2)
 
         if verbose is True:
             print('******************************************************')
-            print('Root = ',param_vec)
-            print('R2   = ',r2)
+            print('Root = ', param_vec)
+            print('R2   = ', r2)
 
         if k > k_max:
             print('')
@@ -963,24 +951,22 @@ class Surge:
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        import math
-
         if name is None: # Combine all column data in the surge
-            cases = np.sum(self.cases,axis=1)
+            cases = np.sum(self.cases, axis=1)
         elif name in self.names:
             name_id = self.names.index(name)
-            cases = self.cases[:,name_id]
+            cases = self.cases[:, name_id]
         else:
             #assert name in self.names, \
             #  '\n\n Name: %r not in %r'%(name,self.names)
-            assert_in( name, self.names )
+            assert_in(name, self.names)
 
         # Select data with non-zero cases only
-        (nz_cases_ids,) = np.where(cases>0)
+        (nz_cases_ids,) = np.where(cases > 0)
         dates = self.dates[nz_cases_ids]
 
         # Peak
-        ( time_max_prime, prime_max ) = self.__sigmoid_prime_max(param_vec)
+        (time_max_prime, prime_max) = self.__sigmoid_prime_max(param_vec)
 
         if time_max_prime%1:
             time_max_id = int(time_max_prime) + 1
@@ -1007,7 +993,7 @@ class Surge:
             time_max_id = int(time_max_double_prime)
 
         #assert abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
-        assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
+        assert_true(abs(a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime, param_vec)) <= 1.e-8 )
 
         if verbose:
             print('Maximum growth acceleration            = %3.2e [case/day^2]'%(a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3))
@@ -1022,15 +1008,15 @@ class Surge:
             print('')
 
         # Minimum curvature
-        time_min_double_prime = -math.log(a_1/(2-math.sqrt(3)))/a_2 # time at minimum growth acceration
+        # time at minimum growth acceration
+        time_min_double_prime = -math.log(a_1/(2-math.sqrt(3)))/a_2
 
         if time_min_double_prime%1:
             time_min_id = int(time_min_double_prime) + 1
         else:
             time_min_id = int(time_min_double_prime)
 
-        #assert abs(a_0*a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8
-        assert_true( abs(a_0*a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime,param_vec)) <= 1.e-8 )
+        assert_true(abs(a_0*a_2**2*(5-3*math.sqrt(3))/(3-math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_min_double_prime, param_vec)) <= 1.e-8)
 
         if verbose:
             print('')
@@ -1046,58 +1032,51 @@ class Surge:
             print('')
             print('Surge period = %3.1f [day]'%(time_min_double_prime-time_max_double_prime))
 
-        #assert abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5
-        assert_true( abs( (time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime) ) <= 1.e-5 )
+        assert_true(abs((time_max_prime-time_max_double_prime) - (time_min_double_prime - time_max_prime)) <= 1.e-5)
 
 
-        return ( time_max_prime, time_max_prime-time_max_double_prime )
+        return (time_max_prime, time_max_prime-time_max_double_prime)
 
     def __sigmoid_prime_max(self, param_vec):
 
-        import math
         a_0 = param_vec[0]
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        tc = -math.log(a_1)/a_2 # time at maximum growth rate
+        tcc = -math.log(a_1)/a_2 # time at maximum growth rate
 
         prime_max = -a_0*a_2/4.0
 
-        #assert abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8
-        assert_true( abs(prime_max - self.__sigmoid_func_prime(tc,param_vec)) <= 1.e-8 )
+        assert_true( abs(prime_max - self.__sigmoid_func_prime(tcc, param_vec)) <= 1.e-8)
 
-        return (tc, prime_max)
+        return (tcc, prime_max)
 
     def __sigmoid_double_prime_max(self, param_vec):
 
-        import math
         a_0 = param_vec[0]
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
         time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2 # time at maximum growth acceleration
 
-        #assert abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8
         assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
 
-    def error_analysis(self, param_vec, tc, dtc, name=None):
+    def error_analysis(self, param_vec, tcc, dtc, name=None):
 
         if name is None: # Combine all column data in the surge
-            cases = np.sum(self.cases,axis=1)
+            cases = np.sum(self.cases, axis=1)
         elif name in self.names:
             name_id = self.names.index(name)
-            cases = self.cases[:,name_id]
+            cases = self.cases[:, name_id]
         else:
-            #assert name in self.names,\
-            #     'Name: %r not in %r'%(name,self.names)
-            assert_in( name,self.names )
+            assert_in(name, self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids,) = np.where(cases>self.trim_rel_small_n_cases/100*cases[-1])
+        (nz_cases_ids,) = np.where(cases > self.trim_rel_small_n_cases/100*cases[-1])
         cases = cases[nz_cases_ids]
         dates = self.dates[nz_cases_ids]
 
-        times = np.array(range(dates.size),dtype=np.float64)
+        times = np.array(range(dates.size), dtype=np.float64)
 
         sigmoid_func = self.sigmoid_func
 
@@ -1105,8 +1084,8 @@ class Surge:
         print('Pointwise Error Analysis')
         print('')
         print('Total error')
-        (idx,) = np.where(np.abs(cases)>=0)
-        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        (idx,) = np.where(np.abs(cases) >= 0)
+        rel_error = np.abs(sigmoid_func(times, param_vec) - cases)[idx]/cases[idx]*100
         mean_rel_error = np.mean(rel_error)
         print('mean relative error [%%] = %5.2f'%(mean_rel_error))
         std_rel_error = np.std(rel_error)
@@ -1114,8 +1093,8 @@ class Surge:
 
         print('')
         print('Pre-exponential error')
-        (idx,) = np.where( times < tc - dtc )
-        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        (idx,) = np.where(times < tcc - dtc)
+        rel_error = np.abs(sigmoid_func(times, param_vec) - cases)[idx]/cases[idx]*100
         mean_rel_error = np.mean(rel_error)
         print('mean relative error [%%] = %5.2f'%(mean_rel_error))
         std_rel_error = np.std(rel_error)
@@ -1123,23 +1102,23 @@ class Surge:
 
         print('')
         print('Post-linear error')
-        (idx,) = np.where( times > tc + dtc )
+        (idx,) = np.where(times > tcc + dtc)
         if len(idx):
-            rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+            rel_error = np.abs(sigmoid_func(times, param_vec) - cases)[idx]/cases[idx]*100
             mean_rel_error = np.mean(rel_error)
             print('mean relative error [%%] = %5.2f'%(mean_rel_error))
             std_rel_error = np.std(rel_error)
             print('std  relative error [%%] = %5.2f'%(std_rel_error))
         else:
-            print('Post-linear error unavailable; not enough evolution.' )
-            print('This data set is not suitable for analysis yet.' )
+            print('Post-linear error unavailable; not enough evolution.')
+            print('This data set is not suitable for analysis yet.')
 
         print('')
         print('Surge period error')
-        (idx_min,) = np.where( times >= tc - dtc )
-        (idx_max,) = np.where( times <= tc + dtc )
+        (idx_min,) = np.where(times >= tcc - dtc)
+        (idx_max,) = np.where(times <= tcc + dtc)
         idx = idx_min[:idx_max[-1]]
-        rel_error = np.abs(sigmoid_func(times,param_vec) - cases)[idx]/cases[idx]*100
+        rel_error = np.abs(sigmoid_func(times, param_vec) - cases)[idx]/cases[idx]*100
         mean_rel_error = np.mean(rel_error)
         print('mean relative error [%%] = %5.2f'%(mean_rel_error))
         std_rel_error = np.std(rel_error)
@@ -1155,10 +1134,8 @@ class Surge:
         cases = self.cases
 
         # Sort the states by descending number of total cases
-        sorted_list = sorted(
-               zip( names, cases[-1,:] ),
-               key = lambda entry: entry[1], reverse=True
-                             )
+        sorted_list = sorted( zip(names, cases[-1, :]),
+                              key = lambda entry: entry[1], reverse=True)
 
         # Post processing data storage
         fit_data = list()
@@ -1169,28 +1146,28 @@ class Surge:
 
         top_id = 0
 
-        for (name,dummy) in sorted_list:
+        for (name, dummy) in sorted_list:
 
             if name in blocked_list:
                 continue
 
             #assert name in names, 'Name: %r not in %r'%(name,names)
-            assert_in( name, names )
+            assert_in(name, names)
             name_id = names.index(name)
             if self.populations:
                 population = self.populations[name_id]
-            icases = cases[:,name_id]
+            icases = cases[:, name_id]
 
             if icases[-1] < self.min_n_cases_abs:
                 if verbose:
                     print('')
-                    print('WARNING: name %r # deaths: %r below absolute minimum'%(name,icases[-1]))
+                    print('WARNING: name %r # deaths: %r below absolute minimum'%(name, icases[-1]))
                     print('')
-                names_below_deaths_abs_minimum.append((name,icases[-1]))
+                names_below_deaths_abs_minimum.append((name, icases[-1]))
                 continue
 
             # Select data with # of cases greater than the minimum
-            (nz_cases_ids,) = np.where(icases>self.trim_rel_small_n_cases/100*icases[-1])
+            (nz_cases_ids,) = np.where(icases > self.trim_rel_small_n_cases/100*icases[-1])
 
             if nz_cases_ids.size == 0:
                 if verbose:
@@ -1203,14 +1180,14 @@ class Surge:
             dates = self.dates[nz_cases_ids]
 
             if self.populations:
-                deaths_100k = round(icases[-1]*100000/population * 365/dates.size,1)
+                deaths_100k = round(icases[-1]*100000/population * 365/dates.size, 1)
 
                 if deaths_100k < self.deaths_100k_minimum:
                     if verbose:
                         print('')
-                        print('WARNING: name %r deaths per 100k: %r below minimum'%(name,deaths_100k))
+                        print('WARNING: name %r deaths per 100k: %r below minimum'%(name, deaths_100k))
                         print('')
-                    names_below_deaths_100k_minimum.append((name,deaths_100k))
+                    names_below_deaths_100k_minimum.append((name, deaths_100k))
                     continue
 
             if verbose:
@@ -1229,16 +1206,16 @@ class Surge:
             if name == 'Michigan':
                 a_2 = -.1
 
-            param_vec_0 = np.array([a_0,a_1,a_2])
+            param_vec_0 = np.array([a_0, a_1, a_2])
 
-            times = np.array(range(dates.size),dtype=np.float64)
+            times = np.array(range(dates.size), dtype=np.float64)
 
             k_max = 25
             rel_tol = 0.01 / 100.0 # (0.1%)
 
-            (param_vec,r2,k) = self.__newton_nlls_solve( times, icases,
+            (param_vec, r2, k) = self.__newton_nlls_solve(times, icases,
                                self.sigmoid_func, self.__grad_p_sigmoid_func,
-                               param_vec_0, k_max, rel_tol, verbose=False )
+                               param_vec_0, k_max, rel_tol, verbose=False)
 
             if k > k_max and verbose:
                 print(" NO Newton's method convergence")
@@ -1249,16 +1226,12 @@ class Surge:
                 print('Fitting coeff. of det. R2 = %1.3f'%r2)
                 print('')
 
-            #assert param_vec[0] > 0.0
-            #assert param_vec[1] > 0.0
-            #assert param_vec[2] < 0.0
-
             assert_true( param_vec[0] > 0.0 )
             assert_true( param_vec[1] > 0.0 )
             assert_true( param_vec[2] < 0.0 )
 
             param_vec[0] *= scaling
-            icases  *= scaling
+            icases *= scaling
 
             if verbose:
                 print('')
@@ -1266,102 +1239,96 @@ class Surge:
                 print('')
 
             # Compute critical times
-            (tc,dtc) = self.critical_times(param_vec,name,verbose=verbose)
+            (tcc, dtc) = self.critical_times(param_vec, name, verbose=verbose)
 
-            if tc > times[-1]:
+            if tcc > times[-1]:
                 if verbose:
                     print('')
                     print('WARNING: Time at peak surge rate exceeds time data.')
                     print('WARNING: Skipping this data set.')
                 # not needed or incorrect
-                #assert int(tc-dtc)+1 <= dates.size,\
-                        #'\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc-dtc)+1,dates.size,times.size)
+                #assert int(tcc-dtc)+1 <= dates.size,\
+                        #'\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tcc-dtc)+1,dates.size,times.size)
 
-                names_no_peak_surge_period.append( (name, tc, dtc, times[-1], dates[-1]) )
+                names_no_peak_surge_period.append((name, tcc, dtc, times[-1], dates[-1]))
                 continue
 
-            if tc + dtc > times[-1]:
+            if tcc + dtc > times[-1]:
                 if verbose:
                     print('')
                     print('WARNING: Time at mininum acceleration exceeds time data.')
                     print('WARNING: Skipping this data set.')
-                #assert int(tc)+1 <= dates.size,\
-                #        '\n\n value = %r; dates.sizes = %r; times.size = %r'%(int(tc)+1,dates.size,times.size)
-                assert_true( int(tc)+1 <= dates.size )
-                names_past_peak_surge_period.append( (name, tc, dates[int(tc)+1], dtc) )
+                assert_true(int(tcc)+1 <= dates.size)
+                names_past_peak_surge_period.append((name, tcc, dates[int(tcc)+1], dtc))
                 continue
-
 
             top_id += 1
 
-
             if plot:
-                self.plot_covid_nlfit( param_vec, name, save=save_plots )
-
+                self.plot_covid_nlfit(param_vec, name, save=save_plots)
 
             n_last_days = 7
             if verbose:
                 print('')
                 print('Last %i days'%n_last_days,
-                      ' # of cumulative cases = ',icases[-n_last_days:])
+                      ' # of cumulative cases = ', icases[-n_last_days:])
                 print('Last %i days'%n_last_days,
                       ' # of added cases =',
-                      [round(b-a,0) for (b,a) in zip( icases[-(n_last_days-1):],
-                                                      icases[-n_last_days:-1])
-                    ])
+                      [round(b-a, 0) for (b, a) in
+                       zip(icases[-(n_last_days-1):], icases[-n_last_days:-1])
+                      ])
                 print('')
 
             # Report erros
             if verbose:
-                self.error_analysis(param_vec, tc, dtc, name)
+                self.error_analysis(param_vec, tcc, dtc, name)
 
             # 60-day look-ahead
             n_prediction_days = 60
 
             last_day = dates.size
-            total_deaths_predicted = int( self.sigmoid_func(n_prediction_days + last_day, param_vec) )
+            total_deaths_predicted = int(self.sigmoid_func(n_prediction_days + last_day, param_vec))
 
             if verbose:
                 print('')
-                print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days,dates[-1],total_deaths_predicted))
-                print('# of cumulative deaths today, %s               = %6i'%(dates[-1],icases[-1]))
+                print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days, dates[-1], total_deaths_predicted))
+                print('# of cumulative deaths today, %s               = %6i'%(dates[-1], icases[-1]))
                 print('')
 
 
-            fit_data.append( [ name,
-                               dates,
-                               icases,
-                               param_vec,
-                               tc,
-                               dtc] )
-
+            fit_data.append([name,
+                             dates,
+                             icases,
+                             param_vec,
+                             tcc,
+                             dtc])
 
         if verbose:
             print('Names with significant deaths past peak in surge period:')
             print('')
-            for (name, tc, tc_date, dtc) in names_past_peak_surge_period:
-                print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name,tc,tc_date,dtc))
+            for (name, tcc, tc_date, dtc) in names_past_peak_surge_period:
+                print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name, tcc, tc_date, dtc))
 
             print('')
 
             print('Names with significant deaths before peak in surge period:')
             print('')
-            for (name, tc, dtc, t_max, d_max) in names_no_peak_surge_period:
-                print( '%15s tc = %3.1f [d] dtc = %3.1f [d] t_max = %3.1f [d] d_max %7s'%(name,tc,dtc,t_max,d_max))
+            for (name, tcc, dtc, t_max, d_max) in names_no_peak_surge_period:
+                print('%15s tc = %3.1f [d] dtc = %3.1f [d] t_max = %3.1f [d] d_max %7s'%(name, tcc, dtc, t_max, d_max))
 
             print('')
 
             print('Names with deaths per 100k below mininum:')
             print('')
             for (name, deaths_100k) in names_below_deaths_100k_minimum:
-                print( '%15s deaths per 100k/y = %5.2f'%(name,deaths_100k))
+                print('%15s deaths per 100k/y = %5.2f'%(name, deaths_100k))
 
             print('')
 
             print('Names with deaths below the absolute mininum:')
             print('')
             for (name, case) in names_below_deaths_abs_minimum:
-                print( '%15s deaths = %5.2f'%(name,case) )
+                print('%15s deaths = %5.2f'%(name, case))
 
         # Order fit_data
 
@@ -1370,16 +1337,16 @@ class Surge:
         #        for i in fit_data ], key = lambda entry: entry[0], reverse=True )
 
         sorted_by_surge_period = sorted(
-                [ (2*i[5], i ) for i in fit_data ],
-                 key = lambda entry: entry[0], reverse=False )
+                [(2*i[5], i ) for i in fit_data],
+                 key = lambda entry: entry[0], reverse=False)
 
         sorted_fit_data = sorted_by_surge_period
 
         if verbose:
             print('')
-            for (sort_key,data) in sorted_fit_data:
+            for (sort_key, data) in sorted_fit_data:
                 name = data[0]
-                print('%15s: surge period %1.2f [day]'%(name,sort_key))
+                print('%15s: surge period %1.2f [day]'%(name, sort_key))
 
         return sorted_fit_data
 
@@ -1394,8 +1361,8 @@ class Surge:
 
             colors = self.__color_map(len(fit_data))
 
-            for (sort_key,data) in fit_data:
-                color = colors[fit_data.index((sort_key,data))]
+            for (sort_key, data) in fit_data:
+                color = colors[fit_data.index((sort_key, data))]
                 state = data[0]
                 n_dates = data[1].size
                 param_vec = data[3]
@@ -1403,15 +1370,15 @@ class Surge:
                 value = '%1.1f'%sort_key
 
                 ax1.plot(np.array(range(n_dates))-tshift, data[2]/param_vec[0],
-                         '*',label=state+': '+value,color=color)
+                         '*', label=state+': '+value, color=color)
 
-            ax1.set_xlabel(r'Shifted Time [day]',fontsize=16)
-            ax1.set_ylabel(r'Normalized Cumulative Death',fontsize=16,color='black')
+            ax1.set_xlabel(r'Shifted Time [day]', fontsize=16)
+            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16, color='black')
 
             if matplotlib.__version__ >= '3.0.2':
-                ax1.legend(loc='best',fontsize=12,title=legend_title,title_fontsize=14)
+                ax1.legend(loc='best', fontsize=12, title=legend_title, title_fontsize=14)
             else:
-                ax1.legend(loc='best',fontsize=12,title=legend_title)
+                ax1.legend(loc='best', fontsize=12, title=legend_title)
 
             ax1.grid(True)
 
@@ -1424,7 +1391,7 @@ class Surge:
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for '+data_name+
-                      ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
+                      ' w/ Evolved Mortality ('+data[1][-1]+')', fontsize=20)
 
             plt.show()
             if save:
@@ -1445,8 +1412,8 @@ class Surge:
 
             colors = self.__color_map(len(fit_data))
 
-            for (sort_key,data) in fit_data:
-                color = colors[fit_data.index((sort_key,data))]
+            for (sort_key, data) in fit_data:
+                color = colors[fit_data.index((sort_key, data))]
                 state = data[0]
                 n_dates = data[1].size
                 param_vec = data[3]
@@ -1456,19 +1423,19 @@ class Surge:
                 t2 = tshift + data[5]
                 value = '%1.1f'%sort_key
 
-                ax1.plot( np.array(range(n_dates))-tshift, self.sigmoid_func(np.array(range(n_dates)),param_vec)/param_vec[0],
-                     'b-',label=state+': '+value,color=color)
+                ax1.plot(np.array(range(n_dates))-tshift, self.sigmoid_func(np.array(range(n_dates)), param_vec)/param_vec[0],
+                     'b-', label=state+': '+value, color=color)
 
-                ax1.plot(t1-tshift,self.sigmoid_func(t1,param_vec)/param_vec[0],'*',color=color,markersize=12)
+                ax1.plot(t1-tshift, self.sigmoid_func(t1, param_vec)/param_vec[0], '*', color=color, markersize=12)
 
-                ax1.plot(t2-tshift,self.sigmoid_func(t2,param_vec)/param_vec[0],'*',color=color,markersize=12)
+                ax1.plot(t2-tshift, self.sigmoid_func(t2, param_vec)/param_vec[0], '*', color=color, markersize=12)
 
-            ax1.set_xlabel(r'Shifted Time [day]',fontsize=16)
-            ax1.set_ylabel(r'Normalized Cumulative Death',fontsize=16,color='black')
+            ax1.set_xlabel(r'Shifted Time [day]', fontsize=16)
+            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16, color='black')
             if matplotlib.__version__ >= '3.0.2':
-                ax1.legend(loc='best',fontsize=12,title=legend_title,title_fontsize=14)
+                ax1.legend(loc='best', fontsize=12, title=legend_title, title_fontsize=14)
             else:
-                ax1.legend(loc='best',fontsize=12,title=legend_title)
+                ax1.legend(loc='best', fontsize=12, title=legend_title)
 
             ax1.grid(True)
 
@@ -1481,7 +1448,7 @@ class Surge:
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for '+ data_name+
-                      ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
+                      ' w/ Evolved Mortality ('+data[1][-1]+')', fontsize=20)
 
             plt.show()
             if save:
@@ -1495,21 +1462,19 @@ class Surge:
         return
 
     def clustering(self, sorted_fit_data, bin_width, option='surge_period'):
-        '''
-        Cluster the communities based on the sorting value of the fit_data
-        '''
+        """Cluster communities based on the sorting value of the fit_data."""
 
-        max_value = max([key for (key,data) in sorted_fit_data])
-        min_value = min([key for (key,data) in sorted_fit_data])
+        max_value = max([key for (key, data) in sorted_fit_data])
+        min_value = min([key for (key, data) in sorted_fit_data])
 
         if len(sorted_fit_data) == 1:
-            bins = {0:[float(int(min_value)),float(int(max_value)+1)]}
+            bins = {0:[float(int(min_value)), float(int(max_value)+1)]}
             return bins
 
         small_value = (max_value - min_value)* 1./100.0
 
-        max_value = round(max_value,1) + small_value
-        min_value = round(min_value,1) - small_value
+        max_value = round(max_value, 1) + small_value
+        min_value = round(min_value, 1) - small_value
 
 
         if option == 'surge_period':
@@ -1523,30 +1488,26 @@ class Surge:
 
         bins = dict()
         for i in range(n_bins):
-            pt  = pts[i]
+            pt = pts[i]
             pt1 = pts[i+1]
-            bins[i] = [pt,pt1]
+            bins[i] = [pt, pt1]
 
         return bins
 
-    def get_bin_id(self,value,bins):
+    def get_bin_id(self, value, bins):
 
         if len(bins) == 0:
             return None
 
-        for (key,val) in bins.items():
+        for (key, val) in bins.items():
             if value >= val[0] and value < val[1]:
                 return key
 
-        #assert False,\
-        #  '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins)
-        assert_true( False,
-          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins) )
+        assert_true(False,
+          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins))
 
     def plot_group_fit_data(self, state_groups, fit_data, save=False):
-        '''
-        Plot fit functions for each country group
-        '''
+        """Plot fit functions for each country group."""
 
         legend_title = 'Max. Relative Death Rate [%/day]'
         legend_title = 'Surge Period [day]'
@@ -1575,24 +1536,23 @@ class Surge:
                 sort_value = '%1.1f'%sort_key
 
                 ax1.plot(np.array(range(n_dates))-tshift,
-                        self.sigmoid_func( np.array(range(n_dates)), param_vec )/param_vec[0],
-                         'b-',label=state+': '+sort_value,
-                         color=color)
+                        self.sigmoid_func(np.array(range(n_dates)), param_vec )/param_vec[0],
+                         'b-', label=state+': '+sort_value, color=color)
 
                 ax1.plot(t1-tshift,
-                        self.sigmoid_func(t1,param_vec)/param_vec[0],'*',
-                        color=color,markersize=12)
+                        self.sigmoid_func(t1, param_vec)/param_vec[0], '*',
+                        color=color, markersize=12)
 
                 ax1.plot(t2-tshift,
-                        self.sigmoid_func(t2,param_vec)/param_vec[0],'*',
-                        color=color,markersize=12)
+                        self.sigmoid_func(t2, param_vec)/param_vec[0], '*',
+                        color=color, markersize=12)
 
-            ax1.set_xlabel(r'Shifted Time [day]',fontsize=16)
-            ax1.set_ylabel(r'Normalized Cumulative Death',fontsize=16,color='black')
+            ax1.set_xlabel(r'Shifted Time [day]', fontsize=16)
+            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16, color='black')
             if matplotlib.__version__ >= '3.0.2':
-                ax1.legend(loc='best',fontsize=16,title=legend_title,title_fontsize=18)
+                ax1.legend(loc='best', fontsize=16, title=legend_title, title_fontsize=18)
             else:
-                ax1.legend(loc='best',fontsize=16,title=legend_title)
+                ax1.legend(loc='best', fontsize=16, title=legend_title)
 
             ax1.grid(True)
 
@@ -1605,7 +1565,7 @@ class Surge:
                 data_name = 'Countries'
 
             plt.title('COVID-19 Pandemic 2020 for '+data_name+
-                      ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
+                      ' w/ Evolved Mortality ('+data[1][-1]+')', fontsize=20)
 
             plt.show()
             if save:
@@ -1621,12 +1581,12 @@ class Surge:
     def plot_group_surge_periods(self, fit_data, bins, save=False):
 
         #plt.rcParams['figure.figsize'] = [20, 4]
-        fig, ax = plt.subplots(figsize=(20,6))
+        fig, ax = plt.subplots(figsize=(20, 6))
 
         surge_periods = list()
         states = list()
 
-        for (key,data) in fit_data:
+        for (key, data) in fit_data:
             surge_periods.append(2*data[5])
             states.append(data[0])
 
@@ -1634,34 +1594,34 @@ class Surge:
         std  = np.std(np.array(surge_periods))
 
         # created sorted list
-        sorted_list = sorted( zip(states,surge_periods),
-                key = lambda entry: entry[1], reverse=False )
+        sorted_list = sorted(zip(states, surge_periods),
+                key = lambda entry: entry[1], reverse=False)
 
         colors = self.__color_map(len(bins))
 
-        for (mid,(state,val)) in enumerate(sorted_list):
+        for (mid, (state, val)) in enumerate(sorted_list):
 
-            color = colors[ self.get_bin_id(val,bins) ]
-            ax.bar( mid, val, color=color )
+            color = colors[self.get_bin_id(val, bins)]
+            ax.bar(mid, val, color=color)
 
         # Fine tunning the axes
-        ax.set_xlim((-.75,len(fit_data)))
+        ax.set_xlim((-.75, len(fit_data)))
 
         # make space for annotation
-        (ymin,ymax)= ax.get_ylim()
-        ax.set_ylim((ymin,ymax+(ymax-ymin)*0.15))
+        (ymin, ymax) = ax.get_ylim()
+        ax.set_ylim((ymin, ymax+(ymax-ymin)*0.15))
 
-        (xmin,xmax)= ax.get_xlim()
-        (ymin,ymax)= ax.get_ylim()
+        (xmin, xmax) = ax.get_xlim()
+        (ymin, ymax) = ax.get_ylim()
 
         for group_id in range(len(bins.keys())):
             b = bins[group_id]
-            ax.plot((-.75,len(fit_data)), [b[0],b[0]], 'k-.',linewidth=0.75 )
+            ax.plot((-.75, len(fit_data)), [b[0], b[0]], 'k-.', linewidth=0.75 )
             if group_id == len(bins.keys())-1:
-                ax.plot((-.75,len(fit_data)), [b[1],b[1]], 'k-.',linewidth=0.75 )
+                ax.plot((-.75, len(fit_data)), [b[1], b[1]], 'k-.',linewidth=0.75 )
 
         # Annotation
-        annot='mean: %2.1f; std: %2.1f (%2.1f %%)'%(mean,std,std/mean*100)
+        annot = 'mean: %2.1f; std: %2.1f (%2.1f %%)'%(mean, std, std/mean*100)
         dx = abs(xmax-xmin)
         xtext = xmin + dx*0.02
 
@@ -1670,13 +1630,13 @@ class Surge:
 
         ax.text(xtext, ytext, annot, fontsize=16)
 
-        plt.xticks( range(len(states)), [state for (state,val) in sorted_list],
-                rotation=80,fontsize=16)
+        plt.xticks(range(len(states)), [state for (state, val) in sorted_list],
+                rotation=80, fontsize=16)
         plt.yticks(fontsize=18)
 
-        ax.set_ylabel('Surge Period [day]',fontsize=16)
-        ax.set_xlabel('',fontsize=20)
-        ax.xaxis.grid(True,linestyle='-',which='major',color='lightgrey',alpha=0.9)
+        ax.set_ylabel('Surge Period [day]', fontsize=16)
+        ax.set_xlabel('', fontsize=20)
+        ax.xaxis.grid(True, linestyle='-', which='major', color='lightgrey', alpha=0.9)
 
         data_name = 'null-data-name'
         if self.locale == 'US' and self.sub_locale is None:
@@ -1687,7 +1647,7 @@ class Surge:
             data_name = 'Countries'
 
         plt.title('COVID-19 Pandemic 2020 for '+data_name+
-                  ' w/ Evolved Mortality ('+data[1][-1]+')',fontsize=20)
+                  ' w/ Evolved Mortality ('+data[1][-1]+')', fontsize=20)
 
         plt.tight_layout(1)
 
@@ -1702,9 +1662,8 @@ class Surge:
 
         return
 
-    def __color_map(self, num_colors ):
-        '''
-        Nice colormap internal helper method for plotting.
+    def __color_map(self, num_colors):
+        """Nice colormap internal helper method for plotting.
 
         Parameters
         ----------
@@ -1716,23 +1675,20 @@ class Surge:
         color_map: list(tuple(R,G,B,A))
             List with colors interpolated from internal list of primary colors.
 
-        '''
-
+        """
         #assert num_colors >= 1
-        assert_true( num_colors >= 1 )
-
-        import numpy as np
+        assert_true(num_colors >= 1)
 
         # primary colors
         # use the RGBA decimal code
-        red     = np.array((1,0,0,1))
-        blue    = np.array((0,0,1,1))
-        magenta = np.array((1,0,1,1))
-        green   = np.array((0,1,0,1))
-        orange  = np.array((1,0.5,0,1))
-        black   = np.array((0,0,0,1))
-        yellow  = np.array((1,1,0,1))
-        cyan    = np.array((0,1,1,1))
+        red = np.array((1, 0, 0, 1))
+        blue = np.array((0, 0, 1, 1))
+        magenta = np.array((1, 0, 1, 1))
+        green = np.array((0, 1, 0, 1))
+        orange = np.array((1, 0.5, 0, 1))
+        black = np.array((0, 0, 0, 1))
+        yellow = np.array((1, 1, 0, 1))
+        cyan = np.array((0, 1, 1, 1))
 
         # order the primary colors here
         color_map = list()
@@ -1751,7 +1707,7 @@ class Surge:
                 color_b = color_map[2*i+1]
                 mid_color = (color_a+color_b)/2.0
                 j = 2*i+1
-                color_map.insert(j,mid_color) # insert before index
+                color_map.insert(j, mid_color) # insert before index
                 if len(color_map) == num_colors:
                     break
 
@@ -1765,10 +1721,10 @@ class Surge:
             filename = filename[0]
         else:
             tmp = filename[0]
-            for (i,v) in enumerate(filename):
+            for (i, val) in enumerate(filename):
                 if i == 0:
                     continue
-                tmp = tmp+'_'+v
+                tmp = tmp+'_'+val
             filename = tmp
 
         return filename
