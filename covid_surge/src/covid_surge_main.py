@@ -11,9 +11,9 @@ class in various ways.
 
 Notes
 -----
-This single class is a rather long file. `Vim` is used with various
-highlighting and folding configurations to make it simple to navigate a
-single file.
+This single class is a rather long file. This author uses `vim` with various
+highlighting and folding configurations integrated with `pylint` to make it
+simple to navigate a single long file.
 """
 
 import math
@@ -124,10 +124,14 @@ class Surge:
 
         self.__reset_data()
 
+        return
+
     def __reset_data(self):
 
         self.cases = np.copy(self.__cases)
         self.dates = np.copy(self.__dates)
+
+        return
 
     def __set_end_date(self, v):
 
@@ -148,6 +152,8 @@ class Surge:
         else:
             pass
 
+        return
+
     def __get_end_date(self):
 
         return self.__end_date
@@ -166,6 +172,8 @@ class Surge:
             self.dates = np.copy(self.dates[:-self.__ignore_last_n_days])
             self.cases = np.copy(self.cases[:-self.__ignore_last_n_days])
 
+        return
+
     def __get_ignore_last_n_days(self):
 
         return self.__ignore_last_n_days
@@ -173,6 +181,16 @@ class Surge:
                                   __set_ignore_last_n_days, None, None)
 
     def plot_covid_data(self, name=None, save=False):
+        """Plot the COVID-19 input data.
+
+        Parameters
+        ----------
+        name: str
+            Name of the community. `None` will combine
+            all communities. Default: `None`.
+        save: bool
+            Save the plot as a `png` image file.
+        """
 
         population = None
 
@@ -196,9 +214,9 @@ class Surge:
         # Report on deaths per 100k per year if available
 
         if population:
-            deaths_100k_y = round(
-                    cases_plot[-1]*100000/population * 365/cases_plot.size, 1
-                                 )
+            deaths_100k_y = cases_plot[-1]*100000/population *\
+                    365/cases_plot.size
+            deaths_100k_y = round(deaths_100k_y, 1)
 
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
@@ -309,6 +327,32 @@ class Surge:
                          plot_double_prime=False, option='dates',
                          ylabel='null-ylabel',
                          title='null-title', formula='null-formula'):
+        """Plot COVID-19 data nolinear fit.
+
+        Parameters
+        ----------
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+        name: str
+            Name of the community. `None` will combine
+            all communities. Default: `None`.
+        save: bool
+            Save plots to `png` files.
+        plot_prime: bool
+            Plot the first derivative of the fit.
+        plot_double_prime: bool
+            Plot the second derivative of the fit.
+        option: str
+            Use dates or days for the independent variable.
+        ylabel: str
+            Label for the y axis.
+        title: str
+            Title of the plots. There are good defaults available.
+        formula
+            Formula to be printed in the inset of plots. Defaults to the
+            sigmoid function.
+
+        """
 
         formula = self.sigmoid_formula
 
@@ -593,7 +637,20 @@ class Surge:
         return
 
     def sigmoid_func(self, x, param_vec):
-        """Compute the sigmoid function at x."""
+        """Compute the sigmoid function at x.
+
+        Parameters
+        ----------
+        x: float, int, or numpy.ndarray
+            Values of the argument of the function.
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+
+        Returns
+        -------
+        f_x: numpy.ndarray(float)
+            Values of the function as a `numpy` vector.
+        """
 
         self.sigmoid_formula = r'$y = \frac{\alpha_0}{1 + \alpha_1 \, e^{\alpha_2\,t}  }$'
 
@@ -665,7 +722,6 @@ class Surge:
             print('--------------------------------------------------------------------------')
         #         1234567890 12345678901 123456789012345 123456789012 123456789 12345678
 
-        #assert k_max >= 1
         assert_true(k_max >= 1)
         k = 1
 
@@ -728,7 +784,9 @@ class Surge:
 
             if k > 0:
                 if np.linalg.norm(delta_vec_k) != 0.0 and np.linalg.norm(delta_vec_k_old) != 0.0:
-                    convergence_factor = math.log(np.linalg.norm(delta_vec_k),10) / math.log(np.linalg.norm(delta_vec_k_old),10)
+                    convergence_factor = math.log(np.linalg.norm(delta_vec_k),
+                                                  10) / \
+                    math.log(np.linalg.norm(delta_vec_k_old), 10)
                 else:
                     convergence_factor = 0.0
             else:
@@ -736,7 +794,7 @@ class Surge:
 
             if verbose is True:
                 print('%2i %+10.2e %+11.2e %+15.2e %+12.2e %+9.2e %8.2f'%\
-                    (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
+                      (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
                        np.linalg.norm(j_mtrx_k.transpose()@r_vec_k),
                        np.linalg.norm(delta_vec_k), np.linalg.norm(param_vec),
                        convergence_factor))
@@ -762,6 +820,8 @@ class Surge:
     def report_critical_times(self, param_vec, name=None, verbose=False):
         """Report critical times and errors.
 
+        Parameters
+        ----------
         param_vec: numpy.ndarray(float)
             Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
         name: str
@@ -769,6 +829,14 @@ class Surge:
             all communities. Default: `None`.
         verbose: bool
             Print out additional information.
+
+        Returns
+        -------
+        time_max_prime: float
+            Time of maximum surge rate.
+        dtc: float
+            Time difference between either maximum or minimum curvature
+            points and `time_max_prime`.
         """
 
         a_0 = param_vec[0]
@@ -891,6 +959,8 @@ class Surge:
 
         assert_true(abs(fdp_analytical - fdp) <= 1.e-8)
 
+        return
+
     def report_error_analysis(self, param_vec, tcc, dtc, name=None):
         """Report error of data fitting.
 
@@ -974,6 +1044,25 @@ class Surge:
     def multi_fit_data(self,
                        blocked_list=None,
                        verbose=False, plot=False, save_plots=False):
+        """Fit a sigmoid curve to multiple data in a Surge object.
+
+        Parameters
+        ----------
+        blocked_list: list
+            List of names of communitiies to be blocked from fitting.
+        verbose: bool
+            Print out internal looping info.
+        plot: bool
+            Plot various plots during the fitting procedure.
+        save_plots: bool
+            Save a `png` version of the plots.
+
+        Returns
+        -------
+        sorted_fit_data: list(tuple)
+            List of the data fit operation sorted by surge period.
+
+        """
 
         if blocked_list is None:
             blocked_list = list()
@@ -983,7 +1072,7 @@ class Surge:
 
         # Sort the states by descending number of total cases
         sorted_list = sorted(zip(names, cases[-1, :]),
-                             key = lambda entry: entry[1], reverse=True)
+                             key=lambda entry: entry[1], reverse=True)
 
         # Post processing data storage
         fit_data = list()
@@ -1040,9 +1129,9 @@ class Surge:
 
             if verbose:
                 print('')
-                print('********************************************************')
+                print('******************************************************')
                 print('                     '+name)
-                print('********************************************************')
+                print('******************************************************')
                 print('')
 
             scaling = icases.max()
@@ -1061,9 +1150,11 @@ class Surge:
             k_max = 25
             rel_tol = 0.01 / 100.0 # (0.1%)
 
-            (param_vec, rr2, k) = self.__newton_nlls_solve(times, icases,
-                               self.sigmoid_func, self.__grad_p_sigmoid_func,
-                               param_vec_0, k_max, rel_tol, verbose=False)
+            (param_vec, rr2, k) = \
+                self.__newton_nlls_solve(times, icases, self.sigmoid_func,
+                                         self.__grad_p_sigmoid_func,
+                                         param_vec_0, k_max,
+                                         rel_tol, verbose=False)
 
             if k > k_max and verbose:
                 print(" NO Newton's method convergence")
@@ -1155,7 +1246,7 @@ class Surge:
             print('Names with significant deaths past peak in surge period:')
             print('')
             for (name, tcc, tc_date, dtc) in names_past_peak_surge_period:
-                print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name, tcc, tc_date, dtc))
+                print('%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name, tcc, tc_date, dtc))
 
             print('')
 
@@ -1186,7 +1277,7 @@ class Surge:
 
         sorted_by_surge_period =\
             sorted([(2*i[5], i) for i in fit_data],
-                   key = lambda entry: entry[0], reverse=False)
+                   key=lambda entry: entry[0], reverse=False)
 
         sorted_fit_data = sorted_by_surge_period
 
@@ -1199,6 +1290,19 @@ class Surge:
         return sorted_fit_data
 
     def plot_multi_fit_data(self, fit_data, option=None, save=False):
+        """Plot joint experimental data or joint sigmoid fit for communities.
+
+        Parameters
+        ----------
+        fit_data: list(tuple)
+            List of tuples obtained from the `multi_fit_data` member function.
+
+        option: str
+            Either `experimental` or `fit`. The default does nothing.
+        save: bool
+            Save plot to `png` image file.
+
+        """
 
         if option == 'experimental':
 
@@ -1314,7 +1418,7 @@ class Surge:
 
         Parameters
         ----------
-        sorted_fit_data: list
+        sorted_fit_data: list(tuple)
             List of tuples obtained from the `multi_fit_data` member function.
         bin_width: float or int
             Width of the sorting key in `sorted_fit_data` first elmenet.
@@ -1323,8 +1427,9 @@ class Surge:
 
         Returns
         -------
-        bins: dict
+        bins: dict(list)
             Dictionary with bin values. Keys are the indices of the bins.
+            Values are a list with beginning and ending of interval.
         """
 
         max_value = max([key for (key, data) in sorted_fit_data])
@@ -1361,9 +1466,15 @@ class Surge:
 
         Parameters
         ----------
-        value
+        value: float or int
+            Value for intended bin interval.
         bins: dict
             Bins created by `fit_data_bins`
+
+        Returns
+        -------
+        key: int
+            If key is found return an `int` else stop.
 
         """
 
@@ -1375,15 +1486,30 @@ class Surge:
                 return key
 
         assert_true(False,
-          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins))
+                    '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key, value, bins))
 
-    def plot_group_fit_data(self, state_groups, fit_data, save=False):
-        """Plot fit functions for each country group."""
+        return
+
+    def plot_group_fit_data(self, groups, fit_data, save=False):
+        """Plot sigmoid fit functions for each community in the group.
+
+        Parameters
+        ----------
+        groups: dict
+            Dictionary with keys equal to the group `id` and values equal
+            to lists of names of communities. User must create this data
+            structure. See `examples/`.
+        fit_data: list(tuple)
+            Fit data structure as created by `multi_fit_data`.
+
+        save: bool
+            Save plot in a `png` image file.
+        """
 
         legend_title = 'Max. Relative Death Rate [%/day]'
         legend_title = 'Surge Period [day]'
 
-        for (ig,states) in enumerate(state_groups):
+        for (grp, states) in enumerate(groups):
 
             fig, ax1 = plt.subplots(1, figsize=(20, 8))
             colors = color_map(len(states))
@@ -1391,7 +1517,7 @@ class Surge:
             for state in states:
                 color = colors[states.index(state)]
 
-                for (sort_key_i,data_i) in fit_data:
+                for (sort_key_i, data_i) in fit_data:
 
                     if data_i[0] != state:
                         continue
@@ -1402,26 +1528,29 @@ class Surge:
                 n_dates = data[1].size
                 param_vec = data[3]
                 tshift = data[4]
-                t1 = tshift - data[5]
-                t2 = tshift + data[5]
+                ti1 = tshift - data[5]
+                ti2 = tshift + data[5]
                 sort_value = '%1.1f'%sort_key
 
                 ax1.plot(np.array(range(n_dates))-tshift,
-                        self.sigmoid_func(np.array(range(n_dates)), param_vec )/param_vec[0],
+                         self.sigmoid_func(np.array(range(n_dates)),
+                                           param_vec)/param_vec[0],
                          'b-', label=state+': '+sort_value, color=color)
 
-                ax1.plot(t1-tshift,
-                        self.sigmoid_func(t1, param_vec)/param_vec[0], '*',
-                        color=color, markersize=12)
+                ax1.plot(ti1-tshift,
+                         self.sigmoid_func(ti1, param_vec)/param_vec[0], '*',
+                         color=color, markersize=12)
 
-                ax1.plot(t2-tshift,
-                        self.sigmoid_func(t2, param_vec)/param_vec[0], '*',
-                        color=color, markersize=12)
+                ax1.plot(ti2-tshift,
+                         self.sigmoid_func(ti2, param_vec)/param_vec[0], '*',
+                         color=color, markersize=12)
 
             ax1.set_xlabel(r'Shifted Time [day]', fontsize=16)
-            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16, color='black')
+            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16,
+                           color='black')
             if matplotlib.__version__ >= '3.0.2':
-                ax1.legend(loc='best', fontsize=16, title=legend_title, title_fontsize=18)
+                ax1.legend(loc='best', fontsize=16, title=legend_title,
+                           title_fontsize=18)
             else:
                 ax1.legend(loc='best', fontsize=16, title=legend_title)
 
@@ -1430,7 +1559,7 @@ class Surge:
             data_name = 'null-data-name'
             if self.locale == 'US' and self.sub_locale is None:
                 data_name = 'US States'
-            if self.locale == 'US' and self.sub_locale != None:
+            if self.locale == 'US' and self.sub_locale is not None:
                 data_name = self.sub_locale+' Counties/Cities'
             elif self.locale == 'global':
                 data_name = 'Countries'
@@ -1444,12 +1573,20 @@ class Surge:
                     stem = self.__filename(self.locale)
                 else:
                     stem = self.__filename(self.locale+'_'+self.sub_locale)
-                plt.savefig('fit_group_'+str(ig)+'_'+stem+'.png', dpi=100)
+                plt.savefig('fit_group_'+str(grp)+'_'+stem+'.png', dpi=100)
             plt.close()
 
         return
 
     def plot_group_surge_periods(self, fit_data, bins, save=False):
+        """Plot surge period for communities in a bar plot colored by bins.
+
+        Parameters
+        ----------
+        fit_data: list(tuple)
+            Fit data structure as created by `multi_fit_data`.
+        bins: dict(list)
+        """
 
         #plt.rcParams['figure.figsize'] = [20, 4]
         fig, ax = plt.subplots(figsize=(20, 6))
@@ -1677,6 +1814,8 @@ def get_covid_us_data(sub_locale=None, case_type='deaths', save_html=False):
 
     else:
         assert_in(sub_locale, state_names)
+
+    return
 
 def get_covid_global_data(case_type='deaths', distribution=True,
                           cumulative=False, save_html=False):
