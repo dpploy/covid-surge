@@ -64,7 +64,7 @@ def test_main():
                               plot_prime=True, plot_double_prime=True)
 
     # Report critical times
-    (tcc, dtc) = us_surge.critical_times(param_vec, verbose=True)
+    (tcc, dtc) = us_surge.report_critical_times(param_vec, verbose=True)
 
     print('')
     print('critical times = ', [tcc, dtc])
@@ -87,7 +87,7 @@ def test_main():
         print('')
 
     # Report errors
-    us_surge.error_analysis(param_vec, tcc, dtc)
+    us_surge.report_error_analysis(param_vec, tcc, dtc)
 
 
 if __name__ == '__main__':

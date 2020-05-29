@@ -34,8 +34,6 @@ class Surge:
                  save_all_original_data_html=False):
         """Construct a Surge object.
 
-        # TODO log_filename='covid_surge'):
-
         Parameters
         ----------
         locale: str
@@ -48,6 +46,7 @@ class Surge:
             If `locale` is US, then `sub_locale` must be one of the state
             names. There is no `sub_locale` for countries.
             Default: None
+        # TODO log_filename='covid_surge'):
         log_filename: str
             Name of the file to save logging information. Not used at the
             moment.
@@ -92,7 +91,7 @@ class Surge:
             if self.sub_locale:
 
                 (county_names, populations, dates, cases) = \
-                 self.__get_covid_us_data(self.sub_locale,
+                 get_covid_us_data(self.sub_locale,
                                           save_html=save_all_original_data_html)
 
                 assert_equal(dates.size, cases.shape[0])
@@ -103,7 +102,7 @@ class Surge:
             else:
 
                 (state_names, populations, dates, cases) = \
-                 self.__get_covid_us_data(save_html=save_all_original_data_html)
+                 get_covid_us_data(save_html=save_all_original_data_html)
 
                 assert_equal(dates.size, cases.shape[0])
                 assert_equal(len(state_names), cases.shape[1])
@@ -114,7 +113,7 @@ class Surge:
 
         elif self.locale == 'global':
             (country_names, dates, cases) = \
-             self.__get_covid_global_data(cumulative=True)
+             get_covid_global_data(cumulative=True)
             self.names = country_names
 
         else:
@@ -172,208 +171,6 @@ class Surge:
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days,
                                   __set_ignore_last_n_days, None, None)
-
-    def __get_covid_us_data(self, sub_locale=None,
-                            case_type='deaths', save_html=False):
-        """COVID-19 data loader.
-
-        Load COVID-19 pandemic cumulative data from:
-
-         https://github.com/CSSEGISandData/COVID-19.
-
-        Parameters
-        ----------
-        case_type:  str, optional
-                Type of data. Deaths ('deaths') and confirmed cases
-                ('confirmed'). Default: 'deaths'.
-
-        Returns
-        -------
-        data: tuple(int, list(str), list(int))
-               (population, dates, cases)
-        """
-        if case_type == 'deaths':
-
-            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
-            if save_html:
-                df.to_html('covid_19_deaths.html')
-
-        elif case_type == 'confirmed':
-
-            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
-            df_pop = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
-            if save_html:
-                df.to_html('covid_19_confirmed.html')
-
-        else:
-            assert_true(False,
-            'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type))
-
-        df = df.drop(['UID', 'iso2', 'iso3', 'Combined_Key', 'code3', 'FIPS', 'Lat', 'Long_', 'Country_Region'], axis=1)
-
-        df = df.rename(columns={'Province_State':'state/province', 'Admin2':'county'})
-
-        state_names = list()
-        state_names_tmp = list()
-
-        for (i, istate) in enumerate(df['state/province']):
-
-            if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
-                break
-
-            state_names_tmp.append(istate)
-
-        state_names_set = set(state_names_tmp)
-
-        state_names = list(state_names_set)
-        state_names = sorted(state_names)
-
-        dates = np.array(list(df.columns[3:]))
-
-        if sub_locale is None:
-
-            population = [0]*len(state_names)
-
-            cases = np.zeros((len(df.columns[3:]), len(state_names)),
-                             dtype=np.float64)
-
-            for (i, istate) in enumerate(df['state/province']):
-
-                if istate.strip() == 'Wyoming' and\
-                    (df.loc[i, 'county']).strip() == 'Weston':
-                    break
-
-                state_id = state_names.index(istate)
-
-                if case_type == 'confirmed':
-                    population[state_id] += int(df_pop.loc[i, 'Population'])
-                else:
-                    population[state_id] += int(df.loc[i, 'Population'])
-
-                # Add all counties/city/towns columnwise states
-                cases[:, state_id] += np.array(list(df.loc[i, df.columns[3:]]))
-
-            return (state_names, population, dates, cases)
-
-        elif sub_locale in state_names:
-
-            county_names = list()
-            county_names_tmp = list()
-
-            for (i, istate) in enumerate(df['state/province']):
-
-                if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
-                    break
-
-                if istate.strip() == sub_locale:
-
-                    county_names_tmp.append(df.loc[i, 'county'])
-
-            county_names_set = set(county_names_tmp)
-
-            county_names = list(county_names_set)
-            county_names = sorted(county_names)
-
-            population = [0]*len(county_names)
-
-            cases = np.zeros((len(df.columns[3:]), len(county_names)),
-                             dtype=np.float64)
-
-            for (i, istate) in enumerate(df['state/province']):
-
-                if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
-                    break
-
-                icounty = df.loc[i, 'county']
-
-                if istate.strip() == sub_locale:
-
-                    county_id = county_names.index(icounty)
-
-                    if case_type == 'confirmed':
-                        population[county_id] += int(df_pop.loc[i, 'Population'])
-                    else:
-                        population[county_id] += int(df.loc[i, 'Population'])
-
-                    cases[:, county_id] = np.array(
-                          list(df.loc[i, df.columns[3:]]))
-
-            return (county_names, population, dates, cases)
-
-        else:
-            assert_in(sub_locale, state_names)
-
-    def __get_covid_global_data(self, case_type='deaths',
-                                distribution=True, cumulative=False,
-                                save_html=False):
-        """COVID-19 data loader.
-
-        Load COVID-19 pandemic cumulative data from:
-
-            https://github.com/CSSEGISandData/COVID-19
-
-        Parameters
-        ----------
-        case_type: str, optional
-            Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
-            Default: 'deaths'.
-
-        distribution: bool, optional
-            Distribution of new cases over dates.
-            Default: True
-
-        cumulative: bool, optional
-            Cumulative number of cases over dates.
-            Default: False
-
-        Returns
-        -------
-        data: tuple(int, list(str), list(int))
-               (contry_names, dates, cases)
-        """
-        if cumulative is True:
-            distribution = False
-
-        if case_type == 'deaths':
-            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
-            if save_html:
-                df.to_html('covid_19_global_deaths.html')
-
-        else:
-            assert_true(False, 'invalid query type: %r (valid: "deaths"'%(case_type))
-
-        df = df.drop(['Lat', 'Long'], axis=1)
-        df = df.rename(columns={'Province/State':'state/province', 'Country/Region':'country/region'})
-
-        country_names = list()
-
-        country_names_tmp = list()
-
-        for (i, icountry) in enumerate(df['country/region']):
-            country_names_tmp.append(icountry)
-
-        country_names_set = set(country_names_tmp)
-
-        country_names = list(country_names_set)
-        country_names = sorted(country_names)
-
-        dates = np.array(list(df.columns[2:]))
-
-        cases = np.zeros((len(df.columns[2:]), len(country_names)),
-                         dtype=np.float64)
-
-        for (i, icountry) in enumerate(df['country/region']):
-
-            country_id = country_names.index(icountry)
-
-            cases[:, country_id] += np.array(list(df.loc[i, df.columns[2:]]))
-
-        if distribution:
-
-            for j in range(cases.shape[1]):
-                cases[:, j] = np.round(np.gradient(cases[:, j]), 0)
-
-        return (country_names, dates, cases)
 
     def plot_covid_data(self, name=None, save=False):
 
@@ -565,7 +362,7 @@ class Surge:
         plt.ylabel(ylabel, fontsize=16)
         plt.title(title, fontsize=20)
 
-        (tcc, dtc) = self.critical_times(param_vec, name, verbose=False)
+        (tcc, dtc) = self.report_critical_times(param_vec, name, verbose=False)
 
         time_max_prime = tcc
         time_min_max_double_prime = [tcc-dtc, tcc+dtc]
@@ -948,7 +745,17 @@ class Surge:
 
         return (param_vec, rr2, k)
 
-    def critical_times(self, param_vec, name=None, verbose=False):
+    def report_critical_times(self, param_vec, name=None, verbose=False):
+        """Report critical times and errors.
+
+        param_vec: numpy.ndarray(float)
+            Vector of parameters `a_0`, `a_1`, `a_0`.
+        name: str
+            Name of the community for creating the report. `None` will combine
+            all communities. Default: `None`.
+        verbose: bool
+            Print out additional information.
+        """
 
         a_0 = param_vec[0]
         a_1 = param_vec[1]
@@ -1064,7 +871,22 @@ class Surge:
 
         assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
 
-    def error_analysis(self, param_vec, tcc, dtc, name=None):
+    def report_error_analysis(self, param_vec, tcc, dtc, name=None):
+        """Report error of data fitting.
+
+        param_vec: numpy.ndarray(float)
+            Vector of parameters `a_0`, `a_1`, `a_0`.
+        tcc: float
+            Critical time for maximum surge rate. Previously computed by
+            `report_critical_times`.
+        dtc: float
+            Time difference from `tcc` to either of the maximum and minimum
+            curvature points. Previously computed by `report_critical_times`.
+        name: str
+            Name of the community for creating the report. `None` will combine
+            all communities. Default: `None`.
+
+        """
 
         if name is None: # Combine all column data in the surge
             cases = np.sum(self.cases, axis=1)
@@ -1245,7 +1067,7 @@ class Surge:
                 print('')
 
             # Compute critical times
-            (tcc, dtc) = self.critical_times(param_vec, name, verbose=verbose)
+            (tcc, dtc) = self.report_critical_times(param_vec, name, verbose=verbose)
 
             if tcc > times[-1]:
                 if verbose:
@@ -1287,7 +1109,7 @@ class Surge:
 
             # Report erros
             if verbose:
-                self.error_analysis(param_vec, tcc, dtc, name)
+                self.report_error_analysis(param_vec, tcc, dtc, name)
 
             # 60-day look-ahead
             n_prediction_days = 60
@@ -1342,9 +1164,9 @@ class Surge:
         #     [ (self.__sigmoid_func_prime(i[4],i[3])/i[3][0]*100, i )
         #        for i in fit_data ], key = lambda entry: entry[0], reverse=True )
 
-        sorted_by_surge_period = sorted(
-                [(2*i[5], i ) for i in fit_data],
-                 key = lambda entry: entry[0], reverse=False)
+        sorted_by_surge_period =\
+            sorted([(2*i[5], i) for i in fit_data],
+                   key = lambda entry: entry[0], reverse=False)
 
         sorted_fit_data = sorted_by_surge_period
 
@@ -1365,7 +1187,7 @@ class Surge:
 
             fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
-            colors = self.__color_map(len(fit_data))
+            colors = color_map(len(fit_data))
 
             for (sort_key, data) in fit_data:
                 color = colors[fit_data.index((sort_key, data))]
@@ -1416,7 +1238,7 @@ class Surge:
 
             fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
-            colors = self.__color_map(len(fit_data))
+            colors = color_map(len(fit_data))
 
             for (sort_key, data) in fit_data:
                 color = colors[fit_data.index((sort_key, data))]
@@ -1468,7 +1290,17 @@ class Surge:
         return
 
     def clustering(self, sorted_fit_data, bin_width, option='surge_period'):
-        """Cluster communities based on the sorting value of the fit_data."""
+        """Cluster communities based on the sorting value of the `fit_data`.
+
+        Parameters
+        ----------
+        sorted_fit_data: list
+            List of tuples obtained from the `multi_fit_data` member function.
+        bin_width: float or int
+            Width of the sorting key in `sorted_fit_data` first elmenet.
+        option: str
+            The `surge_period` option clusters the data in integer bins.
+        """
 
         max_value = max([key for (key, data) in sorted_fit_data])
         min_value = min([key for (key, data) in sorted_fit_data])
@@ -1481,7 +1313,6 @@ class Surge:
 
         max_value = round(max_value, 1) + small_value
         min_value = round(min_value, 1) - small_value
-
 
         if option == 'surge_period':
             max_value = int(max_value) + 1
@@ -1521,7 +1352,7 @@ class Surge:
         for (ig,states) in enumerate(state_groups):
 
             fig, ax1 = plt.subplots(1, figsize=(20, 8))
-            colors = self.__color_map(len(states))
+            colors = color_map(len(states))
 
             for state in states:
                 color = colors[states.index(state)]
@@ -1603,7 +1434,7 @@ class Surge:
         sorted_list = sorted(zip(states, surge_periods),
                 key = lambda entry: entry[1], reverse=False)
 
-        colors = self.__color_map(len(bins))
+        colors = color_map(len(bins))
 
         for (mid, (state, val)) in enumerate(sorted_list):
 
@@ -1668,57 +1499,6 @@ class Surge:
 
         return
 
-    def __color_map(self, num_colors):
-        """Nice colormap internal helper method for plotting.
-
-        Parameters
-        ----------
-        num_colors: int, required
-            Number of colors.
-
-        Returns
-        -------
-        color_map: list(tuple(R,G,B,A))
-            List with colors interpolated from internal list of primary colors.
-
-        """
-        #assert num_colors >= 1
-        assert_true(num_colors >= 1)
-
-        # primary colors
-        # use the RGBA decimal code
-        red = np.array((1, 0, 0, 1))
-        blue = np.array((0, 0, 1, 1))
-        magenta = np.array((1, 0, 1, 1))
-        green = np.array((0, 1, 0, 1))
-        orange = np.array((1, 0.5, 0, 1))
-        black = np.array((0, 0, 0, 1))
-        yellow = np.array((1, 1, 0, 1))
-        cyan = np.array((0, 1, 1, 1))
-
-        # order the primary colors here
-        color_map = list()
-        color_map = [red, blue, orange, magenta, green, yellow, cyan, black]
-
-        num_primary_colors = len(color_map)
-
-        if num_colors <= num_primary_colors:
-            return color_map[:num_colors]
-
-        # interpolate primary colors
-        while len(color_map) < num_colors:
-            j = 0
-            for i in range(len(color_map)-1):
-                color_a = color_map[2*i]
-                color_b = color_map[2*i+1]
-                mid_color = (color_a+color_b)/2.0
-                j = 2*i+1
-                color_map.insert(j, mid_color) # insert before index
-                if len(color_map) == num_colors:
-                    break
-
-        return color_map
-
     def __filename(self, name):
 
         filename = name.lower().strip().split(' ')
@@ -1734,3 +1514,255 @@ class Surge:
             filename = tmp
 
         return filename
+
+def get_covid_us_data(sub_locale=None, case_type='deaths', save_html=False):
+    """COVID-19 data loader.
+
+    Load COVID-19 pandemic cumulative data from:
+
+     `https://github.com/CSSEGISandData/COVID-19`.
+
+    Parameters
+    ----------
+    case_type:  str, optional
+            Type of data. Deaths ('deaths') and confirmed cases
+            ('confirmed'). Default: 'deaths'.
+
+    Returns
+    -------
+    data: tuple(int, list(str), list(int))
+           (population, dates, cases)
+    """
+    if case_type == 'deaths':
+
+        dtf = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
+        if save_html:
+            dtf.to_html('covid_19_deaths.html')
+
+    elif case_type == 'confirmed':
+
+        dtf = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
+        dtf_pop = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
+        if save_html:
+            dtf.to_html('covid_19_confirmed.html')
+
+    else:
+        assert_true(False,
+        'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type))
+
+    dtf = dtf.drop(['UID', 'iso2', 'iso3', 'Combined_Key', 'code3', 'FIPS', 'Lat', 'Long_', 'Country_Region'], axis=1)
+
+    dtf = dtf.rename(columns={'Province_State':'state/province', 'Admin2':'county'})
+
+    state_names = list()
+    state_names_tmp = list()
+
+    for (i, istate) in enumerate(dtf['state/province']):
+
+        if istate.strip() == 'Wyoming' and dtf.loc[i, 'county'] == 'Weston':
+            break
+
+        state_names_tmp.append(istate)
+
+    state_names_set = set(state_names_tmp)
+
+    state_names = list(state_names_set)
+    state_names = sorted(state_names)
+
+    dates = np.array(list(dtf.columns[3:]))
+
+    if sub_locale is None:
+
+        population = [0]*len(state_names)
+
+        cases = np.zeros((len(dtf.columns[3:]), len(state_names)),
+                         dtype=np.float64)
+
+        for (i, istate) in enumerate(dtf['state/province']):
+
+            if istate.strip() == 'Wyoming' and\
+                (dtf.loc[i, 'county']).strip() == 'Weston':
+                break
+
+            state_id = state_names.index(istate)
+
+            if case_type == 'confirmed':
+                population[state_id] += int(dtf_pop.loc[i, 'Population'])
+            else:
+                population[state_id] += int(dtf.loc[i, 'Population'])
+
+            # Add all counties/city/towns columnwise states
+            cases[:, state_id] += np.array(list(dtf.loc[i, dtf.columns[3:]]))
+
+        return (state_names, population, dates, cases)
+
+    elif sub_locale in state_names:
+
+        county_names = list()
+        county_names_tmp = list()
+
+        for (i, istate) in enumerate(dtf['state/province']):
+
+            if istate.strip() == 'Wyoming' and dtf.loc[i, 'county'] == 'Weston':
+                break
+
+            if istate.strip() == sub_locale:
+
+                county_names_tmp.append(dtf.loc[i, 'county'])
+
+        county_names_set = set(county_names_tmp)
+
+        county_names = list(county_names_set)
+        county_names = sorted(county_names)
+
+        population = [0]*len(county_names)
+
+        cases = np.zeros((len(dtf.columns[3:]), len(county_names)),
+                         dtype=np.float64)
+
+        for (i, istate) in enumerate(dtf['state/province']):
+
+            if istate.strip() == 'Wyoming' and dtf.loc[i, 'county'] == 'Weston':
+                break
+
+            icounty = dtf.loc[i, 'county']
+
+            if istate.strip() == sub_locale:
+
+                county_id = county_names.index(icounty)
+
+                if case_type == 'confirmed':
+                    population[county_id] += int(dtf_pop.loc[i, 'Population'])
+                else:
+                    population[county_id] += int(dtf.loc[i, 'Population'])
+
+                cases[:, county_id] = \
+                        np.array(list(dtf.loc[i, dtf.columns[3:]]))
+
+        return (county_names, population, dates, cases)
+
+    else:
+        assert_in(sub_locale, state_names)
+
+def get_covid_global_data(case_type='deaths', distribution=True,
+                          cumulative=False, save_html=False):
+    """COVID-19 data loader.
+
+    Load COVID-19 pandemic cumulative data from:
+
+        https://github.com/CSSEGISandData/COVID-19
+
+    Parameters
+    ----------
+    case_type: str, optional
+        Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
+        Default: 'deaths'.
+
+    distribution: bool, optional
+        Distribution of new cases over dates.
+        Default: True
+
+    cumulative: bool, optional
+        Cumulative number of cases over dates.
+        Default: False
+
+    Returns
+    -------
+    data: tuple(int, list(str), list(int))
+           (contry_names, dates, cases)
+    """
+
+    if cumulative is True:
+        distribution = False
+
+    if case_type == 'deaths':
+        dtf = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
+        if save_html:
+            dtf.to_html('covid_19_global_deaths.html')
+
+    else:
+        assert_true(False, 'invalid query type: %r (valid: "deaths"'%(case_type))
+
+    dtf = dtf.drop(['Lat', 'Long'], axis=1)
+    dtf = dtf.rename(columns={'Province/State':'state/province', 'Country/Region':'country/region'})
+
+    country_names = list()
+
+    country_names_tmp = list()
+
+    for (i, icountry) in enumerate(dtf['country/region']):
+        country_names_tmp.append(icountry)
+
+    country_names_set = set(country_names_tmp)
+
+    country_names = list(country_names_set)
+    country_names = sorted(country_names)
+
+    dates = np.array(list(dtf.columns[2:]))
+
+    cases = np.zeros((len(dtf.columns[2:]), len(country_names)),
+                     dtype=np.float64)
+
+    for (i, icountry) in enumerate(dtf['country/region']):
+
+        country_id = country_names.index(icountry)
+
+        cases[:, country_id] += np.array(list(dtf.loc[i, dtf.columns[2:]]))
+
+    if distribution:
+
+        for j in range(cases.shape[1]):
+            cases[:, j] = np.round(np.gradient(cases[:, j]), 0)
+
+    return (country_names, dates, cases)
+
+def color_map(num_colors):
+    """Nice colormap internal helper method for plotting.
+
+    Parameters
+    ----------
+    num_colors: int, required
+        Number of colors.
+
+    Returns
+    -------
+    colors: list(tuple(R,G,B,A))
+        List with colors interpolated from internal list of primary colors.
+
+    """
+
+    assert_true(num_colors >= 1)
+
+    # primary colors
+    # use the RGBA decimal code
+    red = np.array((1, 0, 0, 1))
+    blue = np.array((0, 0, 1, 1))
+    magenta = np.array((1, 0, 1, 1))
+    green = np.array((0, 1, 0, 1))
+    orange = np.array((1, 0.5, 0, 1))
+    black = np.array((0, 0, 0, 1))
+    yellow = np.array((1, 1, 0, 1))
+    cyan = np.array((0, 1, 1, 1))
+
+    # order the primary colors here
+    colors = list()
+    colors = [red, blue, orange, magenta, green, yellow, cyan, black]
+
+    num_primary_colors = len(colors)
+
+    if num_colors <= num_primary_colors:
+        return colors[:num_colors]
+
+    # interpolate primary colors
+    while len(colors) < num_colors:
+        j = 0
+        for i in range(len(colors)-1):
+            color_a = colors[2*i]
+            color_b = colors[2*i+1]
+            mid_color = (color_a+color_b)/2.0
+            j = 2*i+1
+            colors.insert(j, mid_color) # insert before index
+            if len(colors) == num_colors:
+                break
+
+    return colors
