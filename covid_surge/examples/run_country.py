@@ -21,9 +21,9 @@ def main():
     g_surge.end_date = None            # get all the data available
     g_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
 
-    print('********************************************************************')
-    print('*                        Single Country                            *')
-    print('********************************************************************')
+    print('******************************************************************')
+    print('*                        Single Country                          *')
+    print('******************************************************************')
 
     name = 'US'
     print(name)
@@ -50,13 +50,13 @@ def main():
 
     # Plot the fit data to model function
     g_surge.plot_covid_nlfit(param_vec, name, save=True,
-            plot_prime=True, plot_double_prime=True)
+                             plot_prime=True, plot_double_prime=True)
 
     # Report critical times
-    (tcc, dtc) = g_surge.critical_times(param_vec, name, verbose=True)
+    (tcc, dtc) = g_surge.report_critical_times(param_vec, name, verbose=True)
 
     # Report errors
-    g_surge.error_analysis(param_vec, tcc, dtc, name)
+    g_surge.report_error_analysis(param_vec, tcc, dtc, name)
 
     # 60-day look-ahead
     n_prediction_days = 60
@@ -65,8 +65,10 @@ def main():
     total_deaths_predicted = int(g_surge.sigmoid_func(n_prediction_days + last_day, param_vec))
 
     print('')
-    print('Estimated cumulative deaths in %s days from %s = %6i'%(n_prediction_days, g_surge.dates[-1], total_deaths_predicted))
-    print('# of cumulative deaths today, %s               = %6i'%(g_surge.dates[-1], g_surge.cases[-1, g_surge.names.index(name)]))
+    print('Estimated cumulative deaths in %s days from %s = %6i'%\
+            (n_prediction_days, g_surge.dates[-1], total_deaths_predicted))
+    print('# of cumulative deaths today, %s               = %6i'%\
+            (g_surge.dates[-1], g_surge.cases[-1, g_surge.names.index(name)]))
     print('')
 
 

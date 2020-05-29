@@ -243,6 +243,20 @@ class Surge:
         return
 
     def fit_data(self, name=None):
+        """Fit a sigmoid curve to data in a Surge object.
+
+        Parameters
+        ----------
+        name: str
+            Name of the community. `None` will combine
+            all communities. Default: `None`.
+
+        Returns
+        -------
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+
+        """
 
         if name is None:  # Combine all column data in the surge
             cases = np.sum(self.cases, axis=1)
@@ -749,7 +763,7 @@ class Surge:
         """Report critical times and errors.
 
         param_vec: numpy.ndarray(float)
-            Vector of parameters `a_0`, `a_1`, `a_0`.
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
         name: str
             Name of the community for creating the report. `None` will combine
             all communities. Default: `None`.
@@ -857,7 +871,8 @@ class Surge:
 
         prime_max = -a_0*a_2/4.0
 
-        assert_true( abs(prime_max - self.__sigmoid_func_prime(tcc, param_vec)) <= 1.e-8)
+        assert_true(abs(prime_max -
+                        self.__sigmoid_func_prime(tcc, param_vec)) <= 1.e-8)
 
         return (tcc, prime_max)
 
@@ -867,9 +882,14 @@ class Surge:
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2 # time at maximum growth acceleration
+        # time at maximum growth acceleration
+        time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2
 
-        assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
+        fdp = self.__sigmoid_func_double_prime(time_max_double_prime,
+                                               param_vec)
+        fdp_analytical = a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3
+
+        assert_true(abs(fdp_analytical - fdp) <= 1.e-8)
 
     def report_error_analysis(self, param_vec, tcc, dtc, name=None):
         """Report error of data fitting.
@@ -1289,7 +1309,7 @@ class Surge:
 
         return
 
-    def clustering(self, sorted_fit_data, bin_width, option='surge_period'):
+    def fit_data_bins(self, sorted_fit_data, bin_width, option='surge_period'):
         """Cluster communities based on the sorting value of the `fit_data`.
 
         Parameters
@@ -1300,6 +1320,11 @@ class Surge:
             Width of the sorting key in `sorted_fit_data` first elmenet.
         option: str
             The `surge_period` option clusters the data in integer bins.
+
+        Returns
+        -------
+        bins: dict
+            Dictionary with bin values. Keys are the indices of the bins.
         """
 
         max_value = max([key for (key, data) in sorted_fit_data])
@@ -1325,13 +1350,22 @@ class Surge:
 
         bins = dict()
         for i in range(n_bins):
-            pt = pts[i]
-            pt1 = pts[i+1]
-            bins[i] = [pt, pt1]
+            pti = pts[i]
+            pti1 = pts[i+1]
+            bins[i] = [pti, pti1]
 
         return bins
 
     def get_bin_id(self, value, bins):
+        """Return the bin`id` `value` is in.
+
+        Parameters
+        ----------
+        value
+        bins: dict
+            Bins created by `fit_data_bins`
+
+        """
 
         if len(bins) == 0:
             return None

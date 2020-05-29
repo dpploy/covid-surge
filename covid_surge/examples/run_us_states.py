@@ -16,9 +16,11 @@ def main():
     # Set parameters
     us_surge.end_date = '4/20/20'   # set end date wanted
     us_surge.end_date = None        # get all the data available
-    us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    us_surge.ignore_last_n_days = 2 # allow for data repo to be updated
     us_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
-    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+    us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic
+    #                                   Lower Respiratory Diseases per year:
+    #                                   41 (2019)
 
     print('')
     print('# of states/distric: ', len(us_surge.names))
@@ -33,7 +35,7 @@ def main():
     us_surge.plot_multi_fit_data(fit_data, 'fit', save=True)
 
     # Create clustering bins based on surge period
-    bins = us_surge.clustering(fit_data, 2, 'surge_period')
+    bins = us_surge.fit_data_bins(fit_data, 2, 'surge_period')
 
     print('')
     print('*****************************************************************')

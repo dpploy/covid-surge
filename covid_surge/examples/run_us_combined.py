@@ -52,10 +52,10 @@ def main():
                               plot_double_prime=True)
 
     # Report critical times
-    (tcc, dtc) = us_surge.critical_times(param_vec, verbose=True)
+    (tcc, dtc) = us_surge.report_critical_times(param_vec, verbose=True)
 
     # Report errors
-    us_surge.error_analysis(param_vec, tcc, dtc)
+    us_surge.report_error_analysis(param_vec, tcc, dtc)
 
     # 60-day look-ahead
     n_prediction_days = 60

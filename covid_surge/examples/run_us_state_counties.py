@@ -23,7 +23,8 @@ def main():
     c_surge.end_date = None        # get all the data available
     c_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
     c_surge.min_n_cases_abs = 25  # min # of absolute cases for analysis
-    c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower Respiratory Diseases per year: 41 (2019)
+    c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower 
+    #                                  Respiratory Diseases per year: 41 (2019)
 
     # Fit data to all counties/cities
     fit_data = c_surge.multi_fit_data(verbose=True, plot=True, save_plots=True)
@@ -41,7 +42,7 @@ def main():
     c_surge.plot_multi_fit_data(fit_data, 'fit', save=True)
 
     # Create clustering bins based on surge period
-    bins = c_surge.clustering(fit_data, 2, 'surge_period')
+    bins = c_surge.fit_data_bins(fit_data, 2, 'surge_period')
 
     print('')
     print('*****************************************************************')
