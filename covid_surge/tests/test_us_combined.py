@@ -18,7 +18,7 @@ def test_main():
 
     # Set parameters
     us_surge.end_date = '5/15/20'       # set end date wanted
-    us_surge.ignore_last_n_days = 0 # allow for data repo to be updated
+    us_surge.ignore_last_n_days = 2 # allow for data repo to be updated
 
     #**************************************************************************
     # Combine all states into a country
@@ -41,9 +41,10 @@ def test_main():
     print('')
     print('param_vec = ', list(param_vec))
 
-    param_gold = np.array([98258.11249350989,
-                           24.16030887578648,
-                           -0.09667519121651309])
+    param_gold = np.array([98905.59617683111,
+                           23.92344107340221,
+                           -0.09583739742289933])
+
     print('param_gold = ', list(param_gold))
     print('')
 
@@ -69,8 +70,9 @@ def test_main():
     print('')
     print('critical times = ', [tcc, dtc])
 
-    tc_gold = 32.942382813045036
-    dtc_gold = 13.622501081744613
+    tc_gold = 33.127556274405116
+    dtc_gold = 13.74158660750676
+
     print('critical gold times = ', [tc_gold, dtc_gold])
     print('')
 
