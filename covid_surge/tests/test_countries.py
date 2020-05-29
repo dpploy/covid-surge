@@ -33,7 +33,7 @@ def test_main():
     g_surge.plot_multi_fit_data(fit_data, 'fit', save=True)
 
     # Create clustering bins based on surge period
-    bins = g_surge.clustering(fit_data, 2, 'surge_period')
+    bins = g_surge.fit_data_bins(fit_data, 2, 'surge_period')
 
     print('')
     print('*****************************************************************')

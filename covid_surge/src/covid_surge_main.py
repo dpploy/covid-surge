@@ -11,9 +11,9 @@ class in various ways.
 
 Notes
 -----
-This single class is a rather long file. `Vim` is used with various
-highlighting and folding configurations to make it simple to navigate a
-single file.
+This single class is a rather long file. This author uses `vim` with various
+highlighting and folding configurations integrated with `pylint` to make it
+simple to navigate a single long file.
 """
 
 import math
@@ -34,8 +34,6 @@ class Surge:
                  save_all_original_data_html=False):
         """Construct a Surge object.
 
-        # TODO log_filename='covid_surge'):
-
         Parameters
         ----------
         locale: str
@@ -48,6 +46,7 @@ class Surge:
             If `locale` is US, then `sub_locale` must be one of the state
             names. There is no `sub_locale` for countries.
             Default: None
+        # TODO log_filename='covid_surge'):
         log_filename: str
             Name of the file to save logging information. Not used at the
             moment.
@@ -92,7 +91,7 @@ class Surge:
             if self.sub_locale:
 
                 (county_names, populations, dates, cases) = \
-                 self.__get_covid_us_data(self.sub_locale,
+                 get_covid_us_data(self.sub_locale,
                                           save_html=save_all_original_data_html)
 
                 assert_equal(dates.size, cases.shape[0])
@@ -103,7 +102,7 @@ class Surge:
             else:
 
                 (state_names, populations, dates, cases) = \
-                 self.__get_covid_us_data(save_html=save_all_original_data_html)
+                 get_covid_us_data(save_html=save_all_original_data_html)
 
                 assert_equal(dates.size, cases.shape[0])
                 assert_equal(len(state_names), cases.shape[1])
@@ -114,7 +113,7 @@ class Surge:
 
         elif self.locale == 'global':
             (country_names, dates, cases) = \
-             self.__get_covid_global_data(cumulative=True)
+             get_covid_global_data(cumulative=True)
             self.names = country_names
 
         else:
@@ -125,10 +124,14 @@ class Surge:
 
         self.__reset_data()
 
+        return
+
     def __reset_data(self):
 
         self.cases = np.copy(self.__cases)
         self.dates = np.copy(self.__dates)
+
+        return
 
     def __set_end_date(self, v):
 
@@ -149,6 +152,8 @@ class Surge:
         else:
             pass
 
+        return
+
     def __get_end_date(self):
 
         return self.__end_date
@@ -167,215 +172,25 @@ class Surge:
             self.dates = np.copy(self.dates[:-self.__ignore_last_n_days])
             self.cases = np.copy(self.cases[:-self.__ignore_last_n_days])
 
+        return
+
     def __get_ignore_last_n_days(self):
 
         return self.__ignore_last_n_days
     ignore_last_n_days = property(__get_ignore_last_n_days,
                                   __set_ignore_last_n_days, None, None)
 
-    def __get_covid_us_data(self, sub_locale=None,
-                            case_type='deaths', save_html=False):
-        """COVID-19 data loader.
-
-        Load COVID-19 pandemic cumulative data from:
-
-         https://github.com/CSSEGISandData/COVID-19.
-
-        Parameters
-        ----------
-        case_type:  str, optional
-                Type of data. Deaths ('deaths') and confirmed cases
-                ('confirmed'). Default: 'deaths'.
-
-        Returns
-        -------
-        data: tuple(int, list(str), list(int))
-               (population, dates, cases)
-        """
-        if case_type == 'deaths':
-
-            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
-            if save_html:
-                df.to_html('covid_19_deaths.html')
-
-        elif case_type == 'confirmed':
-
-            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
-            df_pop = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
-            if save_html:
-                df.to_html('covid_19_confirmed.html')
-
-        else:
-            assert_true(False,
-            'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type))
-
-        df = df.drop(['UID', 'iso2', 'iso3', 'Combined_Key', 'code3', 'FIPS', 'Lat', 'Long_', 'Country_Region'], axis=1)
-
-        df = df.rename(columns={'Province_State':'state/province', 'Admin2':'county'})
-
-        state_names = list()
-        state_names_tmp = list()
-
-        for (i, istate) in enumerate(df['state/province']):
-
-            if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
-                break
-
-            state_names_tmp.append(istate)
-
-        state_names_set = set(state_names_tmp)
-
-        state_names = list(state_names_set)
-        state_names = sorted(state_names)
-
-        dates = np.array(list(df.columns[3:]))
-
-        if sub_locale is None:
-
-            population = [0]*len(state_names)
-
-            cases = np.zeros((len(df.columns[3:]), len(state_names)),
-                             dtype=np.float64)
-
-            for (i, istate) in enumerate(df['state/province']):
-
-                if istate.strip() == 'Wyoming' and\
-                    (df.loc[i, 'county']).strip() == 'Weston':
-                    break
-
-                state_id = state_names.index(istate)
-
-                if case_type == 'confirmed':
-                    population[state_id] += int(df_pop.loc[i, 'Population'])
-                else:
-                    population[state_id] += int(df.loc[i, 'Population'])
-
-                # Add all counties/city/towns columnwise states
-                cases[:, state_id] += np.array(list(df.loc[i, df.columns[3:]]))
-
-            return (state_names, population, dates, cases)
-
-        elif sub_locale in state_names:
-
-            county_names = list()
-            county_names_tmp = list()
-
-            for (i, istate) in enumerate(df['state/province']):
-
-                if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
-                    break
-
-                if istate.strip() == sub_locale:
-
-                    county_names_tmp.append(df.loc[i, 'county'])
-
-            county_names_set = set(county_names_tmp)
-
-            county_names = list(county_names_set)
-            county_names = sorted(county_names)
-
-            population = [0]*len(county_names)
-
-            cases = np.zeros((len(df.columns[3:]), len(county_names)),
-                             dtype=np.float64)
-
-            for (i, istate) in enumerate(df['state/province']):
-
-                if istate.strip() == 'Wyoming' and df.loc[i, 'county'] == 'Weston':
-                    break
-
-                icounty = df.loc[i, 'county']
-
-                if istate.strip() == sub_locale:
-
-                    county_id = county_names.index(icounty)
-
-                    if case_type == 'confirmed':
-                        population[county_id] += int(df_pop.loc[i, 'Population'])
-                    else:
-                        population[county_id] += int(df.loc[i, 'Population'])
-
-                    cases[:, county_id] = np.array(
-                          list(df.loc[i, df.columns[3:]]))
-
-            return (county_names, population, dates, cases)
-
-        else:
-            assert_in(sub_locale, state_names)
-
-    def __get_covid_global_data(self, case_type='deaths',
-                                distribution=True, cumulative=False,
-                                save_html=False):
-        """COVID-19 data loader.
-
-        Load COVID-19 pandemic cumulative data from:
-
-            https://github.com/CSSEGISandData/COVID-19
-
-        Parameters
-        ----------
-        case_type: str, optional
-            Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
-            Default: 'deaths'.
-
-        distribution: bool, optional
-            Distribution of new cases over dates.
-            Default: True
-
-        cumulative: bool, optional
-            Cumulative number of cases over dates.
-            Default: False
-
-        Returns
-        -------
-        data: tuple(int, list(str), list(int))
-               (contry_names, dates, cases)
-        """
-        if cumulative is True:
-            distribution = False
-
-        if case_type == 'deaths':
-            df = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
-            if save_html:
-                df.to_html('covid_19_global_deaths.html')
-
-        else:
-            assert_true(False, 'invalid query type: %r (valid: "deaths"'%(case_type))
-
-        df = df.drop(['Lat', 'Long'], axis=1)
-        df = df.rename(columns={'Province/State':'state/province', 'Country/Region':'country/region'})
-
-        country_names = list()
-
-        country_names_tmp = list()
-
-        for (i, icountry) in enumerate(df['country/region']):
-            country_names_tmp.append(icountry)
-
-        country_names_set = set(country_names_tmp)
-
-        country_names = list(country_names_set)
-        country_names = sorted(country_names)
-
-        dates = np.array(list(df.columns[2:]))
-
-        cases = np.zeros((len(df.columns[2:]), len(country_names)),
-                         dtype=np.float64)
-
-        for (i, icountry) in enumerate(df['country/region']):
-
-            country_id = country_names.index(icountry)
-
-            cases[:, country_id] += np.array(list(df.loc[i, df.columns[2:]]))
-
-        if distribution:
-
-            for j in range(cases.shape[1]):
-                cases[:, j] = np.round(np.gradient(cases[:, j]), 0)
-
-        return (country_names, dates, cases)
-
     def plot_covid_data(self, name=None, save=False):
+        """Plot the COVID-19 input data.
+
+        Parameters
+        ----------
+        name: str
+            Name of the community. `None` will combine
+            all communities. Default: `None`.
+        save: bool
+            Save the plot as a `png` image file.
+        """
 
         population = None
 
@@ -399,9 +214,9 @@ class Surge:
         # Report on deaths per 100k per year if available
 
         if population:
-            deaths_100k_y = round(
-                    cases_plot[-1]*100000/population * 365/cases_plot.size, 1
-                                 )
+            deaths_100k_y = cases_plot[-1]*100000/population *\
+                    365/cases_plot.size
+            deaths_100k_y = round(deaths_100k_y, 1)
 
         xlabel = 'Date'
         ylabel = 'Cumulative Deaths []'
@@ -446,6 +261,20 @@ class Surge:
         return
 
     def fit_data(self, name=None):
+        """Fit a sigmoid curve to data in a Surge object.
+
+        Parameters
+        ----------
+        name: str
+            Name of the community. `None` will combine
+            all communities. Default: `None`.
+
+        Returns
+        -------
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+
+        """
 
         if name is None:  # Combine all column data in the surge
             cases = np.sum(self.cases, axis=1)
@@ -498,6 +327,32 @@ class Surge:
                          plot_double_prime=False, option='dates',
                          ylabel='null-ylabel',
                          title='null-title', formula='null-formula'):
+        """Plot COVID-19 data nolinear fit.
+
+        Parameters
+        ----------
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+        name: str
+            Name of the community. `None` will combine
+            all communities. Default: `None`.
+        save: bool
+            Save plots to `png` files.
+        plot_prime: bool
+            Plot the first derivative of the fit.
+        plot_double_prime: bool
+            Plot the second derivative of the fit.
+        option: str
+            Use dates or days for the independent variable.
+        ylabel: str
+            Label for the y axis.
+        title: str
+            Title of the plots. There are good defaults available.
+        formula
+            Formula to be printed in the inset of plots. Defaults to the
+            sigmoid function.
+
+        """
 
         formula = self.sigmoid_formula
 
@@ -565,7 +420,7 @@ class Surge:
         plt.ylabel(ylabel, fontsize=16)
         plt.title(title, fontsize=20)
 
-        (tcc, dtc) = self.critical_times(param_vec, name, verbose=False)
+        (tcc, dtc) = self.report_critical_times(param_vec, name, verbose=False)
 
         time_max_prime = tcc
         time_min_max_double_prime = [tcc-dtc, tcc+dtc]
@@ -782,7 +637,20 @@ class Surge:
         return
 
     def sigmoid_func(self, x, param_vec):
-        """Compute the sigmoid function at x."""
+        """Compute the sigmoid function at x.
+
+        Parameters
+        ----------
+        x: float, int, or numpy.ndarray
+            Values of the argument of the function.
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+
+        Returns
+        -------
+        f_x: numpy.ndarray(float)
+            Values of the function as a `numpy` vector.
+        """
 
         self.sigmoid_formula = r'$y = \frac{\alpha_0}{1 + \alpha_1 \, e^{\alpha_2\,t}  }$'
 
@@ -854,7 +722,6 @@ class Surge:
             print('--------------------------------------------------------------------------')
         #         1234567890 12345678901 123456789012345 123456789012 123456789 12345678
 
-        #assert k_max >= 1
         assert_true(k_max >= 1)
         k = 1
 
@@ -917,7 +784,9 @@ class Surge:
 
             if k > 0:
                 if np.linalg.norm(delta_vec_k) != 0.0 and np.linalg.norm(delta_vec_k_old) != 0.0:
-                    convergence_factor = math.log(np.linalg.norm(delta_vec_k),10) / math.log(np.linalg.norm(delta_vec_k_old),10)
+                    convergence_factor = math.log(np.linalg.norm(delta_vec_k),
+                                                  10) / \
+                    math.log(np.linalg.norm(delta_vec_k_old), 10)
                 else:
                     convergence_factor = 0.0
             else:
@@ -925,7 +794,7 @@ class Surge:
 
             if verbose is True:
                 print('%2i %+10.2e %+11.2e %+15.2e %+12.2e %+9.2e %8.2f'%\
-                    (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
+                      (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
                        np.linalg.norm(j_mtrx_k.transpose()@r_vec_k),
                        np.linalg.norm(delta_vec_k), np.linalg.norm(param_vec),
                        convergence_factor))
@@ -948,7 +817,27 @@ class Surge:
 
         return (param_vec, rr2, k)
 
-    def critical_times(self, param_vec, name=None, verbose=False):
+    def report_critical_times(self, param_vec, name=None, verbose=False):
+        """Report critical times and errors.
+
+        Parameters
+        ----------
+        param_vec: numpy.ndarray(float)
+            Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
+        name: str
+            Name of the community for creating the report. `None` will combine
+            all communities. Default: `None`.
+        verbose: bool
+            Print out additional information.
+
+        Returns
+        -------
+        time_max_prime: float
+            Time of maximum surge rate.
+        dtc: float
+            Time difference between either maximum or minimum curvature
+            points and `time_max_prime`.
+        """
 
         a_0 = param_vec[0]
         a_1 = param_vec[1]
@@ -1050,7 +939,8 @@ class Surge:
 
         prime_max = -a_0*a_2/4.0
 
-        assert_true( abs(prime_max - self.__sigmoid_func_prime(tcc, param_vec)) <= 1.e-8)
+        assert_true(abs(prime_max -
+                        self.__sigmoid_func_prime(tcc, param_vec)) <= 1.e-8)
 
         return (tcc, prime_max)
 
@@ -1060,11 +950,33 @@ class Surge:
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2 # time at maximum growth acceleration
+        # time at maximum growth acceleration
+        time_max_double_prime = -math.log(a_1/(2+math.sqrt(3)))/a_2
 
-        assert_true( abs( a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3 - self.__sigmoid_func_double_prime(time_max_double_prime,param_vec) ) <= 1.e-8 )
+        fdp = self.__sigmoid_func_double_prime(time_max_double_prime,
+                                               param_vec)
+        fdp_analytical = a_0*a_2**2*(5+3*math.sqrt(3))/(3+math.sqrt(3))**3
 
-    def error_analysis(self, param_vec, tcc, dtc, name=None):
+        assert_true(abs(fdp_analytical - fdp) <= 1.e-8)
+
+        return
+
+    def report_error_analysis(self, param_vec, tcc, dtc, name=None):
+        """Report error of data fitting.
+
+        param_vec: numpy.ndarray(float)
+            Vector of parameters `a_0`, `a_1`, `a_0`.
+        tcc: float
+            Critical time for maximum surge rate. Previously computed by
+            `report_critical_times`.
+        dtc: float
+            Time difference from `tcc` to either of the maximum and minimum
+            curvature points. Previously computed by `report_critical_times`.
+        name: str
+            Name of the community for creating the report. `None` will combine
+            all communities. Default: `None`.
+
+        """
 
         if name is None: # Combine all column data in the surge
             cases = np.sum(self.cases, axis=1)
@@ -1132,6 +1044,25 @@ class Surge:
     def multi_fit_data(self,
                        blocked_list=None,
                        verbose=False, plot=False, save_plots=False):
+        """Fit a sigmoid curve to multiple data in a Surge object.
+
+        Parameters
+        ----------
+        blocked_list: list
+            List of names of communitiies to be blocked from fitting.
+        verbose: bool
+            Print out internal looping info.
+        plot: bool
+            Plot various plots during the fitting procedure.
+        save_plots: bool
+            Save a `png` version of the plots.
+
+        Returns
+        -------
+        sorted_fit_data: list(tuple)
+            List of the data fit operation sorted by surge period.
+
+        """
 
         if blocked_list is None:
             blocked_list = list()
@@ -1141,7 +1072,7 @@ class Surge:
 
         # Sort the states by descending number of total cases
         sorted_list = sorted(zip(names, cases[-1, :]),
-                             key = lambda entry: entry[1], reverse=True)
+                             key=lambda entry: entry[1], reverse=True)
 
         # Post processing data storage
         fit_data = list()
@@ -1198,9 +1129,9 @@ class Surge:
 
             if verbose:
                 print('')
-                print('********************************************************')
+                print('******************************************************')
                 print('                     '+name)
-                print('********************************************************')
+                print('******************************************************')
                 print('')
 
             scaling = icases.max()
@@ -1219,9 +1150,11 @@ class Surge:
             k_max = 25
             rel_tol = 0.01 / 100.0 # (0.1%)
 
-            (param_vec, rr2, k) = self.__newton_nlls_solve(times, icases,
-                               self.sigmoid_func, self.__grad_p_sigmoid_func,
-                               param_vec_0, k_max, rel_tol, verbose=False)
+            (param_vec, rr2, k) = \
+                self.__newton_nlls_solve(times, icases, self.sigmoid_func,
+                                         self.__grad_p_sigmoid_func,
+                                         param_vec_0, k_max,
+                                         rel_tol, verbose=False)
 
             if k > k_max and verbose:
                 print(" NO Newton's method convergence")
@@ -1245,7 +1178,7 @@ class Surge:
                 print('')
 
             # Compute critical times
-            (tcc, dtc) = self.critical_times(param_vec, name, verbose=verbose)
+            (tcc, dtc) = self.report_critical_times(param_vec, name, verbose=verbose)
 
             if tcc > times[-1]:
                 if verbose:
@@ -1287,7 +1220,7 @@ class Surge:
 
             # Report erros
             if verbose:
-                self.error_analysis(param_vec, tcc, dtc, name)
+                self.report_error_analysis(param_vec, tcc, dtc, name)
 
             # 60-day look-ahead
             n_prediction_days = 60
@@ -1313,7 +1246,7 @@ class Surge:
             print('Names with significant deaths past peak in surge period:')
             print('')
             for (name, tcc, tc_date, dtc) in names_past_peak_surge_period:
-                print( '%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name, tcc, tc_date, dtc))
+                print('%20s tc = %3.1f [d] tc_date = %8s pending days = %3.1f'%(name, tcc, tc_date, dtc))
 
             print('')
 
@@ -1342,9 +1275,9 @@ class Surge:
         #     [ (self.__sigmoid_func_prime(i[4],i[3])/i[3][0]*100, i )
         #        for i in fit_data ], key = lambda entry: entry[0], reverse=True )
 
-        sorted_by_surge_period = sorted(
-                [(2*i[5], i ) for i in fit_data],
-                 key = lambda entry: entry[0], reverse=False)
+        sorted_by_surge_period =\
+            sorted([(2*i[5], i) for i in fit_data],
+                   key=lambda entry: entry[0], reverse=False)
 
         sorted_fit_data = sorted_by_surge_period
 
@@ -1357,6 +1290,19 @@ class Surge:
         return sorted_fit_data
 
     def plot_multi_fit_data(self, fit_data, option=None, save=False):
+        """Plot joint experimental data or joint sigmoid fit for communities.
+
+        Parameters
+        ----------
+        fit_data: list(tuple)
+            List of tuples obtained from the `multi_fit_data` member function.
+
+        option: str
+            Either `experimental` or `fit`. The default does nothing.
+        save: bool
+            Save plot to `png` image file.
+
+        """
 
         if option == 'experimental':
 
@@ -1365,7 +1311,7 @@ class Surge:
 
             fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
-            colors = self.__color_map(len(fit_data))
+            colors = color_map(len(fit_data))
 
             for (sort_key, data) in fit_data:
                 color = colors[fit_data.index((sort_key, data))]
@@ -1416,7 +1362,7 @@ class Surge:
 
             fig, ax1 = plt.subplots(1, figsize=(15, 6))
 
-            colors = self.__color_map(len(fit_data))
+            colors = color_map(len(fit_data))
 
             for (sort_key, data) in fit_data:
                 color = colors[fit_data.index((sort_key, data))]
@@ -1467,8 +1413,24 @@ class Surge:
 
         return
 
-    def clustering(self, sorted_fit_data, bin_width, option='surge_period'):
-        """Cluster communities based on the sorting value of the fit_data."""
+    def fit_data_bins(self, sorted_fit_data, bin_width, option='surge_period'):
+        """Cluster communities based on the sorting value of the `fit_data`.
+
+        Parameters
+        ----------
+        sorted_fit_data: list(tuple)
+            List of tuples obtained from the `multi_fit_data` member function.
+        bin_width: float or int
+            Width of the sorting key in `sorted_fit_data` first elmenet.
+        option: str
+            The `surge_period` option clusters the data in integer bins.
+
+        Returns
+        -------
+        bins: dict(list)
+            Dictionary with bin values. Keys are the indices of the bins.
+            Values are a list with beginning and ending of interval.
+        """
 
         max_value = max([key for (key, data) in sorted_fit_data])
         min_value = min([key for (key, data) in sorted_fit_data])
@@ -1482,7 +1444,6 @@ class Surge:
         max_value = round(max_value, 1) + small_value
         min_value = round(min_value, 1) - small_value
 
-
         if option == 'surge_period':
             max_value = int(max_value) + 1
             min_value = int(min_value)
@@ -1494,13 +1455,28 @@ class Surge:
 
         bins = dict()
         for i in range(n_bins):
-            pt = pts[i]
-            pt1 = pts[i+1]
-            bins[i] = [pt, pt1]
+            pti = pts[i]
+            pti1 = pts[i+1]
+            bins[i] = [pti, pti1]
 
         return bins
 
     def get_bin_id(self, value, bins):
+        """Return the bin`id` `value` is in.
+
+        Parameters
+        ----------
+        value: float or int
+            Value for intended bin interval.
+        bins: dict
+            Bins created by `fit_data_bins`
+
+        Returns
+        -------
+        key: int
+            If key is found return an `int` else stop.
+
+        """
 
         if len(bins) == 0:
             return None
@@ -1510,23 +1486,38 @@ class Surge:
                 return key
 
         assert_true(False,
-          '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key,value,bins))
+                    '\n\n FATAL: key search failed: key = %r, value = %r, bins = %r'%(key, value, bins))
 
-    def plot_group_fit_data(self, state_groups, fit_data, save=False):
-        """Plot fit functions for each country group."""
+        return
+
+    def plot_group_fit_data(self, groups, fit_data, save=False):
+        """Plot sigmoid fit functions for each community in the group.
+
+        Parameters
+        ----------
+        groups: dict
+            Dictionary with keys equal to the group `id` and values equal
+            to lists of names of communities. User must create this data
+            structure. See `examples/`.
+        fit_data: list(tuple)
+            Fit data structure as created by `multi_fit_data`.
+
+        save: bool
+            Save plot in a `png` image file.
+        """
 
         legend_title = 'Max. Relative Death Rate [%/day]'
         legend_title = 'Surge Period [day]'
 
-        for (ig,states) in enumerate(state_groups):
+        for (grp, states) in enumerate(groups):
 
             fig, ax1 = plt.subplots(1, figsize=(20, 8))
-            colors = self.__color_map(len(states))
+            colors = color_map(len(states))
 
             for state in states:
                 color = colors[states.index(state)]
 
-                for (sort_key_i,data_i) in fit_data:
+                for (sort_key_i, data_i) in fit_data:
 
                     if data_i[0] != state:
                         continue
@@ -1537,26 +1528,29 @@ class Surge:
                 n_dates = data[1].size
                 param_vec = data[3]
                 tshift = data[4]
-                t1 = tshift - data[5]
-                t2 = tshift + data[5]
+                ti1 = tshift - data[5]
+                ti2 = tshift + data[5]
                 sort_value = '%1.1f'%sort_key
 
                 ax1.plot(np.array(range(n_dates))-tshift,
-                        self.sigmoid_func(np.array(range(n_dates)), param_vec )/param_vec[0],
+                         self.sigmoid_func(np.array(range(n_dates)),
+                                           param_vec)/param_vec[0],
                          'b-', label=state+': '+sort_value, color=color)
 
-                ax1.plot(t1-tshift,
-                        self.sigmoid_func(t1, param_vec)/param_vec[0], '*',
-                        color=color, markersize=12)
+                ax1.plot(ti1-tshift,
+                         self.sigmoid_func(ti1, param_vec)/param_vec[0], '*',
+                         color=color, markersize=12)
 
-                ax1.plot(t2-tshift,
-                        self.sigmoid_func(t2, param_vec)/param_vec[0], '*',
-                        color=color, markersize=12)
+                ax1.plot(ti2-tshift,
+                         self.sigmoid_func(ti2, param_vec)/param_vec[0], '*',
+                         color=color, markersize=12)
 
             ax1.set_xlabel(r'Shifted Time [day]', fontsize=16)
-            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16, color='black')
+            ax1.set_ylabel(r'Normalized Cumulative Death', fontsize=16,
+                           color='black')
             if matplotlib.__version__ >= '3.0.2':
-                ax1.legend(loc='best', fontsize=16, title=legend_title, title_fontsize=18)
+                ax1.legend(loc='best', fontsize=16, title=legend_title,
+                           title_fontsize=18)
             else:
                 ax1.legend(loc='best', fontsize=16, title=legend_title)
 
@@ -1565,7 +1559,7 @@ class Surge:
             data_name = 'null-data-name'
             if self.locale == 'US' and self.sub_locale is None:
                 data_name = 'US States'
-            if self.locale == 'US' and self.sub_locale != None:
+            if self.locale == 'US' and self.sub_locale is not None:
                 data_name = self.sub_locale+' Counties/Cities'
             elif self.locale == 'global':
                 data_name = 'Countries'
@@ -1579,12 +1573,20 @@ class Surge:
                     stem = self.__filename(self.locale)
                 else:
                     stem = self.__filename(self.locale+'_'+self.sub_locale)
-                plt.savefig('fit_group_'+str(ig)+'_'+stem+'.png', dpi=100)
+                plt.savefig('fit_group_'+str(grp)+'_'+stem+'.png', dpi=100)
             plt.close()
 
         return
 
     def plot_group_surge_periods(self, fit_data, bins, save=False):
+        """Plot surge period for communities in a bar plot colored by bins.
+
+        Parameters
+        ----------
+        fit_data: list(tuple)
+            Fit data structure as created by `multi_fit_data`.
+        bins: dict(list)
+        """
 
         #plt.rcParams['figure.figsize'] = [20, 4]
         fig, ax = plt.subplots(figsize=(20, 6))
@@ -1603,7 +1605,7 @@ class Surge:
         sorted_list = sorted(zip(states, surge_periods),
                 key = lambda entry: entry[1], reverse=False)
 
-        colors = self.__color_map(len(bins))
+        colors = color_map(len(bins))
 
         for (mid, (state, val)) in enumerate(sorted_list):
 
@@ -1668,57 +1670,6 @@ class Surge:
 
         return
 
-    def __color_map(self, num_colors):
-        """Nice colormap internal helper method for plotting.
-
-        Parameters
-        ----------
-        num_colors: int, required
-            Number of colors.
-
-        Returns
-        -------
-        color_map: list(tuple(R,G,B,A))
-            List with colors interpolated from internal list of primary colors.
-
-        """
-        #assert num_colors >= 1
-        assert_true(num_colors >= 1)
-
-        # primary colors
-        # use the RGBA decimal code
-        red = np.array((1, 0, 0, 1))
-        blue = np.array((0, 0, 1, 1))
-        magenta = np.array((1, 0, 1, 1))
-        green = np.array((0, 1, 0, 1))
-        orange = np.array((1, 0.5, 0, 1))
-        black = np.array((0, 0, 0, 1))
-        yellow = np.array((1, 1, 0, 1))
-        cyan = np.array((0, 1, 1, 1))
-
-        # order the primary colors here
-        color_map = list()
-        color_map = [red, blue, orange, magenta, green, yellow, cyan, black]
-
-        num_primary_colors = len(color_map)
-
-        if num_colors <= num_primary_colors:
-            return color_map[:num_colors]
-
-        # interpolate primary colors
-        while len(color_map) < num_colors:
-            j = 0
-            for i in range(len(color_map)-1):
-                color_a = color_map[2*i]
-                color_b = color_map[2*i+1]
-                mid_color = (color_a+color_b)/2.0
-                j = 2*i+1
-                color_map.insert(j, mid_color) # insert before index
-                if len(color_map) == num_colors:
-                    break
-
-        return color_map
-
     def __filename(self, name):
 
         filename = name.lower().strip().split(' ')
@@ -1734,3 +1685,257 @@ class Surge:
             filename = tmp
 
         return filename
+
+def get_covid_us_data(sub_locale=None, case_type='deaths', save_html=False):
+    """COVID-19 data loader.
+
+    Load COVID-19 pandemic cumulative data from:
+
+     `https://github.com/CSSEGISandData/COVID-19`.
+
+    Parameters
+    ----------
+    case_type:  str, optional
+            Type of data. Deaths ('deaths') and confirmed cases
+            ('confirmed'). Default: 'deaths'.
+
+    Returns
+    -------
+    data: tuple(int, list(str), list(int))
+           (population, dates, cases)
+    """
+    if case_type == 'deaths':
+
+        dtf = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
+        if save_html:
+            dtf.to_html('covid_19_deaths.html')
+
+    elif case_type == 'confirmed':
+
+        dtf = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
+        dtf_pop = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
+        if save_html:
+            dtf.to_html('covid_19_confirmed.html')
+
+    else:
+        assert_true(False,
+        'invalid query type: %r (valid: "deaths", "confirmed"'%(case_type))
+
+    dtf = dtf.drop(['UID', 'iso2', 'iso3', 'Combined_Key', 'code3', 'FIPS', 'Lat', 'Long_', 'Country_Region'], axis=1)
+
+    dtf = dtf.rename(columns={'Province_State':'state/province', 'Admin2':'county'})
+
+    state_names = list()
+    state_names_tmp = list()
+
+    for (i, istate) in enumerate(dtf['state/province']):
+
+        if istate.strip() == 'Wyoming' and dtf.loc[i, 'county'] == 'Weston':
+            break
+
+        state_names_tmp.append(istate)
+
+    state_names_set = set(state_names_tmp)
+
+    state_names = list(state_names_set)
+    state_names = sorted(state_names)
+
+    dates = np.array(list(dtf.columns[3:]))
+
+    if sub_locale is None:
+
+        population = [0]*len(state_names)
+
+        cases = np.zeros((len(dtf.columns[3:]), len(state_names)),
+                         dtype=np.float64)
+
+        for (i, istate) in enumerate(dtf['state/province']):
+
+            if istate.strip() == 'Wyoming' and\
+                (dtf.loc[i, 'county']).strip() == 'Weston':
+                break
+
+            state_id = state_names.index(istate)
+
+            if case_type == 'confirmed':
+                population[state_id] += int(dtf_pop.loc[i, 'Population'])
+            else:
+                population[state_id] += int(dtf.loc[i, 'Population'])
+
+            # Add all counties/city/towns columnwise states
+            cases[:, state_id] += np.array(list(dtf.loc[i, dtf.columns[3:]]))
+
+        return (state_names, population, dates, cases)
+
+    elif sub_locale in state_names:
+
+        county_names = list()
+        county_names_tmp = list()
+
+        for (i, istate) in enumerate(dtf['state/province']):
+
+            if istate.strip() == 'Wyoming' and dtf.loc[i, 'county'] == 'Weston':
+                break
+
+            if istate.strip() == sub_locale:
+
+                county_names_tmp.append(dtf.loc[i, 'county'])
+
+        county_names_set = set(county_names_tmp)
+
+        county_names = list(county_names_set)
+        county_names = sorted(county_names)
+
+        population = [0]*len(county_names)
+
+        cases = np.zeros((len(dtf.columns[3:]), len(county_names)),
+                         dtype=np.float64)
+
+        for (i, istate) in enumerate(dtf['state/province']):
+
+            if istate.strip() == 'Wyoming' and dtf.loc[i, 'county'] == 'Weston':
+                break
+
+            icounty = dtf.loc[i, 'county']
+
+            if istate.strip() == sub_locale:
+
+                county_id = county_names.index(icounty)
+
+                if case_type == 'confirmed':
+                    population[county_id] += int(dtf_pop.loc[i, 'Population'])
+                else:
+                    population[county_id] += int(dtf.loc[i, 'Population'])
+
+                cases[:, county_id] = \
+                        np.array(list(dtf.loc[i, dtf.columns[3:]]))
+
+        return (county_names, population, dates, cases)
+
+    else:
+        assert_in(sub_locale, state_names)
+
+    return
+
+def get_covid_global_data(case_type='deaths', distribution=True,
+                          cumulative=False, save_html=False):
+    """COVID-19 data loader.
+
+    Load COVID-19 pandemic cumulative data from:
+
+        https://github.com/CSSEGISandData/COVID-19
+
+    Parameters
+    ----------
+    case_type: str, optional
+        Type of data. Deaths ('deaths') and confirmed cases ('confirmed').
+        Default: 'deaths'.
+
+    distribution: bool, optional
+        Distribution of new cases over dates.
+        Default: True
+
+    cumulative: bool, optional
+        Cumulative number of cases over dates.
+        Default: False
+
+    Returns
+    -------
+    data: tuple(int, list(str), list(int))
+           (contry_names, dates, cases)
+    """
+
+    if cumulative is True:
+        distribution = False
+
+    if case_type == 'deaths':
+        dtf = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
+        if save_html:
+            dtf.to_html('covid_19_global_deaths.html')
+
+    else:
+        assert_true(False, 'invalid query type: %r (valid: "deaths"'%(case_type))
+
+    dtf = dtf.drop(['Lat', 'Long'], axis=1)
+    dtf = dtf.rename(columns={'Province/State':'state/province', 'Country/Region':'country/region'})
+
+    country_names = list()
+
+    country_names_tmp = list()
+
+    for (i, icountry) in enumerate(dtf['country/region']):
+        country_names_tmp.append(icountry)
+
+    country_names_set = set(country_names_tmp)
+
+    country_names = list(country_names_set)
+    country_names = sorted(country_names)
+
+    dates = np.array(list(dtf.columns[2:]))
+
+    cases = np.zeros((len(dtf.columns[2:]), len(country_names)),
+                     dtype=np.float64)
+
+    for (i, icountry) in enumerate(dtf['country/region']):
+
+        country_id = country_names.index(icountry)
+
+        cases[:, country_id] += np.array(list(dtf.loc[i, dtf.columns[2:]]))
+
+    if distribution:
+
+        for j in range(cases.shape[1]):
+            cases[:, j] = np.round(np.gradient(cases[:, j]), 0)
+
+    return (country_names, dates, cases)
+
+def color_map(num_colors):
+    """Nice colormap internal helper method for plotting.
+
+    Parameters
+    ----------
+    num_colors: int, required
+        Number of colors.
+
+    Returns
+    -------
+    colors: list(tuple(R,G,B,A))
+        List with colors interpolated from internal list of primary colors.
+
+    """
+
+    assert_true(num_colors >= 1)
+
+    # primary colors
+    # use the RGBA decimal code
+    red = np.array((1, 0, 0, 1))
+    blue = np.array((0, 0, 1, 1))
+    magenta = np.array((1, 0, 1, 1))
+    green = np.array((0, 1, 0, 1))
+    orange = np.array((1, 0.5, 0, 1))
+    black = np.array((0, 0, 0, 1))
+    yellow = np.array((1, 1, 0, 1))
+    cyan = np.array((0, 1, 1, 1))
+
+    # order the primary colors here
+    colors = list()
+    colors = [red, blue, orange, magenta, green, yellow, cyan, black]
+
+    num_primary_colors = len(colors)
+
+    if num_colors <= num_primary_colors:
+        return colors[:num_colors]
+
+    # interpolate primary colors
+    while len(colors) < num_colors:
+        j = 0
+        for i in range(len(colors)-1):
+            color_a = colors[2*i]
+            color_b = colors[2*i+1]
+            mid_color = (color_a+color_b)/2.0
+            j = 2*i+1
+            colors.insert(j, mid_color) # insert before index
+            if len(colors) == num_colors:
+                break
+
+    return colors

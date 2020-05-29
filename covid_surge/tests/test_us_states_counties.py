@@ -87,7 +87,7 @@ def test_main():
             print('%15s: surge period %1.2f [day]'%(name, sort_key))
 
         # Create clustering bins based on surge period
-        bins = c_surge.clustering(fit_data, 2, 'surge_period')
+        bins = c_surge.fit_data_bins(fit_data, 2, 'surge_period')
 
         print('')
         print('--------------------------------------------------------------')
