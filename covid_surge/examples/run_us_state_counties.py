@@ -21,9 +21,9 @@ def main():
     # Set parameters
     c_surge.end_date = '4/20/20'   # set end date wanted
     c_surge.end_date = None        # get all the data available
-    c_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    c_surge.ignore_last_n_days = 2 # allow for data repo to be updated
     c_surge.min_n_cases_abs = 25  # min # of absolute cases for analysis
-    c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower 
+    c_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower
     #                                  Respiratory Diseases per year: 41 (2019)
 
     # Fit data to all counties/cities
