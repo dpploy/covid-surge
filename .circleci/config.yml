@@ -30,5 +30,6 @@ jobs:
           name: Pytest w/ code coverage
           command: |    
               export PYTHONPATH=$PYTHONPATH:$(pwd)
-              pytest --ignore=setup.py --cov=./ 
+              cd covid_surge/tests
+              pytest --cov=./ 
               codecov
