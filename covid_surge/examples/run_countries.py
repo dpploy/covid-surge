@@ -9,7 +9,6 @@ from covid_surge import Surge
 
 def main():
     """Main function executed at the bottom."""
-
     # Get US surge data
     g_surge = Surge('global')
 
