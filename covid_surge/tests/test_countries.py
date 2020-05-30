@@ -72,7 +72,8 @@ def test_main():
         assert_equal(len(country_groups), 6)
         assert_equal(country_groups[0], ['Belgium', 'France'])
         assert_equal(country_groups[1], ['Germany', 'Turkey'])
-        assert_equal(country_groups[2], ['Spain', 'Netherlands', 'United Kingdom', 'Canada'])
+        assert_equal(country_groups[2], ['Spain', 'Netherlands',
+                                         'United Kingdom', 'Canada'])
         assert_equal(country_groups[3], ['Ecuador'])
         assert_equal(country_groups[4], ['Sweden', 'US', 'Italy'])
         assert_equal(country_groups[5], ['Iran'])
