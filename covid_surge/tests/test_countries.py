@@ -11,7 +11,6 @@ from covid_surge import Surge
 
 def test_main():
     """Run main function below."""
-
     # Get US surge data
     g_surge = Surge('global')
 

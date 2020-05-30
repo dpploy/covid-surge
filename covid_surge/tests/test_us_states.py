@@ -11,7 +11,6 @@ from covid_surge import Surge
 
 def test_main():
     """Run main function below."""
-
     # Get US surge data
     us_surge = Surge()
 
@@ -27,7 +26,7 @@ def test_main():
     print('# of days:           ', us_surge.dates.shape[0])
 
     # Fit data to all states
-    fit_data = us_surge.multi_fit_data(verbose=True, plot=True, 
+    fit_data = us_surge.multi_fit_data(verbose=True, plot=True,
                                        save_plots=True)
 
     # Plot all data in one plot
@@ -73,14 +72,14 @@ def test_main():
     try:
         assert_equal(len(state_groups), 7)
         assert_equal(state_groups[0], ['New York', 'Virginia'])
-        assert_equal(state_groups[1], ['Massachusetts', 'Connecticut', 
+        assert_equal(state_groups[1], ['Massachusetts', 'Connecticut',
                                        'Michigan'])
-        assert_equal(state_groups[2], ['New Jersey', 'Pennsylvania', 
+        assert_equal(state_groups[2], ['New Jersey', 'Pennsylvania',
                                        'Louisiana', 'Minnesota', 'Maryland'])
         assert_equal(state_groups[3], ['North Carolina'])
-        assert_equal(state_groups[4], ['Indiana', 'Florida', 'Georgia', 
+        assert_equal(state_groups[4], ['Indiana', 'Florida', 'Georgia',
                                        'Wisconsin', 'Missouri'])
-        assert_equal(state_groups[5], ['Colorado', 'Ohio', 'Illinois', 
+        assert_equal(state_groups[5], ['Colorado', 'Ohio', 'Illinois',
                                        'California', 'Washington'])
         assert_equal(state_groups[6], ['Alabama', 'Mississippi'])
     except AssertionError as err:

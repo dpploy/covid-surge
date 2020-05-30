@@ -12,7 +12,6 @@ from covid_surge import Surge
 
 def test_main():
     """Run main function below."""
-
     # Get all US surge data including states.
     us_surge = Surge()
 
