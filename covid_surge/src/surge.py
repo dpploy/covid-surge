@@ -1,20 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# This file is part of the covid-surge application.
+# This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
-# Valmor F. de Almeida dealmeidavf@gmail.com
-"""Surge period analysis of COVID-19 data.
-
-Usage examples can be found in the examples/ directory.
-In addition, the Jupyter notebooks/ directory also shows how to use the
-class in various ways.
-
-Notes
------
-This single class is a rather long file. This author uses `vim` with various
-highlighting and folding configurations integrated with `pylint` to make it
-simple to navigate a single long file.
-"""
 
 import math
 
@@ -28,7 +15,14 @@ from asserts import (assert_equal, assert_in, assert_is_instance,
 
 
 class Surge:
-    """Surge class for critical period analysis of COVID-19 data."""
+    """Surge class for critical period analysis of COVID-19 data.
+
+    Notes
+    -----
+    Usage examples can be found in the examples/ directory.
+    In addition, the Jupyter notebooks/ directory also shows how to use the
+    class in various ways.
+    """
 
     def __init__(self, locale='US', sub_locale=None,
                  save_all_original_data_html=False):
@@ -408,7 +402,10 @@ class Surge:
             assert_in(name, self.names)
 
         # Select data with # of cases greater than the minimum
-        (nz_cases_ids, ) = np.where(cases_plot > self.trim_rel_small_n_cases/100*cases_plot[-1])
+        (nz_cases_ids, ) = \
+                np.where(cases_plot >
+                         self.trim_rel_small_n_cases/100*cases_plot[-1])
+
         cases_plot = cases_plot[nz_cases_ids]
         dates_plot = self.dates[nz_cases_ids]
 
@@ -942,7 +939,7 @@ class Surge:
         print('')
         print('Post-linear error')
         (idx,) = np.where(times > tcc + dtc)
-        if len(idx):
+        if len(idx) > 0:
             rel_error = np.abs(sigmoid_func(times, param_vec) - cases)[idx]/cases[idx]*100
             mean_rel_error = np.mean(rel_error)
             print('mean relative error [%%] = %5.2f'%(mean_rel_error))
