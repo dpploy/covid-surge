@@ -28,7 +28,7 @@ from asserts import (assert_equal, assert_in, assert_is_instance,
 
 
 class Surge:
-    """Surge class for period analysis of COVID-19 data."""
+    """Surge class for critical period analysis of COVID-19 data."""
 
     def __init__(self, locale='US', sub_locale=None,
                  save_all_original_data_html=False):
@@ -46,6 +46,9 @@ class Surge:
             If `locale` is US, then `sub_locale` must be one of the state
             names. There is no `sub_locale` for countries.
             Default: None
+        save_all_original_data_html: bool
+            Save in a file, an `html` version of the entire data retrived
+            from the repository.
         # TODO log_filename='covid_surge'):
         log_filename: str
             Name of the file to save logging information. Not used at the
@@ -53,21 +56,52 @@ class Surge:
 
         Attributes
         ----------
-        names: str
-        populations:
-        dates
-        cases
-        __dates
-        __cases
-        __end_date
-        __ignore_last_n_days
-        min_n_cases_abs
-        trim_rel_small_n_cases
-        deaths_100k_minimum
+        names: list(str)
+            List of names of communities; countries or states or towns, etc.
+            Created by `get_covid_us_data` or `get_covid_global_data`.
+        populations: list(int)
+            List of population for each community if available. Otherwise,
+            `None`. Created by `get_covid_us_data`.
+            Created by `get_covid_us_data` or `get_covid_global_data`.
+        dates: numpy.ndarray(str)
+            Vector of `str` for dates in the numeric form MM/DD/YY.
+            Created by `get_covid_us_data` or `get_covid_global_data`.
+        cases: numpy.ndarray(float)
+            Matrix of `float` for cases. Number of rows equal to dimension of
+            `dates`. Number of columns equal to dimension of `names`.
+            Created by `get_covid_us_data` or `get_covid_global_data`.
+        __dates: numpy.ndarray(str)
+            Original copy of `dates`.
+        __cases: numpy.ndarray(float)
+            Original copy of `cases`.
+        __end_date: str or None
+            End date of `dates`. The end date of `__dates` remains original.
+            End case of `cases`. The end case of `__cases` remains original.
+        __ignore_last_n_days: int
+            Ignore this many days from the end of cases and dates.
+        min_n_cases_abs: int
+            Minimum number of cases before the analysis is carried on.
+        trim_rel_small_n_cases: float
+            Remove this percentage of cases from the begining of the data.
+        deaths_100k_minimum: float
+            Minimum number of deaths per 100k population per year before the
+            analysis is carried on.
+        sigmoid_formula: str
+            Formula of the sigmoid function as a `str`.
+
+        Examples
+        --------
+        See also the examples/ directory.
+
+        >>> us_surge = Surge()
+        >>> us_surge = Surge(locale='US')
+        >>> ny_surge = Surge(locale='US', sub_locale='New York')
+
+        >>> global_surge = Surge(locale='global')
         """
 
+        # Initializations
         if locale == 'global':
-            # assert sub_locale is None
             assert_is_none(sub_locale)
 
         self.locale = locale
@@ -86,13 +120,16 @@ class Surge:
 
         self.populations = None
 
+        self.sigmoid_formula = 'null-formula'
+
+        # Read data
         if self.locale == 'US':
 
             if self.sub_locale:
 
                 (county_names, populations, dates, cases) = \
                  get_covid_us_data(self.sub_locale,
-                                          save_html=save_all_original_data_html)
+                                   save_html=save_all_original_data_html)
 
                 assert_equal(dates.size, cases.shape[0])
                 assert_equal(len(county_names), cases.shape[1])
@@ -119,21 +156,22 @@ class Surge:
         else:
             assert_true(False, 'Bad locale: %r (US, global)'%(self.locale))
 
-        self.__dates = dates
-        self.__cases = cases
+        self.__dates = dates # preserve original
+        self.__cases = cases # preserve original
+
+        self.dates = None # modification of __dates
+        self.cases = None # modification of __cases
 
         self.__reset_data()
 
-        return
-
     def __reset_data(self):
+        """"Reset data to original values."""
 
         self.cases = np.copy(self.__cases)
         self.dates = np.copy(self.__dates)
 
-        return
-
     def __set_end_date(self, v):
+        """End date setter and `dates` and `cases` modifier."""
 
         assert_true(isinstance(v, str) or v is None)
 
@@ -152,14 +190,13 @@ class Surge:
         else:
             pass
 
-        return
-
     def __get_end_date(self):
 
         return self.__end_date
     end_date = property(__get_end_date, __set_end_date, None, None)
 
     def __set_ignore_last_n_days(self, val):
+        """Ignore last n days setter and `dates` and `cases` modifier."""
 
         assert_is_instance(val, int)
         assert_true(val >= 0)
@@ -171,8 +208,6 @@ class Surge:
 
             self.dates = np.copy(self.dates[:-self.__ignore_last_n_days])
             self.cases = np.copy(self.cases[:-self.__ignore_last_n_days])
-
-        return
 
     def __get_ignore_last_n_days(self):
 
@@ -303,8 +338,10 @@ class Surge:
         k_max = 25
         rel_tol = 0.01 / 100.0  # (0.01%)
 
-        (param_vec, rr2, k) = self.__newton_nlls_solve(times, cases,
-                              self.sigmoid_func, self.__grad_p_sigmoid_func,
+        (param_vec, rr2, k) = \
+            newton_nlls_solve(times, cases,
+                              self.sigmoid_func,
+                              self.__grad_p_sigmoid_func,
                               param_vec_0, k_max, rel_tol, verbose=False)
 
         assert_true(param_vec[0] > 0.0)
@@ -322,12 +359,12 @@ class Surge:
 
         return param_vec
 
-    def plot_covid_nlfit(self, param_vec, name=None,
-                         save=False, plot_prime=False,
-                         plot_double_prime=False, option='dates',
+    def plot_covid_nlfit(self, param_vec, name=None, save=False,
+                         plot_prime=False, plot_double_prime=False,
+                         option='dates',
                          ylabel='null-ylabel',
                          title='null-title', formula='null-formula'):
-        """Plot COVID-19 data nolinear fit.
+        """Plot COVID-19 data nonlinear fit.
 
         Parameters
         ----------
@@ -378,9 +415,8 @@ class Surge:
         ylabel = 'Cumulative Deaths []'
 
         if population:
-            deaths_100k_y = round(
-                    cases_plot[-1]*100000/population * 365/cases_plot.size, 1
-                             )
+            deaths_100k_y = \
+            round(cases_plot[-1]*100000/population * 365/cases_plot.size, 1)
 
         if name is None:
             locale = self.locale+' Combined '
@@ -409,7 +445,8 @@ class Surge:
         plt.plot(dates_fit, cases_fit, 'b-', label='Covid-surge fitting')
 
         if option == 'dates':
-            plt.xticks(range(len(dates_plot)), dates_plot, rotation=60, fontsize=14)
+            plt.xticks(range(len(dates_plot)), dates_plot, rotation=60,
+                       fontsize=14)
             plt.xlabel(r'Date', fontsize=16)
         elif option == 'days':
             plt.xlabel(r'Time [day]', fontsize=16)
@@ -491,7 +528,8 @@ class Surge:
 
         for (i, p) in enumerate(param_vec):
             y_text -= dy*0.1
-            plt.text(x_text, y_text, r'$\alpha_{%i}$=%8.2e'%(i, p),fontsize=16)
+            plt.text(x_text, y_text, r'$\alpha_{%i}$=%8.2e'%(i, p),
+                     fontsize=16)
 
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
@@ -522,7 +560,7 @@ class Surge:
             plt.subplot(n_rows, n_cols, 1)
 
             cases_rate_plot = [0.0]
-            for (b, a) in zip(cases_plot[1:],cases_plot[:-1]):
+            for (b, a) in zip(cases_plot[1:], cases_plot[:-1]):
                 cases_rate_plot.append(b-a)
             cases_rate_plot = np.array(cases_rate_plot)
 
@@ -530,16 +568,18 @@ class Surge:
                     'r*', label=source)
 
             n_plot_pts = 100
-            dates_fit = np.linspace( 0, range(len(dates_plot))[-1], n_plot_pts)
+            dates_fit = np.linspace(0, range(len(dates_plot))[-1], n_plot_pts)
 
-            cases_fit = fit_func_prime( dates_fit, param_vec )
+            cases_fit = fit_func_prime(dates_fit, param_vec)
 
-            plt.plot(dates_fit,cases_fit,'b-',label='Covid-surge fitting derivative' )
+            plt.plot(dates_fit, cases_fit, 'b-',
+                     label='Covid-surge fitting derivative')
 
             if time_max_prime is not None:
 
                 peak = fit_func_prime(time_max_prime, param_vec)
-                plt.plot(time_max_prime, peak,'*',color='green',markersize=16)
+                plt.plot(time_max_prime, peak, '*', color='green',
+                         markersize=16)
 
                 (x_min, x_max) = plt.xlim()
                 dx = abs(x_max-x_min)
@@ -591,7 +631,7 @@ class Surge:
                 t_min = time_min_max_double_prime[0]
                 t_max = time_min_max_double_prime[1]
 
-                max_val = fit_func_double_prime(t_max,param_vec)
+                max_val = fit_func_double_prime(t_max, param_vec)
                 plt.plot(t_max, max_val, '*', color='orange', markersize=16)
 
                 (x_min, x_max) = plt.xlim()
@@ -636,12 +676,12 @@ class Surge:
 
         return
 
-    def sigmoid_func(self, x, param_vec):
+    def sigmoid_func(self, xval, param_vec):
         """Compute the sigmoid function at x.
 
         Parameters
         ----------
-        x: float, int, or numpy.ndarray
+        xval: float, int, or numpy.ndarray
             Values of the argument of the function.
         param_vec: numpy.ndarray(float)
             Vector of sigmoid parameters `a_0`, `a_1`, `a_0`.
@@ -658,7 +698,7 @@ class Surge:
         a_1 = param_vec[1]
         a_2 = param_vec[2]
 
-        f_x = a_0 / (1 + a_1 * np.exp(a_2*x))
+        f_x = a_0 / (1 + a_1 * np.exp(a_2*xval))
 
         return f_x
 
@@ -700,122 +740,6 @@ class Surge:
         grad_p_f_2 = - a_0/(1. + a_1 * np.exp(a_2*x))**2 * a_1 * x*np.exp(a_2*x)
 
         return (grad_p_f_0, grad_p_f_1, grad_p_f_2)
-
-    def __newton_nlls_solve(self, x_vec, y_vec, fit_func, grad_p_fit_func,
-                            param_vec_0,
-                            k_max=10, rel_tol=1.0e-3, verbose=True):
-
-        assert_equal(x_vec.size, y_vec.size)
-
-        # Other initialization
-        delta_vec_k = np.ones(param_vec_0.size, dtype=np.float64)*1e10
-        r_vec_k = np.ones(x_vec.size, dtype=np.float64)*1e10
-        j_mtrx_k = np.ones((x_vec.size, param_vec_0.size), dtype=np.float64)*1e10
-        param_vec = np.copy(param_vec_0)
-
-        if verbose is True:
-            print('\n')
-            print('**************************************************************************')
-            print("                      Newton's Method Iterations                          ")
-            print('**************************************************************************')
-            print('k  ||r(p_k)||  ||J(p_k)||  ||J^T r(p_k)||  ||del p_k||   ||p_k||  |convg| ')
-            print('--------------------------------------------------------------------------')
-        #         1234567890 12345678901 123456789012345 123456789012 123456789 12345678
-
-        assert_true(k_max >= 1)
-        k = 1
-
-        while (np.linalg.norm(delta_vec_k/param_vec) > rel_tol or np.linalg.norm(j_mtrx_k.transpose()@r_vec_k) > 1e-3) and k <= k_max:
-
-            # build the residual vector
-            r_vec_k = y_vec - fit_func(x_vec, param_vec)
-
-            # build the Jacobian matrix
-            grad_p_f = grad_p_fit_func(x_vec, param_vec)
-
-            j_mtrx_k = np.zeros((x_vec.size, param_vec.size), dtype=np.float64 )  # initialize matrix
-            for (i, grad_p_f_i) in enumerate(grad_p_f):
-                j_mtrx_k[:, i] = - grad_p_f_i
-
-            delta_vec_k_old = np.copy(delta_vec_k)
-
-            rank = numpy.linalg.matrix_rank(j_mtrx_k.transpose()@j_mtrx_k)
-
-            if rank != param_vec.size and verbose == True:
-                print('')
-                print('*********************************************************************')
-                print('                             RANK DEFICIENCY')
-                print('*********************************************************************')
-                print('rank(JTJ) = %3i; shape(JTJ) = (%3i,%3i)'%
-                      (rank, (j_mtrx_k.transpose()@j_mtrx_k).shape[0],
-                             (j_mtrx_k.transpose()@j_mtrx_k).shape[1]))
-                print('JTJ = \n', j_mtrx_k.transpose()@j_mtrx_k)
-                print('*********************************************************************')
-                print('')
-
-            if rank == param_vec.size:
-                delta_vec_k = numpy.linalg.solve(j_mtrx_k.transpose()@j_mtrx_k,
-                                                 -j_mtrx_k.transpose()@r_vec_k)
-            else:
-                a_mtrx_k = j_mtrx_k.transpose()@j_mtrx_k
-                b_vec_k = -j_mtrx_k.transpose()@r_vec_k
-                delta_vec_k = numpy.linalg.solve(
-                       a_mtrx_k.transpose()@a_mtrx_k +
-                       1e-3*np.eye(param_vec.size),
-                       a_mtrx_k.transpose()@b_vec_k)
-
-            r_vec_k_old = np.copy(r_vec_k)
-            step_size = 1.0
-            r_vec_k = y_vec - fit_func( x_vec, param_vec + delta_vec_k )
-
-            n_steps_max = 5
-            n_steps = 0
-            while (np.linalg.norm(r_vec_k) > np.linalg.norm(r_vec_k_old)) and n_steps <= n_steps_max:
-                step_size *= 0.5
-                r_vec_k = y_vec - fit_func( x_vec, param_vec + step_size*delta_vec_k )
-                n_steps += 1
-
-            if step_size != 1.0 and verbose is True:
-                print('Step_size = ', step_size, ' n_steps = ', n_steps,
-                        ' n_steps_max = ', n_steps_max)
-
-            # compute the update to the root candidate
-            param_vec += step_size * delta_vec_k
-
-            if k > 0:
-                if np.linalg.norm(delta_vec_k) != 0.0 and np.linalg.norm(delta_vec_k_old) != 0.0:
-                    convergence_factor = math.log(np.linalg.norm(delta_vec_k),
-                                                  10) / \
-                    math.log(np.linalg.norm(delta_vec_k_old), 10)
-                else:
-                    convergence_factor = 0.0
-            else:
-                convergence_factor = 0.0
-
-            if verbose is True:
-                print('%2i %+10.2e %+11.2e %+15.2e %+12.2e %+9.2e %8.2f'%\
-                      (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
-                       np.linalg.norm(j_mtrx_k.transpose()@r_vec_k),
-                       np.linalg.norm(delta_vec_k), np.linalg.norm(param_vec),
-                       convergence_factor))
-
-            k = k + 1
-
-        rr2 = 1.0 - np.sum(r_vec_k**2) / np.sum((y_vec-np.mean(y_vec))**2)
-
-        if verbose is True:
-            print('******************************************************')
-            print('Root = ', param_vec)
-            print('R2   = ', rr2)
-
-        if k > k_max:
-            print('')
-            print('******************************************************')
-            print('WARNING: Convergence failure k > k_max                ')
-            print('******************************************************')
-            print('')
-
-        return (param_vec, rr2, k)
 
     def report_critical_times(self, param_vec, name=None, verbose=False):
         """Report critical times and errors.
@@ -1151,10 +1075,10 @@ class Surge:
             rel_tol = 0.01 / 100.0 # (0.1%)
 
             (param_vec, rr2, k) = \
-                self.__newton_nlls_solve(times, icases, self.sigmoid_func,
-                                         self.__grad_p_sigmoid_func,
-                                         param_vec_0, k_max,
-                                         rel_tol, verbose=False)
+                newton_nlls_solve(times, icases, self.sigmoid_func,
+                                  self.__grad_p_sigmoid_func,
+                                  param_vec_0, k_max,
+                                  rel_tol, verbose=False)
 
             if k > k_max and verbose:
                 print(" NO Newton's method convergence")
@@ -1296,7 +1220,6 @@ class Surge:
         ----------
         fit_data: list(tuple)
             List of tuples obtained from the `multi_fit_data` member function.
-
         option: str
             Either `experimental` or `fit`. The default does nothing.
         save: bool
@@ -1414,7 +1337,7 @@ class Surge:
         return
 
     def fit_data_bins(self, sorted_fit_data, bin_width, option='surge_period'):
-        """Cluster communities based on the sorting value of the `fit_data`.
+        """Build data bins for`fit_data`.
 
         Parameters
         ----------
@@ -1430,6 +1353,13 @@ class Surge:
         bins: dict(list)
             Dictionary with bin values. Keys are the indices of the bins.
             Values are a list with beginning and ending of interval.
+
+        Examples
+        --------
+        >>> global_surge = Surge(locale='global')
+        >>> fit_data = global_surge.multi_fit_data()
+        >>> bins = global_surge.fit_data_bins(fit_data, 2)
+
         """
 
         max_value = max([key for (key, data) in sorted_fit_data])
@@ -1888,6 +1818,144 @@ def get_covid_global_data(case_type='deaths', distribution=True,
             cases[:, j] = np.round(np.gradient(cases[:, j]), 0)
 
     return (country_names, dates, cases)
+
+def newton_nlls_solve(x_vec, y_vec, fit_func, grad_p_fit_func,
+                      param_vec_0,
+                      k_max=10, rel_tol=1.0e-3, verbose=True):
+    """Newton's nonlinear least-squares fitting method.
+
+    Parameters
+    ----------
+    x_vec: numpy.ndarray(float)
+        Values of the independent variable.
+    y_vec: numpy.ndarray(float)
+        Values of the dependent variable.
+    fit_func: def f(x,p):
+        Function definitio of the sigma function.
+    grad_p_fit_func: def f_p(x,p):
+        Gradient of f wrt to the parameter vector.
+    param_vec_0: numpy.ndarray(float)
+        Parameter vector initial guess.
+    rel_tol: float
+        Relative tolerance for convergence of Newton's method
+    verbose: bool
+        Flag for print out of internal information.
+    """
+
+    assert_equal(x_vec.size, y_vec.size)
+
+    # Other initialization
+    delta_vec_k = np.ones(param_vec_0.size, dtype=np.float64)*1e10
+    r_vec_k = np.ones(x_vec.size, dtype=np.float64)*1e10
+    j_mtrx_k = np.ones((x_vec.size, param_vec_0.size), dtype=np.float64)*1e10
+    param_vec = np.copy(param_vec_0)
+
+    if verbose is True:
+        print('\n')
+        print('**************************************************************************')
+        print("                      Newton's Method Iterations                          ")
+        print('**************************************************************************')
+        print('k  ||r(p_k)||  ||J(p_k)||  ||J^T r(p_k)||  ||del p_k||   ||p_k||  |convg| ')
+        print('--------------------------------------------------------------------------')
+    #         1234567890 12345678901 123456789012345 123456789012 123456789 12345678
+
+    assert_true(k_max >= 1)
+    k = 1
+
+    while (np.linalg.norm(delta_vec_k/param_vec) > rel_tol or np.linalg.norm(j_mtrx_k.transpose()@r_vec_k) > 1e-3) and k <= k_max:
+
+        # build the residual vector
+        r_vec_k = y_vec - fit_func(x_vec, param_vec)
+
+        # build the Jacobian matrix
+        grad_p_f = grad_p_fit_func(x_vec, param_vec)
+
+        j_mtrx_k = np.zeros((x_vec.size, param_vec.size), dtype=np.float64 )  # initialize matrix
+        for (i, grad_p_f_i) in enumerate(grad_p_f):
+            j_mtrx_k[:, i] = - grad_p_f_i
+
+        delta_vec_k_old = np.copy(delta_vec_k)
+
+        rank = numpy.linalg.matrix_rank(j_mtrx_k.transpose()@j_mtrx_k)
+
+        if rank != param_vec.size and verbose == True:
+            print('')
+            print('*********************************************************************')
+            print('                             RANK DEFICIENCY')
+            print('*********************************************************************')
+            print('rank(JTJ) = %3i; shape(JTJ) = (%3i,%3i)'%
+                  (rank, (j_mtrx_k.transpose()@j_mtrx_k).shape[0],
+                         (j_mtrx_k.transpose()@j_mtrx_k).shape[1]))
+            print('JTJ = \n', j_mtrx_k.transpose()@j_mtrx_k)
+            print('*********************************************************************')
+            print('')
+
+        if rank == param_vec.size:
+            delta_vec_k = numpy.linalg.solve(j_mtrx_k.transpose()@j_mtrx_k,
+                                             -j_mtrx_k.transpose()@r_vec_k)
+        else:
+            a_mtrx_k = j_mtrx_k.transpose()@j_mtrx_k
+            b_vec_k = -j_mtrx_k.transpose()@r_vec_k
+            delta_vec_k = numpy.linalg.solve(a_mtrx_k.transpose()@a_mtrx_k +
+                                             1e-3*np.eye(param_vec.size),
+                                             a_mtrx_k.transpose()@b_vec_k)
+
+        r_vec_k_old = np.copy(r_vec_k)
+        step_size = 1.0
+        r_vec_k = y_vec - fit_func(x_vec, param_vec + delta_vec_k)
+
+        n_steps_max = 5
+        n_steps = 0
+        while (np.linalg.norm(r_vec_k) > np.linalg.norm(r_vec_k_old)) \
+              and n_steps <= n_steps_max:
+            step_size *= 0.5
+            r_vec_k = y_vec - fit_func(x_vec, param_vec +
+                                       step_size*delta_vec_k)
+            n_steps += 1
+
+        if step_size != 1.0 and verbose is True:
+            print('Step_size = ', step_size, ' n_steps = ', n_steps,
+                  ' n_steps_max = ', n_steps_max)
+
+        # compute the update to the root candidate
+        param_vec += step_size * delta_vec_k
+
+        if k > 0:
+            if np.linalg.norm(delta_vec_k) != 0.0 and \
+                    np.linalg.norm(delta_vec_k_old) != 0.0:
+
+                convergence_factor = math.log(np.linalg.norm(delta_vec_k),
+                                              10) / \
+                math.log(np.linalg.norm(delta_vec_k_old), 10)
+            else:
+                convergence_factor = 0.0
+        else:
+            convergence_factor = 0.0
+
+        if verbose is True:
+            print('%2i %+10.2e %+11.2e %+15.2e %+12.2e %+9.2e %8.2f'%\
+                  (k, np.linalg.norm(r_vec_k), np.linalg.norm(j_mtrx_k),
+                   np.linalg.norm(j_mtrx_k.transpose()@r_vec_k),
+                   np.linalg.norm(delta_vec_k), np.linalg.norm(param_vec),
+                   convergence_factor))
+
+        k = k + 1
+
+    rr2 = 1.0 - np.sum(r_vec_k**2) / np.sum((y_vec-np.mean(y_vec))**2)
+
+    if verbose is True:
+        print('******************************************************')
+        print('Root = ', param_vec)
+        print('R2   = ', rr2)
+
+    if k > k_max:
+        print('')
+        print('******************************************************')
+        print('WARNING: Convergence failure k > k_max                ')
+        print('******************************************************')
+        print('')
+
+    return (param_vec, rr2, k)
 
 def color_map(num_colors):
     """Nice colormap internal helper method for plotting.

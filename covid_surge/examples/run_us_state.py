@@ -16,7 +16,7 @@ def main():
     # Set parameters
     us_surge.end_date = '4/20/20'       # set end date wanted
     us_surge.end_date = None            # get all the data available
-    us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    us_surge.ignore_last_n_days = 0 # allow for data repo to be corrected/updated
 
     #****************************************************************************
     # Single State Case
@@ -25,7 +25,7 @@ def main():
     print('*                        Single State                              *')
     print('********************************************************************')
 
-    name = 'North Carolina'
+    name = 'New Mexico'
     print(name)
     print('')
 

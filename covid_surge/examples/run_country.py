@@ -19,13 +19,13 @@ def main():
     # Set parameters
     g_surge.end_date = '4/20/20'       # set end date wanted
     g_surge.end_date = None            # get all the data available
-    g_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    g_surge.ignore_last_n_days = 0 # allow for data repo to be corrected/updated
 
     print('******************************************************************')
     print('*                        Single Country                          *')
     print('******************************************************************')
 
-    name = 'US'
+    name = 'Brazil'
     print(name)
     print('')
 
