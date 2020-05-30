@@ -9,23 +9,22 @@ from covid_surge import Surge
 
 def main():
     """Main function executed at the bottom."""
-
     # Get US surge data
     us_surge = Surge()
 
     # Set parameters
     us_surge.end_date = '4/20/20'       # set end date wanted
     us_surge.end_date = None            # get all the data available
-    us_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    us_surge.ignore_last_n_days = 0 # allow for data repo to be updated
 
-    #****************************************************************************
+    #**************************************************************************
     # Single State Case
-    #****************************************************************************
-    print('********************************************************************')
-    print('*                        Single State                              *')
-    print('********************************************************************')
+    #**************************************************************************
+    print('******************************************************************')
+    print('*                        Single State                            *')
+    print('******************************************************************')
 
-    name = 'North Carolina'
+    name = 'New Mexico'
     print(name)
     print('')
 
@@ -62,13 +61,14 @@ def main():
     n_prediction_days = 60
 
     last_day = us_surge.dates.size
-    total_deaths_predicted = int(us_surge.sigmoid_func(n_prediction_days + last_day, param_vec))
+    total_deaths_predicted = int(us_surge.sigmoid_func(n_prediction_days +
+                                                       last_day, param_vec))
 
     print('')
     print('Estimated cumulative deaths in %s days from %s = %6i'%\
             (n_prediction_days, us_surge.dates[-1], total_deaths_predicted))
     print('# of cumulative deaths today, %s               = %6i'%\
-            (us_surge.dates[-1], us_surge.cases[-1, us_surge.names.index(name)]))
+          (us_surge.dates[-1], us_surge.cases[-1, us_surge.names.index(name)]))
     print('')
 
 

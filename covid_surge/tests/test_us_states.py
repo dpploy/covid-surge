@@ -11,13 +11,12 @@ from covid_surge import Surge
 
 def test_main():
     """Run main function below."""
-
     # Get US surge data
     us_surge = Surge()
 
     # Set parameters
     us_surge.end_date = '5/15/20'   # set end date wanted
-    us_surge.ignore_last_n_days = 0 # allow for data repo to be corrected/updated
+    us_surge.ignore_last_n_days = 0 # allow for data repo to be updated
     us_surge.min_n_cases_abs = 500  # min # of absolute cases for analysis
     us_surge.deaths_100k_minimum = 41 # US death per 100,000 for Chronic Lower
     #                                   Respiratory Diseases per year: 41(2019)
@@ -27,7 +26,8 @@ def test_main():
     print('# of days:           ', us_surge.dates.shape[0])
 
     # Fit data to all states
-    fit_data = us_surge.multi_fit_data(verbose=True, plot=True, save_plots=True)
+    fit_data = us_surge.multi_fit_data(verbose=True, plot=True,
+                                       save_plots=True)
 
     # Plot all data in one plot
     us_surge.plot_multi_fit_data(fit_data, 'experimental', save=True)
@@ -72,11 +72,15 @@ def test_main():
     try:
         assert_equal(len(state_groups), 7)
         assert_equal(state_groups[0], ['New York', 'Virginia'])
-        assert_equal(state_groups[1], ['Massachusetts', 'Connecticut', 'Michigan'])
-        assert_equal(state_groups[2], ['New Jersey', 'Pennsylvania', 'Louisiana', 'Minnesota', 'Maryland'])
+        assert_equal(state_groups[1], ['Massachusetts', 'Connecticut',
+                                       'Michigan'])
+        assert_equal(state_groups[2], ['New Jersey', 'Pennsylvania',
+                                       'Louisiana', 'Minnesota', 'Maryland'])
         assert_equal(state_groups[3], ['North Carolina'])
-        assert_equal(state_groups[4], ['Indiana', 'Florida', 'Georgia', 'Wisconsin', 'Missouri'])
-        assert_equal(state_groups[5], ['Colorado', 'Ohio', 'Illinois', 'California', 'Washington'])
+        assert_equal(state_groups[4], ['Indiana', 'Florida', 'Georgia',
+                                       'Wisconsin', 'Missouri'])
+        assert_equal(state_groups[5], ['Colorado', 'Ohio', 'Illinois',
+                                       'California', 'Washington'])
         assert_equal(state_groups[6], ['Alabama', 'Mississippi'])
     except AssertionError as err:
         print('Warning: ', err)

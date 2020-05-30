@@ -9,7 +9,6 @@ from covid_surge import Surge
 
 def main():
     """Main function executed at the bottom."""
-
     # Get US surge data
     us_surge = Surge()
 
@@ -27,7 +26,8 @@ def main():
     print('# of days:           ', us_surge.dates.shape[0])
 
     # Fit data to all states
-    fit_data = us_surge.multi_fit_data(verbose=True, plot=True, save_plots=True)
+    fit_data = us_surge.multi_fit_data(verbose=True, plot=True,
+                                       save_plots=True)
 
     # Plot all data in one plot
     us_surge.plot_multi_fit_data(fit_data, 'experimental', save=True)

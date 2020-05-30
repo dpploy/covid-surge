@@ -10,6 +10,7 @@ covid_surge/*.png
 *.swp
 *.DS_Store
 *.html
+*~
 
 # C extensions
 *.so

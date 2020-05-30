@@ -11,7 +11,6 @@ from covid_surge import Surge
 
 def main():
     """Main function executed at the bottom."""
-
     # Get US surge data
     us_surge = Surge()
 
@@ -75,7 +74,8 @@ def main():
                                           save_plots=True)
         print('# of fittings done = ', len(fit_data))
 
-        if len(fit_data) == 0:
+        if not fit_data:
+            print('Done here...')
             continue
 
         print('')

@@ -3,13 +3,13 @@
 # This file is part of the COVID-surge application.
 # https://github/dpploy/covid-surge
 # Valmor F. de Almeida dealmeidavf@gmail.com
-"""Example of Surge usage for a country data."""
+"""Example of Surge usage for country data."""
 
 from covid_surge import Surge
 
+
 def main():
     """Main function executed at the bottom."""
-
     # Get global surge data
     g_surge = Surge(locale='global')
 
@@ -17,15 +17,15 @@ def main():
     print('# of days:      ', g_surge.cases.shape[0])
 
     # Set parameters
-    g_surge.end_date = '4/20/20'       # set end date wanted
-    g_surge.end_date = None            # get all the data available
-    g_surge.ignore_last_n_days = 2 # allow for data repo to be corrected/updated
+    g_surge.end_date = '4/20/20'  # set end date wanted
+    g_surge.end_date = None  # get all the data available
+    g_surge.ignore_last_n_days = 0  # allow for data repo to be updated
 
     print('******************************************************************')
     print('*                        Single Country                          *')
     print('******************************************************************')
 
-    name = 'US'
+    name = 'Brazil'
     print(name)
     print('')
 
@@ -35,13 +35,12 @@ def main():
     n_last_days = 7
     country_id = g_surge.names.index(name)
     print('')
-    print('Last %i days'%n_last_days,
-          ' # of cumulative cases = ', g_surge.cases[-n_last_days:, country_id])
-    print('Last %i days'%n_last_days,
-          ' # of added cases =',
-          [b-a for (b, a) in zip(g_surge.cases[-(n_last_days-1):, country_id],
-                                 g_surge.cases[-n_last_days:-1, country_id])
-          ])
+    print('Last %i days' % n_last_days, ' # of cumulative cases = ',
+          g_surge.cases[-n_last_days:, country_id])
+    print('Last %i days' % n_last_days, ' # of added cases =',
+          [b - a for (b, a) in
+           zip(g_surge.cases[-(n_last_days - 1):, country_id],
+               g_surge.cases[-n_last_days:-1, country_id])])
     print('')
 
     # Fit data to model function
@@ -49,8 +48,11 @@ def main():
     print('')
 
     # Plot the fit data to model function
-    g_surge.plot_covid_nlfit(param_vec, name, save=True,
-                             plot_prime=True, plot_double_prime=True)
+    g_surge.plot_covid_nlfit(param_vec,
+                             name,
+                             save=True,
+                             plot_prime=True,
+                             plot_double_prime=True)
 
     # Report critical times
     (tcc, dtc) = g_surge.report_critical_times(param_vec, name, verbose=True)
@@ -62,7 +64,8 @@ def main():
     n_prediction_days = 60
 
     last_day = g_surge.dates.size
-    total_deaths_predicted = int(g_surge.sigmoid_func(n_prediction_days + last_day, param_vec))
+    total_deaths_predicted = int(
+        g_surge.sigmoid_func(n_prediction_days + last_day, param_vec))
 
     print('')
     print('Estimated cumulative deaths in %s days from %s = %6i'%\
