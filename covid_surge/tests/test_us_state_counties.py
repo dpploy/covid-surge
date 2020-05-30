@@ -35,7 +35,7 @@ def test_main():
     # Plot all data in one plot
     c_surge.plot_multi_fit_data(fit_data, 'experimental', save=True)
 
-    if len(fit_data) == 0:
+    if not fit_data:
         print('Done here...')
         return
 

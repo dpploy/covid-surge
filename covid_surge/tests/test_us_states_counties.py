@@ -77,7 +77,8 @@ def test_main():
                                           save_plots=True)
         print('# of fittings done = ', len(fit_data))
 
-        if len(fit_data) == 0:
+        if not fit_data:
+            print('Done here...')
             continue
 
         print('')
