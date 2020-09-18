@@ -9,7 +9,6 @@ COVID-19 mortality surge period calculation for communities afflicted by the cor
 
 [![NBViewer](https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.svg)](https://nbviewer.jupyter.org/github/dpploy/covid-surge/tree/master/notebooks/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dpploy/covid-surge/master)
-[![Azure Notebooks](https://notebooks.azure.com/launch.svg)](https://notebooks.azure.com/dealmeidavf/projects/covid-surge)
 
 [![PyPI Version](https://img.shields.io/pypi/v/covid-surge)](https://pypi.org/project/covid-surge/)
 [![PyPI Python Version](https://img.shields.io/pypi/pyversions/covid-surge)](https://pypi.org/project/covid-surge/)
